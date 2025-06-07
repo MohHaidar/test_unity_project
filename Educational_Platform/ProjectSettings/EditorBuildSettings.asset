@@ -5,9 +5,33 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
+  - enabled: 1
+    path: Assets/Scenes/Login.unity
+    guid: 4f7c4cad862a2534a8aeae325818c55d
+  - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: 7b149330440c7f74bad23fa2c411114a
+  - enabled: 1
+    path: Assets/Scenes/Map.unity
+    guid: 93ec3b1d09d612441a506a2f4c16b7ff
+  - enabled: 1
+    path: Assets/Scenes/Profile.unity
+    guid: a37d776b1b054b847acd354142ca75e8
+  - enabled: 1
+    path: Assets/Scenes/Shop.unity
+    guid: 1425a97eee6a13c4d843ae9bbc68442b
+  - enabled: 1
+    path: Assets/Scenes/ChallengeScene.unity
+    guid: a6a6c77980650c54b86b1ecb4b7de9cb
+  - enabled: 1
+    path: Assets/Scenes/Subjects/Math/Math.unity
+    guid: 8e30edf55f626bf439e4e4a220e55a07
+  - enabled: 1
+    path: Assets/Scenes/Subjects/Math/Arithmetics.unity
+    guid: eed8aa3e3527bc94599586946ed12773
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
