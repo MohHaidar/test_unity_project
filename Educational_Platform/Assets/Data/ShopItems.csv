@@ -1,0 +1,5 @@
+ItemName,Category,Price,LimitPerPlayer,AvatarPath
+Gold Trophy,Trophy,200,1,Sprites/GoldTrophy
+Schokolade,Tool,50,1,Sprites/Schokolade
+Token,Utility,10,5,Sprites/Token
+Batbout, Trophy, 500, 1,Sprites/Batbout

@@ -1,0 +1,10 @@
+PlayerName,ItemName,Category,AcquiredDate,AcquiredFrom
+john_doe,Trophy of Speed,Trophy,2025-05-24T18:33:00Z,ChallengeReward
+john_doe,Bronze Medal,Medal,2025-05-22T12:00:00Z,ShopPurchase
+jane_fox,Speed Boost,Tool,2025-05-21T09:12:00Z,ShopPurchase
+Player1,Schokolade,Tool,2025-05-31T16:35:09.9221019Z,ShopPurchase
+Player1,Token,Utility,2025-05-31T16:37:24.8027195Z,ShopPurchase
+Player1,Token,Utility,2025-05-31T16:37:25.3760902Z,ShopPurchase
+Player1,Token,Utility,2025-05-31T16:37:25.7524116Z,ShopPurchase
+Player1,Token,Utility,2025-05-31T16:37:26.0700329Z,ShopPurchase
+Player1,Token,Utility,2025-05-31T16:37:26.8347132Z,ShopPurchase
