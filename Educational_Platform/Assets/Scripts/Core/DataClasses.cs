@@ -86,3 +86,17 @@ public class ShopItem
     public int LimitPerPlayer;
     public string AvatarPath;
 }
+public class Attempt
+{
+    public bool Success { get; set; }
+    public double TimeElapsedSeconds { get; set; }
+}
+
+public class PerformanceReport
+{
+    public double Accuracy { get; set; }
+    public int AttemptsToMastery { get; set; }
+    public double StreakStability { get; set; }
+    public double TimeEfficiency { get; set; }
+    public double ConfidenceScore { get; set; }
+}
