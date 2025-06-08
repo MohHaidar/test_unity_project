@@ -49,11 +49,9 @@ public abstract class BaseActivityManager : MonoBehaviour
         {
             UpdateStreakDots();
             CheckStreak();
-
+            
             // Load Question
-            var q = currentActivity.GetCurrentQuestion();
-
-            RenderQuestionUI(q);
+            RenderQuestionUI(currentActivity.GenerateQuestion());
             RenderAbandonButton();
         }
     }

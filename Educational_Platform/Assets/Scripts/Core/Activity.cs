@@ -24,7 +24,7 @@ public class Activity
         TimeSpent = 0f;
     }
 
-    public Question GenerateNextQuestion()
+    public Question GenerateQuestion()
     {
         StartQuestionTimer();
         return QuestionGenerator?.Invoke();
