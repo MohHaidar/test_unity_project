@@ -47,6 +47,11 @@ public static class MMRCalculator {
     }
 }
 
-public static class ChallengeLoader {
+public static class ChallengeLoader
+{
     public static Challenge SelectedChallenge;
+}
+public static class ActivityLoader
+{
+    public static ActivityLoader SelectedActivity;
 }

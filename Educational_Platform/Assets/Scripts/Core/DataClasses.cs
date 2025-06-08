@@ -5,49 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 
 [System.Serializable]
-public class PlayerProfile
-{
-    public string Name;
-    public int Level;
-    public string Achievements;
-    public string AvatarPath;
-    public int PlayerCoins;
-    public int MMR;
-    public int TotalScore;
-
-    public PlayerProfile(
-        string name,
-        int level,
-        string achievements,
-        string avatarPath,
-        int playerCoins,
-        int mmr,
-        int totalscore
-    )
-    {
-        Name = name;
-        Level = level;
-        Achievements = achievements;
-        AvatarPath = avatarPath;
-        PlayerCoins = playerCoins;
-        MMR = mmr;
-        TotalScore = totalscore;
-    }
-    public static PlayerProfile GetFromMemory()
-    {
-        return new PlayerProfile(
-        PlayerPrefs.GetString("PlayerName", "Guest"),
-        PlayerPrefs.GetInt("PlayerLevel", 1),
-        PlayerPrefs.GetString("PlayerAchievements", ""),
-        PlayerPrefs.GetString("PlayerAvatar", ""),
-        PlayerPrefs.GetInt("PlayerCoins", 0),
-        PlayerPrefs.GetInt("MMR", 1200),
-        PlayerPrefs.GetInt("TotalScore", 0)
-        );
-    }
-}
-
-[System.Serializable]
 public class ChallengeCooldownRow
 {
     public string PlayerName;
@@ -58,13 +15,12 @@ public class ChallengeCooldownRow
 }
 
 [System.Serializable]
-public class QuestionModule {
-    public string Type;
-    public string Prompt;
-    public List<string> Options;
-    public string CorrectAnswer;
-
-    public bool IsCorrect(string selected) => selected == CorrectAnswer;
+public class Question { 
+    public string Prompt { get; set; }
+    public string CorrectAnswer { get; set; }
+    public List<string> Options { get; set; }
+    public Dictionary<string, string> MatchPairs { get; set; }
+    public Dictionary<string, object> Metadata { get; set; }
 }
 
 [System.Serializable]
@@ -86,13 +42,22 @@ public class ShopItem
     public int LimitPerPlayer;
     public string AvatarPath;
 }
-public class Attempt
+enum Difficulty { Easy = 0, Medium = 1, Hard = 2 }
+public enum StepAction
+{
+    CompleteStep,
+    TryHard,
+    TryMedium,
+    DropToMedium,
+    DropToEasy,
+    Stay
+}
+public class QuestionPerformance
 {
     public bool Success { get; set; }
-    public double TimeElapsedSeconds { get; set; }
+    public float TimeElapsedSeconds { get; set; }
 }
-
-public class PerformanceReport
+public class ActivityPerformance
 {
     public double Accuracy { get; set; }
     public int AttemptsToMastery { get; set; }

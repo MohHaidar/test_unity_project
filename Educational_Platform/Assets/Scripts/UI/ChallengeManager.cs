@@ -48,8 +48,8 @@ public class ChallengeManager : MonoBehaviour
             return;
         }
 
-        GenerateModuleTracker();
-        ShowStartPanel();
+        GenerateModuleTracker(); // Update Step tracker
+        ShowStartPanel(); // Unlock first activity
     }
 
     void ShowRewardAvailability()
