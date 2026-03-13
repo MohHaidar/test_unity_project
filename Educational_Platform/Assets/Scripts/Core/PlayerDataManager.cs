@@ -142,7 +142,7 @@ public class PlayerDataManager
 
             // Find and update existing player, or append new
             bool found = false;
-            for (int i = 1; i < lines.Length; i++) // Skip header
+            for (int i = 1; i < lines.Count; i++) // Skip header
             {
                 string[] fields = lines[i].Split(',');
                 if (fields.Length >= 9 && int.Parse(fields[IDX_ID]) == player.Id)
