@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using System;
 
 /// <summary>
@@ -9,9 +10,9 @@ using System;
 /// </summary>
 public class QuestionDisplay : MonoBehaviour
 {
-    [SerializeField] private Text questionText;
+    [SerializeField] private TextMeshProUGUI questionText;
     [SerializeField] private Button[] optionButtons = new Button[4];
-    [SerializeField] private Text feedbackText;
+    [SerializeField] private TextMeshProUGUI feedbackText;
 
     private IQuestion _currentQuestion;
     private AnswerSubmitter _answerSubmitter;
@@ -79,7 +80,7 @@ public class QuestionDisplay : MonoBehaviour
             }
 
             // Set button text
-            Text buttonText = optionButtons[i].GetComponentInChildren<Text>();
+            TextMeshProUGUI buttonText = optionButtons[i].GetComponentInChildren<TextMeshProUGUI>();
             if (buttonText != null)
             {
                 buttonText.text = question.Options[i];
@@ -135,12 +136,12 @@ public class QuestionDisplay : MonoBehaviour
 
         if (isCorrect)
         {
-            feedbackText.text = $"<color=green>✓ Correct!</color>\n{explanation}";
+            feedbackText.text = $"<color=green>Correct!</color>\n{explanation}";
             feedbackText.color = Color.green;
         }
         else
         {
-            feedbackText.text = $"<color=red>✗ Incorrect</color>\n{explanation}";
+            feedbackText.text = $"<color=red>Incorrect</color>\n{explanation}";
             feedbackText.color = Color.red;
         }
 
@@ -188,7 +189,7 @@ public class QuestionDisplay : MonoBehaviour
             if (button != null)
             {
                 button.interactable = false;
-                Text buttonText = button.GetComponentInChildren<Text>();
+                TextMeshProUGUI buttonText = button.GetComponentInChildren<TextMeshProUGUI>();
                 if (buttonText != null) buttonText.text = "";
             }
         }

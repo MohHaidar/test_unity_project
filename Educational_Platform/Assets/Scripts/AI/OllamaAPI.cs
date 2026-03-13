@@ -10,8 +10,8 @@ using UnityEngine.Networking;
 public class OllamaAPI
 {
     private const string OLLAMA_BASE_URL = "http://localhost:11434";
-    private const string GENERATE_ENDPOINT = "/api/generate";
-    private const string DEFAULT_MODEL = "mistral";
+    private const string CHAT_ENDPOINT = "/api/chat";
+    private const string DEFAULT_MODEL = "gemma3:4b";
     private const int TIMEOUT_SECONDS = 30;
 
     private string _model;
@@ -27,19 +27,20 @@ public class OllamaAPI
     /// </summary>
     public string GenerateSync(string prompt, float temperature = 0.3f)
     {
-        string url = OLLAMA_BASE_URL + GENERATE_ENDPOINT;
+        string url = OLLAMA_BASE_URL + CHAT_ENDPOINT;
         
-        // Create request JSON
-        OllamaRequest request = new OllamaRequest
+        // Create request JSON for /api/chat endpoint
+        OllamaChatRequest request = new OllamaChatRequest
         {
             model = _model,
-            prompt = prompt,
+            messages = new[] { new OllamaChatMessage { role = "user", content = prompt } },
             stream = false,
-            temperature = temperature
+            options = new OllamaOptions { temperature = temperature }
         };
 
         string jsonBody = JsonUtility.ToJson(request);
         Debug.Log($"[OllamaAPI] Sending request to {url}");
+        Debug.Log($"[OllamaAPI] Model: {_model}");
         Debug.Log($"[OllamaAPI] Prompt length: {prompt.Length} chars");
 
         try
@@ -73,8 +74,8 @@ public class OllamaAPI
                 Debug.Log($"[OllamaAPI] Response received ({responseText.Length} chars)");
 
                 // Parse response to extract generated text
-                OllamaResponse response = JsonUtility.FromJson<OllamaResponse>(responseText);
-                return response?.response ?? null;
+                OllamaChatResponse response = JsonUtility.FromJson<OllamaChatResponse>(responseText);
+                return response?.message?.content ?? null;
             }
         }
         catch (Exception e)
@@ -111,21 +112,40 @@ public class OllamaAPI
     }
 
     [System.Serializable]
-    private class OllamaRequest
+    private class OllamaChatMessage
     {
-        public string model;
-        public string prompt;
-        public bool stream;
+        public string role;
+        public string content;
+    }
+
+    [System.Serializable]
+    private class OllamaOptions
+    {
         public float temperature;
     }
 
     [System.Serializable]
-    private class OllamaResponse
+    private class OllamaChatRequest
     {
-        public string response;
         public string model;
+        public OllamaChatMessage[] messages;
+        public bool stream;
+        public OllamaOptions options;
+    }
+
+    [System.Serializable]
+    private class OllamaChatMessage_Response
+    {
+        public string role;
+        public string content;
+    }
+
+    [System.Serializable]
+    private class OllamaChatResponse
+    {
+        public string model;
+        public OllamaChatMessage_Response message;
         public long created_at;
-        public long eval_count;
-        public long eval_duration;
+        public bool done;
     }
 }

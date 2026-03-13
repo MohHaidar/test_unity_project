@@ -15,7 +15,7 @@ public class Player
 
     // Step-based navigation
     public string CurrentSubject { get; set; } = "Math";
-    public string CurrentChallenge { get; set; } = "Addition";
+    public string CurrentChallenge { get; set; } = "addition";
     public int CurrentStep { get; set; } = 1;
 
     // Step-specific metrics

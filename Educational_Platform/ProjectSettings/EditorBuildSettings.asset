@@ -33,5 +33,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Subjects/Math/Arithmetics.unity
     guid: eed8aa3e3527bc94599586946ed12773
   m_configObjects:
+    com.unity.adaptiveperformance.loader_settings: {fileID: 11400000, guid: 29dceb8139103164fb565f810d63a9b6, type: 2}
+    com.unity.adaptiveperformance.simulator.provider_settings: {fileID: 11400000, guid: 618cc00dcd9595546be087b48da35f5c, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

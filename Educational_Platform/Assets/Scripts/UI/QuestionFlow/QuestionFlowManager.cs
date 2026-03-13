@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using System.Collections;
 
 /// <summary>
@@ -13,9 +14,9 @@ public class QuestionFlowManager : MonoBehaviour
     [SerializeField] private string playerName = "Player";
     [SerializeField] private Button nextQuestionButton;
     [SerializeField] private Button stepCompleteButton;
-    [SerializeField] private Text playerStatsText;
-    [SerializeField] private Text stepInfoText;
-    [SerializeField] private Text statusText;
+    [SerializeField] private TextMeshProUGUI playerStatsText;
+    [SerializeField] private TextMeshProUGUI stepInfoText;
+    [SerializeField] private TextMeshProUGUI statusText;
 
     private Player _player;
     private Challenge _currentChallenge;
@@ -46,8 +47,8 @@ public class QuestionFlowManager : MonoBehaviour
         }
 
         // Initialize AI
-        _questionGenerator = new OllamaQuestionGenerator("mistral");
-        _performanceEvaluator = new OllamaPerformanceEvaluator("mistral");
+        _questionGenerator = new OllamaQuestionGenerator("gemma3:4b");
+        _performanceEvaluator = new OllamaPerformanceEvaluator("gemma3:4b");
 
         // Check Ollama is available
         if (!new OllamaAPI().IsOllamaAvailable())
@@ -198,7 +199,7 @@ public class QuestionFlowManager : MonoBehaviour
                 _questionDisplay.ShowFeedback(evaluation.IsCorrect, feedbackMsg);
 
                 // Show status
-                ShowStatus($"{(evaluation.IsCorrect ? "✓ Correct!" : "✗ Incorrect")} | Streak: {_currentStep.StreakCurrent}/{_currentStep.StreakGoal}");
+                ShowStatus($"{(evaluation.IsCorrect ? "[Correct]" : "[Incorrect]")} | Streak: {_currentStep.StreakCurrent}/{_currentStep.StreakGoal}");
 
                 UpdatePlayerStats();
                 UpdateStepInfo();
@@ -208,6 +209,7 @@ public class QuestionFlowManager : MonoBehaviour
                 // Show next button
                 if (nextQuestionButton != null)
                 {
+                    nextQuestionButton.interactable = true;
                     nextQuestionButton.gameObject.SetActive(true);
                 }
 

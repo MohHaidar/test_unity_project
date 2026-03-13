@@ -92,6 +92,8 @@ public class PlayerDataManager
                 if (fields.Length >= 9 && int.Parse(fields[IDX_ID]) == playerId)
                 {
                     Player player = ParsePlayerFromCSV(fields);
+                    // Normalize challenge name to lowercase for consistency
+                    player.CurrentChallenge = player.CurrentChallenge.ToLower();
                     _playerCache[playerId] = player;
                     Debug.Log($"[PlayerDataManager] Loaded player: {player}");
                     return player;
@@ -104,7 +106,7 @@ public class PlayerDataManager
                 Id = playerId,
                 Name = playerName,
                 CurrentSubject = "Math",
-                CurrentChallenge = "Addition",
+                CurrentChallenge = "addition",
                 CurrentStep = 1,
                 MasteryByStep = new Dictionary<string, float>(),
                 StreakInCurrentStep = 0,
@@ -112,8 +114,10 @@ public class PlayerDataManager
                 QuestionHistory = new List<QuestionResult>()
             };
 
-            SavePlayer(newPlayer);
+            // Initialize mastery at 30% of target for current step
             _playerCache[playerId] = newPlayer;
+            SavePlayer(newPlayer);
+            
             Debug.Log($"[PlayerDataManager] Created new player: {newPlayer}");
             return newPlayer;
         }
