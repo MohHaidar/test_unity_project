@@ -25,7 +25,7 @@
 
 ## 🎨 What You're Creating
 
-### UI Elements (14 total)
+### GameScene UI Elements (14 total)
 ```
 Canvas (parent)
 ├── QuestionText ..................... TextMeshPro
@@ -34,8 +34,8 @@ Canvas (parent)
 ├── OptionButton3 .................... Button (bottom-left)
 ├── OptionButton4 .................... Button (bottom-right)
 ├── FeedbackText ..................... TextMeshPro
-├── PlayerStatsText .................. TextMeshPro
-├── StepInfoText ..................... TextMeshPro
+├── PlayerStatsText .................. TextMeshPro (shows Name, EXP, Coins, Completed Steps)
+├── StepInfoText ..................... TextMeshPro (shows Streak, Mastery, Phase)
 ├── StatusText ....................... TextMeshPro
 ├── NextQuestionButton ............... Button (start hidden)
 └── StepCompleteButton ............... Button (start hidden)
@@ -44,6 +44,25 @@ GameFlow (root)
 ├── QuestionFlowManager .............. Script
 ├── QuestionDisplay .................. Script
 └── AnswerSubmitter .................. Script
+```
+
+### ChallengeSelect Scene Elements (new)
+```
+Canvas (parent)
+├── BackgroundPanel .................. Image (dark navy)
+├── TitleText ........................ TextMeshPro
+├── SubjectLabel + SubjectDropdown ... TMP_Dropdown (auto-filled from ChallengeDataManager)
+├── ChallengeLabel + ChallengeDropdown TMP_Dropdown (auto-filled on subject change)
+├── StepsLabel ....................... TextMeshPro
+├── StepsScrollView .................. Scroll View
+│   └── Viewport/Content ............. stepsContainer (VerticalLayoutGroup)
+└── BackButton ....................... Button
+
+ChallengeSelectController (root)
+└── ChallengeSelectUI ................ Script
+
+Assets/Prefabs/
+└── StepButton_Prefab ................ Button + TMP child (580x70)
 ```
 
 ### 3 Scripts to Attach (to GameFlow)
@@ -152,23 +171,26 @@ Assets/
 │   ├── Core/
 │   │   ├── Step.cs
 │   │   ├── Challenge.cs
-│   │   ├── Player.cs
+│   │   ├── Player.cs .............. + EXP, Coins, CompletedSteps, AddExp, AddCoins, MarkStepCompleted
 │   │   ├── IQuestion.cs
 │   │   ├── MultipleChoiceQuestion.cs
 │   │   ├── ChallengeDataManager.cs
-│   │   └── PlayerDataManager.cs
+│   │   └── PlayerDataManager.cs ... + coins, total_exp, completed_steps_json columns
 │   ├── AI/
 │   │   ├── OllamaAPI.cs
-│   │   ├── OllamaQuestionGenerator.cs
+│   │   ├── OllamaQuestionGenerator.cs  (retries up to 4x before fallback)
 │   │   └── OllamaPerformanceEvaluator.cs
-│   └── UI/QuestionFlow/
-│       ├── QuestionDisplay.cs
-│       ├── QuestionFlowManager.cs
-│       └── AnswerSubmitter.cs
+│   └── UI/
+│       ├── QuestionFlow/
+│       │   ├── QuestionDisplay.cs .. (options shuffled each question)
+│       │   ├── QuestionFlowManager.cs (awards EXP/Coins, tracks CompletedSteps)
+│       │   └── AnswerSubmitter.cs
+│       └── ChallengeSelectUI.cs .... (NEW — subject/challenge/step selector)
 │
 ├── Documentation/
-│   ├── UI_LAYOUT_DIAGRAM.md ← Read first
-│   ├── UI_CREATION_GUIDE.md ← Follow this
+│   ├── UI_LAYOUT_DIAGRAM.md ← Read first (GameScene layout)
+│   ├── UI_CREATION_GUIDE.md ← GameScene step-by-step
+│   ├── CHALLENGE_SELECT_UI.md ← NEW: ChallengeSelect scene step-by-step
 │   ├── README.md
 │   ├── QUICK_START.md
 │   ├── CLEANUP_COMPLETE.md
@@ -176,8 +198,12 @@ Assets/
 │   ├── SCENE_SETUP_INSTRUCTIONS.md
 │   └── WHATS_READY.md
 │
+├── Prefabs/
+│   └── StepButton_Prefab (create during ChallengeSelect setup)
+│
 └── Scenes/
-    └── GameScene.unity (create this)
+    ├── ChallengeSelect.unity (create this first — entry point)
+    └── GameScene.unity (create this — game loop)
 ```
 
 ---

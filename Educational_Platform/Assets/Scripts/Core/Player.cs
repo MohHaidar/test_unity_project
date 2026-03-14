@@ -24,6 +24,47 @@ public class Player
     public int StreakInCurrentStep { get; set; } = 0;
     public int QuestionsInCurrentStep { get; set; } = 0;
 
+    // Progress and rewards
+    // Persistent currency and experience
+    public int Coins { get; set; } = 0;
+    public int TotalExp { get; set; } = 0;
+
+    // Completed steps tracking (keys use the same format as MasteryByStep)
+    public List<string> CompletedSteps { get; set; } = new List<string>();
+
+    /// <summary>
+    /// Adds experience to the player.
+    /// </summary>
+    public void AddExp(int amount)
+    {
+        if (amount <= 0) return;
+        TotalExp += amount;
+        LastUpdated = DateTime.Now;
+    }
+
+    /// <summary>
+    /// Adds coins (currency) to the player.
+    /// </summary>
+    public void AddCoins(int amount)
+    {
+        if (amount <= 0) return;
+        Coins += amount;
+        LastUpdated = DateTime.Now;
+    }
+
+    /// <summary>
+    /// Marks a step as completed for this player.
+    /// </summary>
+    public void MarkStepCompleted(string subject, string challenge, int stepNumber)
+    {
+        string key = $"{subject}:{challenge}:{stepNumber}";
+        if (!CompletedSteps.Contains(key))
+        {
+            CompletedSteps.Add(key);
+            LastUpdated = DateTime.Now;
+        }
+    }
+
     // Overall history
     public List<QuestionResult> QuestionHistory { get; set; } = new List<QuestionResult>();
     public DateTime LastUpdated { get; set; } = DateTime.Now;

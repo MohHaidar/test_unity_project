@@ -27,32 +27,52 @@ public class OllamaQuestionGenerator
         }
 
         string prompt = BuildPrompt(player, step);
-        string response = _ollamaAPI.GenerateSync(prompt, temperature: 0.3f);
 
-        if (string.IsNullOrEmpty(response))
+        // Retry loop: attempt multiple times before falling back
+        int maxAttempts = 4;
+        float[] temps = new float[] { 0.3f, 0.5f, 0.7f, 0.9f };
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
-            Debug.LogError("[QuestionGenerator] Ollama returned empty response");
-            return GetFallbackQuestion();
+            float temp = temps[Mathf.Clamp(attempt, 0, temps.Length - 1)];
+            string response = _ollamaAPI.GenerateSync(prompt, temperature: temp);
+
+            if (string.IsNullOrEmpty(response))
+            {
+                Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: Ollama returned empty response (temp={temp})");
+                continue; // try again with higher temperature
+            }
+
+            IQuestion question = ParseJSONResponse(response);
+            if (question == null)
+            {
+                Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: Failed to parse response (temp={temp})");
+                continue; // try again
+            }
+
+            // If the generated question was asked recently, skip and retry
+            if (IsQuestionRecentlyAsked(player, question))
+            {
+                Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: Question was asked recently, retrying (temp={temp})");
+                continue;
+            }
+
+            // Strict validation: if it fails, retry
+            if (question is MultipleChoiceQuestion mcq)
+            {
+                if (!ValidateQuestion(mcq))
+                {
+                    Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: Question failed validation, retrying (temp={temp})");
+                    continue;
+                }
+            }
+
+            Debug.Log($"[QuestionGenerator] Generated on attempt {attempt + 1}: {question}");
+            return question;
         }
 
-        IQuestion question = ParseJSONResponse(response);
-        if (question == null)
-        {
-            Debug.LogError("[QuestionGenerator] Failed to parse Ollama response");
-            return GetFallbackQuestion();
-        }
-
-        // Check if this question was asked recently
-        if (IsQuestionRecentlyAsked(player, question))
-        {
-            Debug.LogWarning("[QuestionGenerator] Question was asked recently, regenerating...");
-            // Retry with slightly higher temperature for diversity
-            response = _ollamaAPI.GenerateSync(prompt, temperature: 0.5f);
-            question = ParseJSONResponse(response) ?? question;
-        }
-
-        Debug.Log($"[QuestionGenerator] Generated: {question}");
-        return question;
+        Debug.LogWarning("[QuestionGenerator] All attempts failed, returning fallback question");
+        return GetFallbackQuestion();
     }
 
     /// <summary>

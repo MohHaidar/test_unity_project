@@ -11,7 +11,8 @@ using UnityEngine;
 public class PlayerDataManager
 {
     private static readonly string PLAYER_DATA_FILE = "player_data.csv";
-    private static readonly string CSV_HEADER = "player_id,name,subject,challenge,step,mastery_by_step_json,streak,questions_count,last_updated";
+    // Added fields: coins, total_exp, completed_steps_json
+    private static readonly string CSV_HEADER = "player_id,name,subject,challenge,step,mastery_by_step_json,streak,questions_count,last_updated,coins,total_exp,completed_steps_json";
 
     // CSV indices
     private const int IDX_ID = 0;
@@ -23,6 +24,9 @@ public class PlayerDataManager
     private const int IDX_STREAK = 6;
     private const int IDX_QUESTIONS = 7;
     private const int IDX_UPDATED = 8;
+    private const int IDX_COINS = 9;
+    private const int IDX_TOTAL_EXP = 10;
+    private const int IDX_COMPLETED_JSON = 11;
 
     private static PlayerDataManager _instance;
     private Dictionary<int, Player> _playerCache = new Dictionary<int, Player>();
@@ -114,7 +118,13 @@ public class PlayerDataManager
                 QuestionHistory = new List<QuestionResult>()
             };
 
-            // Initialize mastery at 30% of target for current step
+            // Initialize mastery as the average of the step target and 30%
+            // Use Step default target if specific step data is not yet loaded
+            Step defaultStep = new Step();
+            float initialMastery = Mathf.Clamp01((defaultStep.MasteryTarget + 0.30f) / 2.0f);
+            string stepKey = $"{newPlayer.CurrentSubject}:{newPlayer.CurrentChallenge}:{newPlayer.CurrentStep}";
+            newPlayer.MasteryByStep[stepKey] = initialMastery;
+
             _playerCache[playerId] = newPlayer;
             SavePlayer(newPlayer);
             
@@ -181,7 +191,10 @@ public class PlayerDataManager
         // Serialize mastery dictionary to JSON
         string masteryJson = JsonUtility.ToJson(new MasteryDictWrapper { pairs = SerializeDictionary(player.MasteryByStep) });
 
-        return $"{player.Id},{player.Name},{player.CurrentSubject},{player.CurrentChallenge},{player.CurrentStep},{masteryJson},{player.StreakInCurrentStep},{player.QuestionsInCurrentStep},{player.LastUpdated:O}";
+        // Serialize completed steps list
+        string completedJson = JsonUtility.ToJson(new CompletedListWrapper { items = player.CompletedSteps });
+
+        return $"{player.Id},{player.Name},{player.CurrentSubject},{player.CurrentChallenge},{player.CurrentStep},{masteryJson},{player.StreakInCurrentStep},{player.QuestionsInCurrentStep},{player.LastUpdated:O},{player.Coins},{player.TotalExp},{completedJson}";
     }
 
     /// <summary>
@@ -193,10 +206,11 @@ public class PlayerDataManager
         Dictionary<string, float> masteryByStep = new Dictionary<string, float>();
         try
         {
-            if (!string.IsNullOrEmpty(fields[IDX_MASTERY_JSON]))
+            if (fields.Length > IDX_MASTERY_JSON && !string.IsNullOrEmpty(fields[IDX_MASTERY_JSON]))
             {
                 var wrapper = JsonUtility.FromJson<MasteryDictWrapper>(fields[IDX_MASTERY_JSON]);
-                masteryByStep = DeserializeDictionary(wrapper.pairs);
+                if (wrapper != null && wrapper.pairs != null)
+                    masteryByStep = DeserializeDictionary(wrapper.pairs);
             }
         }
         catch
@@ -204,18 +218,50 @@ public class PlayerDataManager
             Debug.LogWarning("[PlayerDataManager] Failed to parse mastery JSON, using empty dict");
         }
 
+        // Deserialize completed steps if present
+        List<string> completedSteps = new List<string>();
+        try
+        {
+            if (fields.Length > IDX_COMPLETED_JSON && !string.IsNullOrEmpty(fields[IDX_COMPLETED_JSON]))
+            {
+                var cwrap = JsonUtility.FromJson<CompletedListWrapper>(fields[IDX_COMPLETED_JSON]);
+                if (cwrap != null && cwrap.items != null)
+                    completedSteps = cwrap.items;
+            }
+        }
+        catch
+        {
+            Debug.LogWarning("[PlayerDataManager] Failed to parse completed steps JSON, using empty list");
+        }
+
+        // Parse numeric fields with fallbacks
+        int streak = 0;
+        int questions = 0;
+        DateTime lastUpdated = DateTime.Now;
+        int coins = 0;
+        int totalExp = 0;
+
+        if (fields.Length > IDX_STREAK) int.TryParse(fields[IDX_STREAK], out streak);
+        if (fields.Length > IDX_QUESTIONS) int.TryParse(fields[IDX_QUESTIONS], out questions);
+        if (fields.Length > IDX_UPDATED) DateTime.TryParse(fields[IDX_UPDATED], out lastUpdated);
+        if (fields.Length > IDX_COINS) int.TryParse(fields[IDX_COINS], out coins);
+        if (fields.Length > IDX_TOTAL_EXP) int.TryParse(fields[IDX_TOTAL_EXP], out totalExp);
+
         return new Player
         {
-            Id = int.Parse(fields[IDX_ID]),
-            Name = fields[IDX_NAME],
-            CurrentSubject = fields[IDX_SUBJECT],
-            CurrentChallenge = fields[IDX_CHALLENGE],
-            CurrentStep = int.Parse(fields[IDX_STEP]),
+            Id = fields.Length > IDX_ID ? int.Parse(fields[IDX_ID]) : 0,
+            Name = fields.Length > IDX_NAME ? fields[IDX_NAME] : "Player",
+            CurrentSubject = fields.Length > IDX_SUBJECT ? fields[IDX_SUBJECT] : "Math",
+            CurrentChallenge = fields.Length > IDX_CHALLENGE ? fields[IDX_CHALLENGE] : "addition",
+            CurrentStep = fields.Length > IDX_STEP && int.TryParse(fields[IDX_STEP], out int s) ? s : 1,
             MasteryByStep = masteryByStep,
-            StreakInCurrentStep = int.Parse(fields[IDX_STREAK]),
-            QuestionsInCurrentStep = int.Parse(fields[IDX_QUESTIONS]),
-            LastUpdated = DateTime.Parse(fields[IDX_UPDATED]),
-            QuestionHistory = new List<QuestionResult>()
+            StreakInCurrentStep = streak,
+            QuestionsInCurrentStep = questions,
+            LastUpdated = lastUpdated,
+            QuestionHistory = new List<QuestionResult>(),
+            Coins = coins,
+            TotalExp = totalExp,
+            CompletedSteps = completedSteps
         };
     }
 
@@ -297,5 +343,11 @@ public class PlayerDataManager
     {
         public string key;
         public float value;
+    }
+
+    [System.Serializable]
+    private class CompletedListWrapper
+    {
+        public List<string> items;
     }
 }

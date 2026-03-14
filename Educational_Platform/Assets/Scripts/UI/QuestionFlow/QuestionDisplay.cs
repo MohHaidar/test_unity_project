@@ -71,6 +71,21 @@ public class QuestionDisplay : MonoBehaviour
             return;
         }
 
+        // Shuffle options so the correct answer isn't always the first option
+        var shuffledOptions = new System.Collections.Generic.List<string>(question.Options);
+        System.Random rng = new System.Random();
+        int n = shuffledOptions.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            var tmp = shuffledOptions[k];
+            shuffledOptions[k] = shuffledOptions[n];
+            shuffledOptions[n] = tmp;
+        }
+        // Replace original options with shuffled order
+        question.Options = shuffledOptions;
+
         for (int i = 0; i < 4; i++)
         {
             if (optionButtons[i] == null)

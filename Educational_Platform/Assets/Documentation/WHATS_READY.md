@@ -69,44 +69,38 @@ Your Educational Platform has been completely refactored with an AI-driven archi
    - Returns EvaluationResult with IsCorrect, MasteryDelta, ErrorType, ErrorExplanation
 ```
 
-### UI Scripts (2 files - 18KB)
+### UI Scripts (3 files)
 ```
-✅ QuestionDisplay.cs (Updated - 170 lines)
+✅ QuestionDisplay.cs (Updated)
    - DisplayQuestion(IQuestion) - polymorphic dispatch
-   - Type checking: if (question is MultipleChoiceQuestion) { ... }
-   - DisplayMultipleChoice() - renders MC UI with 4 buttons
-   - ShowFeedback() - shows correct/incorrect feedback
-   - ClearDisplay() - resets display for next question
+   - Options are Fisher-Yates shuffled on every question (correct answer randomized)
+   - ShowFeedback(), ClearDisplay()
 
-✅ QuestionFlowManager.cs (Rewritten - 350 lines)
-   - Completely new step-based game loop
-   - Outer loop: iterate through steps in challenge
-   - Inner loop: generate/answer questions until step.IsFullyComplete
-   - Uses Step.IsFullyComplete (accounts for ultimate challenge)
-   - Auto-advances to next step when complete
-   - Updates UI: streak, mastery, phase
-   - Saves player to CSV after each answer
-   - Shows "Step Complete" → "Next Step" progression
-   - Full error handling and retries
-   - Nested coroutine structure for clean flow
+✅ QuestionFlowManager.cs (Updated)
+   - Step-based game loop with outer (steps) + inner (questions) coroutine
+   - Awards EXP per answer: +5 correct, +1 incorrect, +2 time bonus
+   - Awards Coins + EXP on step completion: +50 each
+   - Marks step completed in player.CompletedSteps on first completion
+   - Player stats panel shows: Name, Subject, Challenge, EXP, Coins, Completed Steps count
+   - Saves player after every answer and step completion
+
+✅ ChallengeSelectUI.cs (NEW)
+   - Subject dropdown → Challenge dropdown → Step buttons in scroll view
+   - Step buttons color-coded: green=done, yellow=unlocked, red=locked
+   - Lock rule: step 1 always unlocked; step N unlocked if step N-1 in CompletedSteps
+   - On step click: SelectStep → SavePlayer → loads GameScene
+   - Falls back to SceneManager.LoadScene if custom SceneLoader not in scene
 ```
 
-### Documentation (4 files - 36KB)
+### Documentation (6 files)
 ```
-✅ README.md (9.5KB)
-   - Complete documentation index
-   - Navigation guide (pick your starting point)
-   - System overview
-   - Customization examples
-   - Troubleshooting guide
-   - Learning path
-
-✅ QUICK_START.md (7.8KB)
-   - 5-minute quickstart
-   - Verify Ollama running
-   - Minimal scene setup for testing
-   - Expected behavior
-   - Customization examples
+✅ README.md - Complete documentation index, updated with EXP/Coins/Selectors
+✅ QUICK_START.md - 5-minute quickstart
+✅ SCENE_SETUP_INSTRUCTIONS.md - GameScene setup
+✅ UI_CREATION_GUIDE.md - GameScene UI step-by-step (updated with new features)
+✅ CHALLENGE_SELECT_UI.md (NEW) - Full step-by-step setup for ChallengeSelect scene
+✅ WHATS_READY.md - This file
+```
 
 ✅ SCENE_SETUP_INSTRUCTIONS.md (9KB)
    - Complete step-by-step guide
@@ -118,13 +112,7 @@ Your Educational Platform has been completely refactored with an AI-driven archi
    - Visual design recommendations
    - Troubleshooting
 
-✅ REFACTORING_COMPLETE.md (9.7KB)
-   - Technical summary
-   - What was built in each phase
-   - Architecture highlights
-   - Files modified summary
-   - Key decisions made
-   - Statistics
+✅ REFACTORING_COMPLETE.md - Technical summary
 ```
 
 ---
@@ -133,15 +121,14 @@ Your Educational Platform has been completely refactored with an AI-driven archi
 
 ### ✅ Step-Based Progression
 - 5-streak goal per step (configurable)
-- Optional ultimate challenge (design room ready, no implementation yet)
+- Optional ultimate challenge (design room ready)
 - Step status: NotStarted, InProgress, Completed
-- Step phase: StreakBuilding, UltimateChallenge, Complete
 - Auto-advance to next step on completion
 
 ### ✅ Per-Step Mastery Tracking
 - Dictionary: `{subject}:{challenge}:{step}` → float (0.0-1.0)
-- Updated +0.03 to +0.05 per correct answer
-- Updated -0.03 per wrong answer
+- New players initialized at avg(MasteryTarget, 30%) instead of 0
+- Updated +0.03 to +0.05 per correct answer, -0.03 per wrong answer
 - Saved to CSV per question
 
 ### ✅ Adaptive AI Questions
@@ -156,10 +143,23 @@ Your Educational Platform has been completely refactored with an AI-driven archi
 - Polymorphic: checks question type, extracts correct answer appropriately
 
 ### ✅ Data Persistence
-- CSV format with JSON serialization of MasteryByStep
+- CSV format with JSON serialization of MasteryByStep, CompletedSteps
+- **New fields:** `coins`, `total_exp`, `completed_steps_json`
 - Load/save via PlayerDataManager singleton
 - Resumes where player left off
 - Multi-player support
+
+### ✅ EXP & Coins Rewards
+- **Per answer:** +5 EXP correct, +1 EXP incorrect, +2 EXP time bonus (answered within estimated time)
+- **Per step completed:** +50 EXP + 50 Coins
+- Saved to CSV after every answer
+- Displayed in the player stats panel during gameplay
+
+### ✅ Completed Steps Tracking
+- Each finished step recorded as key `"{subject}:{challenge}:{stepNumber}"`
+- Persisted in CSV as JSON array
+- Used by ChallengeSelectUI to color-code steps (green/yellow/red)
+- Included in AI prompt context for better-personalized questions on replay
 
 ### ✅ Scalable Architecture
 - IQuestion interface for unlimited question types

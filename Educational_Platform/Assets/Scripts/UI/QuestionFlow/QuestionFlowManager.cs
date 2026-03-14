@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections;
 
@@ -14,9 +15,13 @@ public class QuestionFlowManager : MonoBehaviour
     [SerializeField] private string playerName = "Player";
     [SerializeField] private Button nextQuestionButton;
     [SerializeField] private Button stepCompleteButton;
+    [SerializeField] private Button backButton;
     [SerializeField] private TextMeshProUGUI playerStatsText;
     [SerializeField] private TextMeshProUGUI stepInfoText;
     [SerializeField] private TextMeshProUGUI statusText;
+    [SerializeField] private TextMeshProUGUI expPopText;      // small floating "+7 EXP" label
+    [SerializeField] private GameObject stepCompletePanel;    // overlay shown on step completion
+    [SerializeField] private TextMeshProUGUI stepCompleteText; // text inside the overlay
 
     private Player _player;
     private Challenge _currentChallenge;
@@ -85,6 +90,13 @@ public class QuestionFlowManager : MonoBehaviour
         if (stepCompleteButton != null)
             stepCompleteButton.onClick.AddListener(OnStepCompleteButtonClicked);
 
+        if (backButton != null)
+            backButton.onClick.AddListener(OnBackButtonClicked);
+
+        // Hide overlays/pops initially
+        if (expPopText != null) expPopText.gameObject.SetActive(false);
+        if (stepCompletePanel != null) stepCompletePanel.SetActive(false);
+
         // Subscribe to answer submission
         _answerSubmitter.OnAnswerSubmitted += OnAnswerSubmitted;
 
@@ -110,7 +122,25 @@ public class QuestionFlowManager : MonoBehaviour
                 break;
             }
 
+            // Ensure step is marked in progress
             _currentStep.Status = StepStatus.InProgress;
+
+            // Initialize mastery for this step if not yet present or currently zero
+            string stepKey = $"{_player.CurrentSubject}:{_player.CurrentChallenge}:{_currentStep.Number}";
+            float existingMastery = _player.MasteryByStep.ContainsKey(stepKey) ? _player.MasteryByStep[stepKey] : -1f;
+            if (existingMastery <= 0f)
+            {
+                float initialMastery = Mathf.Clamp01((_currentStep.MasteryTarget + 0.30f) / 2.0f);
+                _player.UpdateStepMastery(initialMastery);
+                _currentStep.MasteryCurrent = initialMastery;
+                PlayerDataManager.Instance.SavePlayer(_player);
+                Debug.Log($"[QuestionFlowManager] Initialized mastery for {stepKey} to {initialMastery:F2}");
+            }
+            else
+            {
+                _currentStep.MasteryCurrent = existingMastery;
+            }
+
             UpdateStepInfo();
 
             // Question loop: keep asking until step is fully complete (5-streak + optional ultimate challenge)
@@ -191,6 +221,22 @@ public class QuestionFlowManager : MonoBehaviour
                 _player.UpdateStepMastery(newMastery);
                 _currentStep.MasteryCurrent = newMastery;
 
+                // Award experience for this answer
+                int expGain = evaluation.IsCorrect ? 5 : 1;
+                int timeBonus = 0;
+                int estimated = 30;
+                if (_currentQuestion is MultipleChoiceQuestion mcq)
+                    estimated = mcq.EstimatedTimeSeconds;
+
+                if (evaluation.IsCorrect && timeTaken <= estimated)
+                    timeBonus = 2;
+
+                _player.AddExp(expGain + timeBonus);
+                Debug.Log($"[QuestionFlowManager] Awarded EXP: {expGain + timeBonus} (base {expGain} + time {timeBonus}) | TotalExp: {_player.TotalExp}");
+
+                // Show EXP pop indicator
+                StartCoroutine(ShowExpPop(expGain + timeBonus));
+
                 // Save to CSV
                 PlayerDataManager.Instance.SavePlayer(_player);
 
@@ -223,26 +269,41 @@ public class QuestionFlowManager : MonoBehaviour
 
             // Step is now complete!
             _currentStep.Status = StepStatus.Completed;
-            ShowStatus($"✓ Step {_currentStep.Number} Complete! ({_currentStep.Description})");
+
+            // Award completion rewards and mark step completed
+            int completionCoins = 0;
+            int completionExp = 0;
+            string completedKey = $"{_player.CurrentSubject}:{_player.CurrentChallenge}:{_currentStep.Number}";
+            bool isFirstCompletion = !_player.CompletedSteps.Contains(completedKey);
+            if (isFirstCompletion)
+            {
+                completionCoins = 50;
+                completionExp = 50;
+                _player.AddCoins(completionCoins);
+                _player.AddExp(completionExp);
+                _player.MarkStepCompleted(_player.CurrentSubject, _player.CurrentChallenge, _currentStep.Number);
+                Debug.Log($"[QuestionFlowManager] Awarded completion rewards: {completionExp} EXP, {completionCoins} Coins for {completedKey}");
+            }
+            PlayerDataManager.Instance.SavePlayer(_player);
+
+            // Show congratulations overlay
+            ShowStepCompleteOverlay(completionExp, completionCoins, isFirstCompletion);
 
             if (stepCompleteButton != null)
-            {
                 stepCompleteButton.gameObject.SetActive(true);
-            }
 
-            // Wait for user to advance to next step
+            // Wait for user to advance
             yield return new WaitUntil(() => stepCompleteButton == null || !stepCompleteButton.gameObject.activeSelf);
 
-            // Move to next step
+            // Hide overlay and move to next step
+            if (stepCompletePanel != null) stepCompletePanel.SetActive(false);
             _player.AdvanceToNextStep();
             PlayerDataManager.Instance.SavePlayer(_player);
             _answerSubmitter.ResetForNextQuestion();
             _questionDisplay.ClearDisplay();
 
             if (stepCompleteButton != null)
-            {
                 stepCompleteButton.gameObject.SetActive(false);
-            }
         }
     }
 
@@ -270,23 +331,60 @@ public class QuestionFlowManager : MonoBehaviour
     /// </summary>
     private void OnNextQuestionButtonClicked()
     {
-        Debug.Log("[QuestionFlowManager] Next question button clicked");
         if (nextQuestionButton != null)
-        {
             nextQuestionButton.gameObject.SetActive(false);
-        }
     }
 
     /// <summary>
-    /// Called when "Step Complete / Next Step" button is clicked.
+    /// Called when "Continue" button on step complete overlay is clicked.
     /// </summary>
     private void OnStepCompleteButtonClicked()
     {
-        Debug.Log("[QuestionFlowManager] Step complete button clicked");
         if (stepCompleteButton != null)
-        {
             stepCompleteButton.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Abandons the current step and returns to the challenge selector.
+    /// Progress in current streak is lost but mastery is saved.
+    /// </summary>
+    private void OnBackButtonClicked()
+    {
+        PlayerDataManager.Instance.SavePlayer(_player);
+        SceneManager.LoadScene("ChallengeSelect");
+    }
+
+    /// <summary>
+    /// Briefly shows "+N EXP" near the feedback area then hides it.
+    /// </summary>
+    private IEnumerator ShowExpPop(int amount)
+    {
+        if (expPopText == null) yield break;
+        expPopText.text = $"<color=yellow>+{amount} EXP</color>";
+        expPopText.gameObject.SetActive(true);
+        yield return new WaitForSeconds(1.8f);
+        expPopText.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// Shows the congratulations overlay with earned rewards.
+    /// </summary>
+    private void ShowStepCompleteOverlay(int expEarned, int coinsEarned, bool firstCompletion)
+    {
+        if (stepCompletePanel != null) stepCompletePanel.SetActive(true);
+        if (stepCompleteText != null)
+        {
+            string title = firstCompletion ? "🎉 Step Complete!" : "✓ Step Replayed!";
+            string rewards = firstCompletion
+                ? $"+{expEarned} EXP   +{coinsEarned} Coins"
+                : "No rewards (already completed)";
+            stepCompleteText.text =
+                $"<b>{title}</b>\n" +
+                $"Step {_currentStep.Number}: {_currentStep.Description}\n\n" +
+                $"<color=yellow>{rewards}</color>\n\n" +
+                $"Total EXP: {_player.TotalExp}   Coins: {_player.Coins}";
         }
+        ShowStatus("");
     }
 
     /// <summary>
@@ -296,9 +394,14 @@ public class QuestionFlowManager : MonoBehaviour
     {
         if (playerStatsText == null || _player == null) return;
 
+        int completedCount = _player.CompletedSteps != null ? _player.CompletedSteps.Count : 0;
+
         playerStatsText.text = $@"<b>{_player.Name}</b>
 Subject: {_player.CurrentSubject}
-Challenge: {_player.CurrentChallenge}";
+Challenge: {_player.CurrentChallenge}
+EXP: {_player.TotalExp}
+Coins: {_player.Coins}
+Completed steps: {completedCount}";
     }
 
     /// <summary>
@@ -329,8 +432,8 @@ Questions: {_currentStep.QuestionsCompleted}";
     private void OnDestroy()
     {
         if (_answerSubmitter != null)
-        {
             _answerSubmitter.OnAnswerSubmitted -= OnAnswerSubmitted;
-        }
+        if (backButton != null)
+            backButton.onClick.RemoveListener(OnBackButtonClicked);
     }
 }

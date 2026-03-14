@@ -85,10 +85,16 @@ Start with one of these based on your goal:
 - OllamaPerformanceEvaluator.cs (polymorphic answer evaluation)
 
 ### ✅ Phase 4: UI Layer
-- QuestionDisplay.cs (polymorphic question rendering)
+- QuestionDisplay.cs (polymorphic question rendering, **options shuffled randomly**)
 - QuestionFlowManager.cs (step-based game loop)
+- **ChallengeSelectUI.cs** (NEW — subject/challenge/step selector with locked/unlocked/completed colors)
 
-### ✅ Phase 5: Documentation
+### ✅ Phase 5: Rewards & Progression
+- **EXP system** — players earn EXP per answer (+5 correct, +1 incorrect, +2 time bonus) and +50 EXP per completed step
+- **Coins** — earned on step completion (+50 per step), persists across sessions
+- **CompletedSteps** — tracks finished steps per player; used to unlock next steps and color-code selector
+
+### ✅ Phase 6: Documentation
 - Complete scene setup guide
 - Technical documentation
 - Quick start guide
@@ -126,6 +132,9 @@ Player
   ├── CurrentChallenge: "Addition"
   ├── CurrentStep: 1
   └── MasteryByStep: { "Math:Addition:1": 0.75, ... }
+  └── CompletedSteps: [ "Math:addition:1", "Math:addition:2", ... ]
+  └── TotalExp: 120
+  └── Coins: 100
 
 Challenge ("Addition")
   ├── Step 1: "Single digit 0+1 to 5+5"
@@ -175,23 +184,25 @@ Float value (0.0 to 1.0) representing student competency in a specific step. Upd
 ```
 Assets/Scripts/
 ├── Core/
-│   ├── Player.cs ............... Player state and navigation
+│   ├── Player.cs ............... Player state, navigation, EXP, Coins, CompletedSteps
 │   ├── Challenge.cs ............ Challenge (chapter) structure
 │   ├── Step.cs ................. Step progression logic
 │   ├── IQuestion.cs ............ Question type interface
 │   ├── MultipleChoiceQuestion.cs  Multiple choice implementation
 │   ├── ChallengeDataManager.cs .. Challenge definitions (hardcoded)
-│   └── PlayerDataManager.cs ..... CSV persistence
+│   └── PlayerDataManager.cs ..... CSV persistence (EXP, Coins, CompletedSteps included)
 │
 ├── AI/
 │   ├── OllamaAPI.cs ............ HTTP communication with Ollama
-│   ├── OllamaQuestionGenerator.cs  Generates adaptive questions
+│   ├── OllamaQuestionGenerator.cs  Generates adaptive questions (retries up to 4x)
 │   └── OllamaPerformanceEvaluator.cs  Evaluates answers
 │
-└── UI/QuestionFlow/
-    ├── QuestionDisplay.cs ...... Displays questions
-    ├── QuestionFlowManager.cs .. Main game loop
-    └── AnswerSubmitter.cs ...... Gets player answers
+└── UI/
+    ├── QuestionFlow/
+    │   ├── QuestionDisplay.cs ...... Displays questions (options shuffled each time)
+    │   ├── QuestionFlowManager.cs .. Main game loop (awards EXP/Coins per answer/step)
+    │   └── AnswerSubmitter.cs ...... Gets player answers
+    └── ChallengeSelectUI.cs ........ Subject/Challenge/Step selector
 ```
 
 ---
