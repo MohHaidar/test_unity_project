@@ -52,8 +52,8 @@ public class QuestionFlowManager : MonoBehaviour
         }
 
         // Initialize AI
-        _questionGenerator = new OllamaQuestionGenerator("gemma3:4b");
-        _performanceEvaluator = new OllamaPerformanceEvaluator("gemma3:4b");
+        _questionGenerator = new OllamaQuestionGenerator("gpt-oss:20b-cloud");
+        _performanceEvaluator = new OllamaPerformanceEvaluator("gpt-oss:20b-cloud");
 
         // Check Ollama is available
         if (!new OllamaAPI().IsOllamaAvailable())

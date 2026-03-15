@@ -11,7 +11,7 @@ public class OllamaAPI
 {
     private const string OLLAMA_BASE_URL = "http://localhost:11434";
     private const string CHAT_ENDPOINT = "/api/chat";
-    private const string DEFAULT_MODEL = "gemma3:4b";
+    private const string DEFAULT_MODEL = "gpt-oss:20b-cloud";
     private const int TIMEOUT_SECONDS = 30;
 
     private string _model;
