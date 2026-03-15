@@ -29,6 +29,15 @@ public class QuestionFlowManager : MonoBehaviour
     private IQuestion _currentQuestion;
     private float _questionStartTime;
 
+    // Session tracking
+    private string _sessionId;
+    private int _sessionQuestions;
+    private int _sessionCorrect;
+    private int _sessionMaxStreak;
+    private int _sessionExpEarned;
+    private int _sessionCoinsEarned;
+    private float _sessionMasteryStart;
+
     private OllamaQuestionGenerator _questionGenerator;
     private OllamaPerformanceEvaluator _performanceEvaluator;
     private QuestionDisplay _questionDisplay;
@@ -97,6 +106,10 @@ public class QuestionFlowManager : MonoBehaviour
         if (expPopText != null) expPopText.gameObject.SetActive(false);
         if (stepCompletePanel != null) stepCompletePanel.SetActive(false);
 
+        // Ensure current step UUID is set on player before starting
+        if (_player.CurrentStepId == null)
+            _player.CurrentStepId = ChallengeDataManager.STEP_ADDITION_1_ID;
+
         // Subscribe to answer submission
         _answerSubmitter.OnAnswerSubmitted += OnAnswerSubmitted;
 
@@ -125,20 +138,31 @@ public class QuestionFlowManager : MonoBehaviour
             // Ensure step is marked in progress
             _currentStep.Status = StepStatus.InProgress;
 
-            // Initialize mastery for this step if not yet present or currently zero
-            string stepKey = $"{_player.CurrentSubject}:{_player.CurrentChallenge}:{_currentStep.Number}";
-            float existingMastery = _player.MasteryByStep.ContainsKey(stepKey) ? _player.MasteryByStep[stepKey] : -1f;
+            // Sync player's CurrentStepId with the step we're actually working on
+            _player.CurrentStepId = _currentStep.Id;
+
+            // Initialize mastery for this step if not yet present
+            float existingMastery = _player.GetStepMastery(_currentStep.Id);
             if (existingMastery <= 0f)
             {
                 float initialMastery = Mathf.Clamp01((_currentStep.MasteryTarget + 0.30f) / 2.0f);
                 _player.UpdateStepMastery(initialMastery);
                 _currentStep.MasteryCurrent = initialMastery;
                 PlayerDataManager.Instance.SavePlayer(_player);
-                Debug.Log($"[QuestionFlowManager] Initialized mastery for {stepKey} to {initialMastery:F2}");
             }
             else
             {
                 _currentStep.MasteryCurrent = existingMastery;
+            }
+
+            // Open a session for this step
+            _sessionMasteryStart = _currentStep.MasteryCurrent;
+            _sessionQuestions = _sessionCorrect = _sessionMaxStreak = _sessionExpEarned = _sessionCoinsEarned = 0;
+            _sessionId = null;
+            if (!string.IsNullOrEmpty(_player.Id))
+            {
+                StartCoroutine(StartSessionCoroutine());
+                StartCoroutine(HeartbeatCoroutine());
             }
 
             UpdateStepInfo();
@@ -221,7 +245,7 @@ public class QuestionFlowManager : MonoBehaviour
                 _player.UpdateStepMastery(newMastery);
                 _currentStep.MasteryCurrent = newMastery;
 
-                // Award experience for this answer
+                // Award experience
                 int expGain = evaluation.IsCorrect ? 5 : 1;
                 int timeBonus = 0;
                 int estimated = 30;
@@ -232,7 +256,17 @@ public class QuestionFlowManager : MonoBehaviour
                     timeBonus = 2;
 
                 _player.AddExp(expGain + timeBonus);
-                Debug.Log($"[QuestionFlowManager] Awarded EXP: {expGain + timeBonus} (base {expGain} + time {timeBonus}) | TotalExp: {_player.TotalExp}");
+                _sessionExpEarned  += expGain + timeBonus;
+                _sessionQuestions++;
+                if (evaluation.IsCorrect) _sessionCorrect++;
+                if (_currentStep.StreakCurrent > _sessionMaxStreak) _sessionMaxStreak = _currentStep.StreakCurrent;
+                Debug.Log($"[QuestionFlowManager] Awarded EXP: {expGain + timeBonus} | TotalExp: {_player.TotalExp}");
+
+                // Persist step progress after every answer (resilience guard)
+                if (!string.IsNullOrEmpty(_player.Id) && !string.IsNullOrEmpty(_currentStep.Id))
+                    _ = PlayerDataManager.Instance.UpdateStepProgressAsync(
+                        _player.Id, _currentStep.Id,
+                        _currentStep.MasteryCurrent, _currentStep.StreakCurrent, _currentStep.QuestionsCompleted);
 
                 // Show EXP pop indicator
                 StartCoroutine(ShowExpPop(expGain + timeBonus));
@@ -270,21 +304,37 @@ public class QuestionFlowManager : MonoBehaviour
             // Step is now complete!
             _currentStep.Status = StepStatus.Completed;
 
-            // Award completion rewards and mark step completed
+            // Award completion rewards
+            bool isFirstCompletion = !_player.CompletedSteps.Contains(_currentStep.Id);
             int completionCoins = 0;
-            int completionExp = 0;
-            string completedKey = $"{_player.CurrentSubject}:{_player.CurrentChallenge}:{_currentStep.Number}";
-            bool isFirstCompletion = !_player.CompletedSteps.Contains(completedKey);
+            int completionExp   = 0;
             if (isFirstCompletion)
             {
                 completionCoins = 50;
-                completionExp = 50;
+                completionExp   = 50;
                 _player.AddCoins(completionCoins);
                 _player.AddExp(completionExp);
-                _player.MarkStepCompleted(_player.CurrentSubject, _player.CurrentChallenge, _currentStep.Number);
-                Debug.Log($"[QuestionFlowManager] Awarded completion rewards: {completionExp} EXP, {completionCoins} Coins for {completedKey}");
+                _player.MarkStepCompleted(_currentStep.Id);
+                Debug.Log($"[QuestionFlowManager] Completion rewards: {completionExp} EXP, {completionCoins} Coins for step {_currentStep.Id}");
             }
+            _sessionCoinsEarned += completionCoins;
+            _sessionExpEarned   += completionExp;
+
+            // Persist final step progress as completed
+            if (!string.IsNullOrEmpty(_player.Id) && !string.IsNullOrEmpty(_currentStep.Id))
+                _ = PlayerDataManager.Instance.UpdateStepProgressAsync(
+                    _player.Id, _currentStep.Id,
+                    _currentStep.MasteryCurrent, _currentStep.StreakCurrent, _currentStep.QuestionsCompleted,
+                    stepCompleted: true);
+
             PlayerDataManager.Instance.SavePlayer(_player);
+
+            // End session
+            if (!string.IsNullOrEmpty(_sessionId))
+                _ = PlayerDataManager.Instance.EndSessionAsync(
+                    _sessionId, _sessionQuestions, _sessionCorrect, _sessionMaxStreak,
+                    _currentStep.MasteryCurrent, _sessionExpEarned, _sessionCoinsEarned, stepCompleted: true);
+            _sessionId = null;
 
             // Show congratulations overlay
             ShowStepCompleteOverlay(completionExp, completionCoins, isFirstCompletion);
@@ -344,14 +394,49 @@ public class QuestionFlowManager : MonoBehaviour
             stepCompleteButton.gameObject.SetActive(false);
     }
 
-    /// <summary>
-    /// Abandons the current step and returns to the challenge selector.
-    /// Progress in current streak is lost but mastery is saved.
-    /// </summary>
     private void OnBackButtonClicked()
     {
+        if (!string.IsNullOrEmpty(_sessionId))
+            _ = PlayerDataManager.Instance.EndSessionAsync(
+                _sessionId, _sessionQuestions, _sessionCorrect, _sessionMaxStreak,
+                _currentStep != null ? _currentStep.MasteryCurrent : 0f,
+                _sessionExpEarned, _sessionCoinsEarned, stepCompleted: false);
+        _sessionId = null;
         PlayerDataManager.Instance.SavePlayer(_player);
         SceneManager.LoadScene("ChallengeSelect");
+    }
+
+    private void OnApplicationPause(bool pausing)
+    {
+        if (!pausing || string.IsNullOrEmpty(_sessionId)) return;
+        // Fire-and-forget: persist final state before app backgrounds
+        if (_player != null && _currentStep != null && !string.IsNullOrEmpty(_player.Id))
+            _ = PlayerDataManager.Instance.UpdateStepProgressAsync(
+                _player.Id, _currentStep.Id,
+                _currentStep.MasteryCurrent, _currentStep.StreakCurrent, _currentStep.QuestionsCompleted);
+        _ = PlayerDataManager.Instance.EndSessionAsync(
+            _sessionId, _sessionQuestions, _sessionCorrect, _sessionMaxStreak,
+            _currentStep != null ? _currentStep.MasteryCurrent : 0f,
+            _sessionExpEarned, _sessionCoinsEarned, stepCompleted: false);
+        _sessionId = null;
+    }
+
+    private IEnumerator StartSessionCoroutine()
+    {
+        var task = PlayerDataManager.Instance.StartSessionAsync(_player.Id, _currentStep.Id, _sessionMasteryStart);
+        yield return new UnityEngine.WaitUntil(() => task.IsCompleted);
+        _sessionId = task.Result;
+    }
+
+    private IEnumerator HeartbeatCoroutine()
+    {
+        var wait = new WaitForSeconds(30f);
+        while (_currentStep != null && _currentStep.Status != StepStatus.Completed)
+        {
+            yield return wait;
+            if (!string.IsNullOrEmpty(_sessionId))
+                _ = PlayerDataManager.Instance.HeartbeatAsync(_sessionId);
+        }
     }
 
     /// <summary>

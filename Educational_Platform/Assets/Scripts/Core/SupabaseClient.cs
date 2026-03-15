@@ -48,15 +48,15 @@ public class SupabaseClient : MonoBehaviour
 
     /// <summary>POST /rest/v1/{table} with JSON body. Returns inserted row(s).</summary>
     public Task<string> PostAsync(string table, string json)
-        => Send(BuildPost(Endpoint(table), json));
+        => Send(BuildPost(Endpoint(table), json), "return=representation");
 
     /// <summary>POST with upsert (merge on conflict). Use for insert-or-update.</summary>
     public Task<string> UpsertAsync(string table, string json)
-        => Send(BuildUpsert(Endpoint(table), json));
+        => Send(BuildPost(Endpoint(table), json), "resolution=merge-duplicates,return=representation");
 
     /// <summary>PATCH /rest/v1/{table}?{query} with JSON body. Returns updated row(s).</summary>
     public Task<string> PatchAsync(string table, string query, string json)
-        => Send(BuildPatch(Endpoint(table, query), json));
+        => Send(BuildPatch(Endpoint(table, query), json), "return=representation");
 
     /// <summary>DELETE /rest/v1/{table}?{query}</summary>
     public Task<string> DeleteAsync(string table, string query)
@@ -67,18 +67,20 @@ public class SupabaseClient : MonoBehaviour
     private string Endpoint(string table, string query = "")
         => $"{_projectUrl}/rest/v1/{table}{(string.IsNullOrEmpty(query) ? "" : "?" + query)}";
 
-    private Task<string> Send(UnityWebRequest req)
+    private Task<string> Send(UnityWebRequest req, string preferHeader = null)
     {
         var tcs = new TaskCompletionSource<string>();
-        StartCoroutine(SendCoroutine(req, tcs));
+        StartCoroutine(SendCoroutine(req, tcs, preferHeader));
         return tcs.Task;
     }
 
-    private IEnumerator SendCoroutine(UnityWebRequest req, TaskCompletionSource<string> tcs)
+    private IEnumerator SendCoroutine(UnityWebRequest req, TaskCompletionSource<string> tcs, string preferHeader)
     {
         req.SetRequestHeader("apikey", _anonKey);
         req.SetRequestHeader("Authorization", $"Bearer {_anonKey}");
         req.SetRequestHeader("Content-Type", "application/json");
+        if (!string.IsNullOrEmpty(preferHeader))
+            req.SetRequestHeader("Prefer", preferHeader);
 
         yield return req.SendWebRequest();
 
@@ -102,7 +104,6 @@ public class SupabaseClient : MonoBehaviour
     {
         var req = UnityWebRequest.Get(url);
         req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Prefer", "return=representation");
         return req;
     }
 
@@ -111,16 +112,6 @@ public class SupabaseClient : MonoBehaviour
         var req = new UnityWebRequest(url, "POST");
         req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
         req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Prefer", "return=representation");
-        return req;
-    }
-
-    private static UnityWebRequest BuildUpsert(string url, string json)
-    {
-        var req = new UnityWebRequest(url, "POST");
-        req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Prefer", "resolution=merge-duplicates,return=representation");
         return req;
     }
 
@@ -129,7 +120,6 @@ public class SupabaseClient : MonoBehaviour
         var req = new UnityWebRequest(url, "PATCH");
         req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
         req.downloadHandler = new DownloadHandlerBuffer();
-        req.SetRequestHeader("Prefer", "return=representation");
         return req;
     }
 

@@ -10,11 +10,15 @@ using UnityEngine;
 [System.Serializable]
 public class Step
 {
-    public string Id { get; set; }
+    public string Id { get; set; }           // UUID (matches DB primary key)
+    public string ChallengeId { get; set; }  // UUID FK → challenges.id
     public int Number { get; set; }
     public string Description { get; set; }
     public string Subject { get; set; }
     public string Challenge { get; set; }
+
+    // Step UUIDs that must be completed before this step unlocks
+    public List<string> PrerequisiteStepIds { get; set; } = new List<string>();
 
     // Streak-based progression
     public int StreakGoal { get; set; } = 5;

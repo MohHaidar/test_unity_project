@@ -76,7 +76,10 @@ public class ChallengeSelectUI : MonoBehaviour
         int sel = 0;
         for (int i = 0; i < _currentChallenges.Count; i++)
         {
-            if (_currentChallenges[i].Id.Equals(_player.CurrentChallenge, StringComparison.OrdinalIgnoreCase)) { sel = i; break; }
+            var c = _currentChallenges[i];
+            if (c.Slug.Equals(_player.CurrentChallenge, StringComparison.OrdinalIgnoreCase) ||
+                c.Name.Equals(_player.CurrentChallenge,  StringComparison.OrdinalIgnoreCase))
+            { sel = i; break; }
         }
         challengeDropdown.value = sel;
         challengeDropdown.RefreshShownValue();
@@ -97,6 +100,8 @@ public class ChallengeSelectUI : MonoBehaviour
 
         foreach (Transform child in stepsContainer) Destroy(child.gameObject);
 
+        bool challengeUnlocked = ChallengeDataManager.Instance.IsChallengeUnlocked(_selectedChallenge.Id, _player);
+
         for (int i = 0; i < _selectedChallenge.Steps.Count; i++)
         {
             var step = _selectedChallenge.Steps[i];
@@ -105,46 +110,29 @@ public class ChallengeSelectUI : MonoBehaviour
             var txt = go.GetComponentInChildren<TextMeshProUGUI>();
             if (txt != null) txt.text = $"Step {step.Number}: {step.Description}";
 
-            string key = $"{step.Subject}:{_selectedChallenge.Id}:{step.Number}";
-            bool completed = _player.CompletedSteps != null && _player.CompletedSteps.Contains(key);
-            bool unlocked = false;
-            if (step.Number == 1) unlocked = true;
-            else
-            {
-                string prevKey = $"{step.Subject}:{_selectedChallenge.Id}:{step.Number - 1}";
-                unlocked = _player.CompletedSteps != null && _player.CompletedSteps.Contains(prevKey);
-            }
+            bool completed = _player.CompletedSteps != null && _player.CompletedSteps.Contains(step.Id);
+            bool unlocked  = challengeUnlocked && ChallengeDataManager.Instance.IsStepUnlocked(step.Id, _player);
 
             ColorBlock colors = btn.colors;
-            if (completed)
-            {
-                colors.normalColor = Color.green;
-            }
-            else if (unlocked)
-            {
-                colors.normalColor = Color.yellow;
-            }
-            else
-            {
-                colors.normalColor = Color.red;
-                btn.interactable = false;
-            }
+            if (completed)       colors.normalColor = Color.green;
+            else if (unlocked)   colors.normalColor = Color.yellow;
+            else                { colors.normalColor = Color.red; btn.interactable = false; }
             btn.colors = colors;
 
             int stepNumber = step.Number;
+            string stepId  = step.Id;
             btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => OnStepSelected(_selectedChallenge.Id, stepNumber));
+            btn.onClick.AddListener(() => OnStepSelected(_selectedChallenge, stepNumber, stepId));
         }
     }
 
-    private void OnStepSelected(string challengeId, int stepNumber)
+    private void OnStepSelected(Challenge challenge, int stepNumber, string stepId)
     {
-        Debug.Log($"[ChallengeSelectUI] Selected {challengeId} step {stepNumber}");
+        Debug.Log($"[ChallengeSelectUI] Selected {challenge.Slug} step {stepNumber} ({stepId})");
 
-        // Update both subject AND challenge so lookup in GameScene is correct
         string subject = subjectDropdown.options[subjectDropdown.value].text;
         _player.CurrentSubject = subject;
-        _player.SelectStep(challengeId, stepNumber);
+        _player.SelectStep(challenge.Slug, stepNumber, stepId);
 
         PlayerDataManager.Instance.SavePlayer(_player);
         SceneManager.LoadScene("GameScene");

@@ -10,16 +10,17 @@ using UnityEngine;
 [System.Serializable]
 public class Player
 {
-    public int Id { get; set; }
+    public string Id { get; set; }  // UUID assigned by Supabase
     public string Name { get; set; }
 
-    // Step-based navigation
+    // Step-based navigation (runtime helpers — also persisted as current_step_id FK)
     public string CurrentSubject { get; set; } = "Math";
     public string CurrentChallenge { get; set; } = "addition";
     public int CurrentStep { get; set; } = 1;
+    public string CurrentStepId { get; set; }  // UUID FK → steps.id (primary DB reference)
 
     // Step-specific metrics
-    // Key format: "{subject}:{challenge}:{step}"
+    // Key format: step UUID string
     public Dictionary<string, float> MasteryByStep { get; set; } = new Dictionary<string, float>();
     public int StreakInCurrentStep { get; set; } = 0;
     public int QuestionsInCurrentStep { get; set; } = 0;
@@ -29,12 +30,29 @@ public class Player
     public int Coins { get; set; } = 0;
     public int TotalExp { get; set; } = 0;
 
-    // Completed steps tracking (keys use the same format as MasteryByStep)
+    // Completed steps tracking — contains step UUIDs
     public List<string> CompletedSteps { get; set; } = new List<string>();
 
-    /// <summary>
-    /// Adds experience to the player.
-    /// </summary>
+    /// <summary>Marks a step completed by its UUID.</summary>
+    public void MarkStepCompleted(string stepId)
+    {
+        if (!string.IsNullOrEmpty(stepId) && !CompletedSteps.Contains(stepId))
+        {
+            CompletedSteps.Add(stepId);
+            LastUpdated = DateTime.Now;
+        }
+    }
+
+    /// <summary>Legacy overload kept for internal compatibility.</summary>
+    public void MarkStepCompleted(string subject, string challenge, int stepNumber)
+    {
+        string key = $"{subject}:{challenge}:{stepNumber}";
+        if (!CompletedSteps.Contains(key))
+        {
+            CompletedSteps.Add(key);
+            LastUpdated = DateTime.Now;
+        }
+    }
     public void AddExp(int amount)
     {
         if (amount <= 0) return;
@@ -97,7 +115,7 @@ public class Player
     }
 
     /// <summary>
-    /// Updates mastery for the current step.
+    /// Updates mastery for the current step (keyed by CurrentStepId UUID).
     /// </summary>
     public void UpdateStepMastery(float newMastery)
     {
@@ -108,19 +126,26 @@ public class Player
     }
 
     /// <summary>
-    /// Gets mastery for a specific step.
+    /// Gets mastery for a step by UUID (preferred) or legacy composite key.
     /// </summary>
+    public float GetStepMastery(string stepIdOrKey)
+    {
+        return MasteryByStep.TryGetValue(stepIdOrKey, out float m) ? m : 0f;
+    }
+
+    /// <summary>Legacy overload: looks up by subject/challenge/stepNumber composite key.</summary>
     public float GetStepMastery(string subject, string challenge, int step)
     {
-        string key = $"{subject}:{challenge}:{step}";
-        return MasteryByStep.ContainsKey(key) ? MasteryByStep[key] : 0.0f;
+        return MasteryByStep.TryGetValue($"{subject}:{challenge}:{step}", out float m) ? m : 0f;
     }
 
     /// <summary>
-    /// Gets mastery for the current step.
+    /// Gets mastery for the current step. Uses CurrentStepId (UUID) when available.
     /// </summary>
     public float GetCurrentStepMastery()
     {
+        if (!string.IsNullOrEmpty(CurrentStepId) && MasteryByStep.ContainsKey(CurrentStepId))
+            return MasteryByStep[CurrentStepId];
         return GetStepMastery(CurrentSubject, CurrentChallenge, CurrentStep);
     }
 
@@ -146,12 +171,13 @@ public class Player
     }
 
     /// <summary>
-    /// Selects a different challenge/step to work on.
+    /// Selects a different challenge/step. Optionally supply the step UUID.
     /// </summary>
-    public void SelectStep(string challenge, int stepNumber)
+    public void SelectStep(string challenge, int stepNumber, string stepId = null)
     {
         CurrentChallenge = challenge;
         CurrentStep = stepNumber;
+        if (stepId != null) CurrentStepId = stepId;
         StreakInCurrentStep = 0;
         QuestionsInCurrentStep = 0;
         LastUpdated = DateTime.Now;
@@ -171,10 +197,13 @@ public class Player
 
     /// <summary>
     /// Gets the key used in MasteryByStep dictionary.
+    /// Returns CurrentStepId (UUID) when set, otherwise legacy composite key.
     /// </summary>
     private string GetCurrentStepKey()
     {
-        return $"{CurrentSubject}:{CurrentChallenge}:{CurrentStep}";
+        return !string.IsNullOrEmpty(CurrentStepId)
+            ? CurrentStepId
+            : $"{CurrentSubject}:{CurrentChallenge}:{CurrentStep}";
     }
 
     public override string ToString()
