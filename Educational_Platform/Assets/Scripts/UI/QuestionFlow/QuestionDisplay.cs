@@ -143,24 +143,14 @@ public class QuestionDisplay : MonoBehaviour
     }
 
     /// <summary>
-    /// Shows feedback: Correct or Incorrect with explanation.
+    /// Shows feedback built by FeedbackBuilder. The message already contains rich text tags.
     /// </summary>
-    public void ShowFeedback(bool isCorrect, string explanation)
+    public void ShowFeedback(bool isCorrect, string richMessage)
     {
         if (feedbackText == null) return;
-
-        if (isCorrect)
-        {
-            feedbackText.text = $"<color=green>Correct!</color>\n{explanation}";
-            feedbackText.color = Color.green;
-        }
-        else
-        {
-            feedbackText.text = $"<color=red>Incorrect</color>\n{explanation}";
-            feedbackText.color = Color.red;
-        }
-
-        Debug.Log($"[QuestionDisplay] Feedback: {feedbackText.text}");
+        feedbackText.color = Color.white;   // let the embedded color tags handle coloring
+        feedbackText.text  = richMessage;
+        Debug.Log($"[QuestionDisplay] Feedback shown (correct={isCorrect})");
     }
 
     /// <summary>

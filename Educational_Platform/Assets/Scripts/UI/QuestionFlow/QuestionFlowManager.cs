@@ -19,9 +19,12 @@ public class QuestionFlowManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI playerStatsText;
     [SerializeField] private TextMeshProUGUI stepInfoText;
     [SerializeField] private TextMeshProUGUI statusText;
-    [SerializeField] private TextMeshProUGUI expPopText;      // small floating "+7 EXP" label
-    [SerializeField] private GameObject stepCompletePanel;    // overlay shown on step completion
-    [SerializeField] private TextMeshProUGUI stepCompleteText; // text inside the overlay
+    [SerializeField] private TextMeshProUGUI expPopText;
+    [SerializeField] private GameObject stepCompletePanel;
+    [SerializeField] private TextMeshProUGUI stepCompleteText;
+    [SerializeField] private GameObject challengeCompletePanel;    // assign a separate panel, or leave null to reuse stepCompletePanel
+    [SerializeField] private TextMeshProUGUI challengeCompleteText; // text inside challengeCompletePanel
+    [SerializeField] private Button challengeCompleteButton;        // "Back to Challenges" button
 
     private Player _player;
     private Challenge _currentChallenge;
@@ -37,6 +40,7 @@ public class QuestionFlowManager : MonoBehaviour
     private int _sessionExpEarned;
     private int _sessionCoinsEarned;
     private float _sessionMasteryStart;
+    private float _lastQuestionDifficulty = -1f;  // -1 = no previous question yet
 
     private OllamaQuestionGenerator _questionGenerator;
     private OllamaPerformanceEvaluator _performanceEvaluator;
@@ -99,12 +103,16 @@ public class QuestionFlowManager : MonoBehaviour
         if (stepCompleteButton != null)
             stepCompleteButton.onClick.AddListener(OnStepCompleteButtonClicked);
 
+        if (challengeCompleteButton != null)
+            challengeCompleteButton.onClick.AddListener(OnChallengeCompleteButtonClicked);
+
         if (backButton != null)
             backButton.onClick.AddListener(OnBackButtonClicked);
 
         // Hide overlays/pops initially
         if (expPopText != null) expPopText.gameObject.SetActive(false);
         if (stepCompletePanel != null) stepCompletePanel.SetActive(false);
+        if (challengeCompletePanel != null) challengeCompletePanel.SetActive(false);
 
         // Ensure current step UUID is set on player before starting
         if (_player.CurrentStepId == null)
@@ -128,10 +136,8 @@ public class QuestionFlowManager : MonoBehaviour
             _currentStep = _currentChallenge.GetStep(_player.CurrentStep);
             if (_currentStep == null)
             {
-                // Challenge complete!
-                ShowStatus($"🎉 {_currentChallenge.Name} Complete! All steps finished.");
-                if (stepCompleteButton != null) stepCompleteButton.gameObject.SetActive(true);
-                yield return new WaitUntil(() => stepCompleteButton == null || !stepCompleteButton.gameObject.activeSelf);
+                // All steps done — handle challenge completion then return to selection
+                yield return StartCoroutine(HandleChallengeComplete());
                 break;
             }
 
@@ -159,6 +165,7 @@ public class QuestionFlowManager : MonoBehaviour
             _sessionMasteryStart = _currentStep.MasteryCurrent;
             _sessionQuestions = _sessionCorrect = _sessionMaxStreak = _sessionExpEarned = _sessionCoinsEarned = 0;
             _sessionId = null;
+            _lastQuestionDifficulty = -1f;
             if (!string.IsNullOrEmpty(_player.Id))
             {
                 StartCoroutine(StartSessionCoroutine());
@@ -274,8 +281,16 @@ public class QuestionFlowManager : MonoBehaviour
                 // Save to CSV
                 PlayerDataManager.Instance.SavePlayer(_player);
 
-                // Show feedback
-                string feedbackMsg = evaluation.IsCorrect ? _currentQuestion.SkillFocus : evaluation.ErrorExplanation;
+                // Show feedback with motivation + difficulty hint (only when difficulty actually changed)
+                float currentDiff = _currentQuestion.Difficulty;
+                string feedbackMsg = FeedbackBuilder.Build(
+                    evaluation.IsCorrect,
+                    _currentStep.StreakCurrent,
+                    _currentStep.StreakGoal,
+                    currentDiff,
+                    _lastQuestionDifficulty,
+                    evaluation.IsCorrect ? _currentQuestion.SkillFocus : evaluation.ErrorExplanation);
+                _lastQuestionDifficulty = currentDiff;
                 _questionDisplay.ShowFeedback(evaluation.IsCorrect, feedbackMsg);
 
                 // Show status
@@ -392,6 +407,80 @@ public class QuestionFlowManager : MonoBehaviour
     {
         if (stepCompleteButton != null)
             stepCompleteButton.gameObject.SetActive(false);
+    }
+
+    private bool _challengeCompleteAcknowledged = false;
+
+    private IEnumerator HandleChallengeComplete()
+    {
+        const int CHALLENGE_BONUS_EXP   = 200;
+        const int CHALLENGE_BONUS_COINS = 100;
+
+        // First completion = at least one step was NOT already in CompletedSteps before this run
+        bool isFirstCompletion = !_currentChallenge.Steps.TrueForAll(s => _player.CompletedSteps.Contains(s.Id));
+
+        if (isFirstCompletion)
+        {
+            _player.AddExp(CHALLENGE_BONUS_EXP);
+            _player.AddCoins(CHALLENGE_BONUS_COINS);
+        }
+
+        // Persist challenge completion in DB
+        if (!string.IsNullOrEmpty(_player.Id))
+            _ = PlayerDataManager.Instance.MarkChallengeCompletedAsync(_player.Id, _currentChallenge.Id);
+
+        PlayerDataManager.Instance.SavePlayer(_player);
+
+        // Show challenge complete overlay
+        ShowChallengeCompleteOverlay(CHALLENGE_BONUS_EXP, CHALLENGE_BONUS_COINS, isFirstCompletion);
+
+        _challengeCompleteAcknowledged = false;
+        yield return new WaitUntil(() => _challengeCompleteAcknowledged);
+
+        // Return to challenge selection
+        SceneManager.LoadScene("ChallengeSelect");
+    }
+
+    private void ShowChallengeCompleteOverlay(int bonusExp, int bonusCoins, bool firstCompletion)
+    {
+        // Use dedicated panel if assigned, otherwise fall back to step complete panel
+        GameObject panel = challengeCompletePanel != null ? challengeCompletePanel : stepCompletePanel;
+        TextMeshProUGUI txt = challengeCompleteText != null ? challengeCompleteText : stepCompleteText;
+
+        if (panel != null) panel.SetActive(true);
+        if (txt != null)
+        {
+            string rewards = firstCompletion
+                ? $"<color=yellow>+{bonusExp} EXP   +{bonusCoins} Coins</color>"
+                : "You've already completed this challenge!";
+
+            txt.text =
+                $"<size=130%><b>Challenge Complete!</b></size>\n\n" +
+                $"<b>{_currentChallenge.Name}</b> — all {_currentChallenge.TotalSteps} steps finished!\n\n" +
+                $"{rewards}\n\n" +
+                $"<size=85%>Total EXP: {_player.TotalExp}   Coins: {_player.Coins}</size>";
+        }
+
+        // If using the fallback panel, repurpose its button
+        if (challengeCompleteButton == null && stepCompleteButton != null)
+        {
+            stepCompleteButton.onClick.RemoveAllListeners();
+            stepCompleteButton.onClick.AddListener(OnChallengeCompleteButtonClicked);
+            stepCompleteButton.gameObject.SetActive(true);
+        }
+        else if (challengeCompleteButton != null)
+        {
+            challengeCompleteButton.gameObject.SetActive(true);
+        }
+
+        ShowStatus("");
+    }
+
+    private void OnChallengeCompleteButtonClicked()
+    {
+        if (challengeCompletePanel != null) challengeCompletePanel.SetActive(false);
+        if (stepCompletePanel != null) stepCompletePanel.SetActive(false);
+        _challengeCompleteAcknowledged = true;
     }
 
     private void OnBackButtonClicked()

@@ -43,16 +43,6 @@ public class Player
         }
     }
 
-    /// <summary>Legacy overload kept for internal compatibility.</summary>
-    public void MarkStepCompleted(string subject, string challenge, int stepNumber)
-    {
-        string key = $"{subject}:{challenge}:{stepNumber}";
-        if (!CompletedSteps.Contains(key))
-        {
-            CompletedSteps.Add(key);
-            LastUpdated = DateTime.Now;
-        }
-    }
     public void AddExp(int amount)
     {
         if (amount <= 0) return;
@@ -68,19 +58,6 @@ public class Player
         if (amount <= 0) return;
         Coins += amount;
         LastUpdated = DateTime.Now;
-    }
-
-    /// <summary>
-    /// Marks a step as completed for this player.
-    /// </summary>
-    public void MarkStepCompleted(string subject, string challenge, int stepNumber)
-    {
-        string key = $"{subject}:{challenge}:{stepNumber}";
-        if (!CompletedSteps.Contains(key))
-        {
-            CompletedSteps.Add(key);
-            LastUpdated = DateTime.Now;
-        }
     }
 
     // Overall history

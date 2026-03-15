@@ -104,7 +104,7 @@ public class PlayerDataManager
         try
         {
             string playerJson = BuildPlayerJson(player);
-            string response = await client.UpsertAsync("players", playerJson);
+            string response = await client.UpsertAsync("players", playerJson, "name");
 
             // Capture UUID assigned by DB on first insert
             if (string.IsNullOrEmpty(player.Id))
@@ -142,7 +142,7 @@ public class PlayerDataManager
                 $"\"status\":\"{status}\"," +
                 $"\"first_completed_at\":{firstCompleted}," +
                 $"\"last_played_at\":\"{DateTime.UtcNow:O}\"}}";
-            await client.UpsertAsync("player_step_progress", json);
+            await client.UpsertAsync("player_step_progress", json, "player_id,step_id");
         }
         catch (Exception e)
         {
@@ -176,6 +176,32 @@ public class PlayerDataManager
         {
             Debug.LogWarning($"[PlayerDataManager] StartSessionAsync failed: {e.Message}");
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Upserts player_challenge_progress with status=completed for the given challenge.
+    /// </summary>
+    public async Task MarkChallengeCompletedAsync(string playerId, string challengeId)
+    {
+        if (string.IsNullOrEmpty(playerId) || string.IsNullOrEmpty(challengeId)) return;
+        var client = SupabaseClient.Instance;
+        if (client == null || !client.IsReady) return;
+
+        try
+        {
+            string now  = DateTime.UtcNow.ToString("O");
+            string json =
+                $"{{\"player_id\":\"{playerId}\"," +
+                $"\"challenge_id\":\"{challengeId}\"," +
+                $"\"status\":\"completed\"," +
+                $"\"completed_at\":\"{now}\"}}";
+            await client.UpsertAsync("player_challenge_progress", json, "player_id,challenge_id");
+            Debug.Log($"[PlayerDataManager] Challenge marked completed: {challengeId}");
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[PlayerDataManager] MarkChallengeCompletedAsync failed: {e.Message}");
         }
     }
 

@@ -50,9 +50,15 @@ public class SupabaseClient : MonoBehaviour
     public Task<string> PostAsync(string table, string json)
         => Send(BuildPost(Endpoint(table), json), "return=representation");
 
-    /// <summary>POST with upsert (merge on conflict). Use for insert-or-update.</summary>
-    public Task<string> UpsertAsync(string table, string json)
-        => Send(BuildPost(Endpoint(table), json), "resolution=merge-duplicates,return=representation");
+    /// <summary>POST with upsert (merge on conflict). Use for insert-or-update.
+    /// Pass onConflict (e.g. "player_id,step_id") when the conflict key is not the primary key.</summary>
+    public Task<string> UpsertAsync(string table, string json, string onConflict = null)
+    {
+        string url = string.IsNullOrEmpty(onConflict)
+            ? Endpoint(table)
+            : Endpoint(table, $"on_conflict={onConflict}");
+        return Send(BuildPost(url, json), "resolution=merge-duplicates,return=representation");
+    }
 
     /// <summary>PATCH /rest/v1/{table}?{query} with JSON body. Returns updated row(s).</summary>
     public Task<string> PatchAsync(string table, string query, string json)
