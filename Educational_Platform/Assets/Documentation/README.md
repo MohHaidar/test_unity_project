@@ -14,6 +14,7 @@ AI-driven adaptive learning game with Supabase cloud persistence and CI/CD schem
 | **[SCENE_SETUP_INSTRUCTIONS.md](SCENE_SETUP_INSTRUCTIONS.md)** | 15 min | Set up GameScene UI in Unity |
 | **[CHALLENGE_SELECT_UI.md](CHALLENGE_SELECT_UI.md)** | 15 min | Set up ChallengeSelect scene |
 | **[SUPABASE_SETUP_GUIDE.md](SUPABASE_SETUP_GUIDE.md)** | 20 min | Configure Supabase cloud database |
+| **[CURRICULUM.md](CURRICULUM.md)** | Reference | Full challenge/step catalog with IDs and prerequisites |
 | **[CICD_RESEARCH.md](CICD_RESEARCH.md)** | Reference | CI/CD patterns and research notes |
 
 ---
@@ -107,12 +108,15 @@ Player picks step → GameScene loads
 
 | Table | Purpose |
 |-------|---------|
-| `players` | Core player data |
-| `player_step_mastery` | Per-step mastery float values |
-| `player_completed_steps` | Completed step keys |
-| `question_history` | Per-answer logs |
-| `challenges` | Challenge catalog (optional seed) |
-| `steps` | Step catalog (optional seed) |
+| `subjects` | Subject catalog (Math, Physics, History) |
+| `challenges` | Challenge catalog with prerequisite graph |
+| `challenge_prerequisites` | Directed challenge unlock dependencies |
+| `steps` | Step catalog per challenge |
+| `step_prerequisites` | Directed step unlock dependencies |
+| `players` | Core player data and current navigation state |
+| `player_step_progress` | Per-step mastery, streak, and completion status |
+| `player_challenge_progress` | Per-challenge lock / completion status |
+| `play_sessions` | Session-level aggregated answer log |
 
 Schema managed via: `supabase/migrations/` → `supabase db push`
 
@@ -164,12 +168,12 @@ Start with one of these based on your goal:
 - Files created/modified
 - Statistics and improvements
 
-### 📝 **Implementation Plan** (Reference)
-→ **[plan.md](../../.copilot/session-state/e70d7db5-25c0-4e5b-94ac-a0f1d78bce14/plan.md)**
-- Detailed implementation notes
-- New system architecture
-- File organization
-- Phase-by-phase breakdown
+### 📚 **Curriculum Reference**
+→ **[CURRICULUM.md](CURRICULUM.md)**
+- Full challenge and step catalog with IDs
+- Prerequisite dependency chains
+- Design conventions and UUID reference
+- Checklist for adding new challenges
 
 ---
 
@@ -207,10 +211,10 @@ Start with one of these based on your goal:
 - MultipleChoiceQuestion.cs (first question type)
 - ChallengeDataManager.cs (challenge definitions)
 
-### ✅ Phase 2: Persistence
-- PlayerDataManager.cs (CSV save/load with step-based data)
-- New CSV format with per-step mastery tracking
-- Multi-player support
+### ✅ Phase 2: Persistence (Supabase)
+- PlayerDataManager.cs — cache-first singleton, async Supabase reads/writes
+- SupabaseClient.cs — REST client (no external SDK, uses UnityWebRequest)
+- SupabaseConfig.cs — ScriptableObject for credentials (gitignored per-developer)
 
 ### ✅ Phase 3: AI Layer
 - OllamaQuestionGenerator.cs (step-aware question generation)
@@ -284,7 +288,7 @@ AI Pipeline
   ├── Generate: Player + Step → Ollama → IQuestion
   ├── Display: IQuestion → QuestionDisplay (polymorphic)
   ├── Evaluate: Player + Step + IQuestion + Answer → Ollama → EvaluationResult
-  └── Save: Updated Player → CSV
+  └── Save: Updated Player → Supabase (async, cache-first)
 ```
 
 ---
@@ -321,8 +325,8 @@ Assets/Scripts/
 │   ├── Step.cs ................. Step progression logic
 │   ├── IQuestion.cs ............ Question type interface
 │   ├── MultipleChoiceQuestion.cs  Multiple choice implementation
-│   ├── ChallengeDataManager.cs .. Challenge definitions (hardcoded)
-│   └── PlayerDataManager.cs ..... CSV persistence (EXP, Coins, CompletedSteps included)
+│   ├── ChallengeDataManager.cs .. Challenge catalog (hardcoded fallback + Supabase loader)
+│   └── PlayerDataManager.cs ..... Cache-first async Supabase persistence
 │
 ├── AI/
 │   ├── OllamaAPI.cs ............ HTTP communication with Ollama

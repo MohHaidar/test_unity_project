@@ -338,7 +338,7 @@ This is the reusable button template for each step.
 
 1. Press **Play**
 2. **Expected:** SubjectDropdown shows `Math`, `Physics`, `History`
-3. Select **Math** → ChallengeDropdown shows `Addition`, `Subtraction`
+3. Select **Math** → ChallengeDropdown shows all 9 Math challenges (Addition through Systems of Equations)
 4. Select **Addition** → Step buttons appear in the scroll view:
    - Step 1: Yellow (unlocked, no completed steps yet)
    - Steps 2–4: Red (locked)

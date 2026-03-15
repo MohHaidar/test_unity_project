@@ -30,7 +30,8 @@ ChallengeDataManager.cs  Updated — LoadFromSupabaseAsync() overrides hardcoded
 
 ### ✅ Phase 7: CI/CD Schema Migrations
 ```
-supabase/migrations/20260315052219_initial_schema.sql   Full schema SQL (versioned, tracked in Git)
+supabase/migrations/20260315070000_improved_schema.sql    Full relational schema (subjects, challenges, steps, players)
+supabase/migrations/20260315231000_expand_math_curriculum.sql  Expanded Math curriculum through Systems of Equations
 .github/workflows/db-migrate.yml                        Auto-applies migrations on push to main
 ```
 
@@ -108,7 +109,8 @@ Assets/Resources/
 
 supabase/
 └── migrations/
-    └── 20260315052219_initial_schema.sql
+    ├── 20260315070000_improved_schema.sql
+    └── 20260315231000_expand_math_curriculum.sql
 
 .github/workflows/
 └── db-migrate.yml

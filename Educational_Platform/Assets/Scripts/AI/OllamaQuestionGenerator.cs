@@ -162,28 +162,108 @@ RETURN ONLY VALID JSON (no other text, no markdown):
     /// </summary>
     private string GetStepConstraints(string challenge, int stepNumber)
     {
-        if (challenge.ToLower() == "addition")
-        {
-            return stepNumber switch
-            {
-                1 => "- First number: 0-5\n- Second number: 0-5\n- Result: Always <= 10\n- NO CARRYING allowed (e.g., 3+2, 4+1, 5+5)",
-                2 => "- First number: 6-9\n- Second number: 6-9\n- Result: Always <= 18\n- NO CARRYING allowed (e.g., 6+2, 7+3, 8+9)",
-                3 => "- First number: 10-50\n- Second number: 10-50\n- CRITICAL CONSTRAINT: NO CARRYING required\n  - Ones digits must sum to < 10 (e.g., 3 + 4 = 7, not 8)\n  - Tens digits must sum to < 10\n  - Examples ALLOWED: 12+13=25, 22+14=36, 31+16=47\n  - Examples FORBIDDEN: 15+17 (5+7=12, needs carrying), 27+15 (7+5=12, needs carrying), 38+24 (8+4=12, needs carrying)",
-                4 => "- First number: 10-99\n- Second number: 10-99\n- CARRYING IS ALLOWED and expected\n  - Can have ones digits summing to >= 10 (e.g., 8+5=13)\n  - Can have tens digits summing to >= 10 (e.g., 70+50=120)\n  - Examples: 27+15=42, 56+23=79, 48+37=85",
-                _ => ""
-            };
-        }
-        else if (challenge.ToLower() == "subtraction")
-        {
-            return stepNumber switch
-            {
-                1 => "- First number: 0-5\n- Second number: 0-5\n- Result: Always >= 0",
-                2 => "- First number: 6-9\n- Second number: 6-9\n- Result: Always >= 0",
-                _ => ""
-            };
-        }
+        string normalizedChallenge = challenge
+            .Trim()
+            .ToLowerInvariant()
+            .Replace(" ", "_")
+            .Replace("-", "_");
 
-        return "";
+        switch (normalizedChallenge)
+        {
+            case "addition":
+                return stepNumber switch
+                {
+                    1 => "- Use addition only\n- Both addends: 0-10\n- Total: at most 10\n- No story problems needed",
+                    2 => "- Use addition facts that make 10\n- One addend should be between 1 and 9\n- Ask for the missing partner or direct sum that completes 10",
+                    3 => "- Use two-digit addition without carrying\n- Each ones-place sum must stay below 10\n- Keep totals below 100",
+                    4 => "- Use two-digit addition with carrying\n- At least one ones-place sum must be 10 or more\n- Keep totals below 150",
+                    _ => ""
+                };
+
+            case "subtraction":
+                return stepNumber switch
+                {
+                    1 => "- Use subtraction only\n- Numbers should stay within 10\n- Result must be 0 or greater",
+                    2 => "- Ask for the missing addend in an addition fact\n- Formats like 3 + ? = 8 are allowed\n- Correct answer must be a whole number from 0 to 10",
+                    3 => "- Use two-digit subtraction without borrowing\n- Ones digit of the minuend must be greater than or equal to the ones digit of the subtrahend",
+                    4 => "- Use two-digit subtraction with borrowing\n- At least one borrow should be required\n- Result must stay positive",
+                    _ => ""
+                };
+
+            case "multiplication":
+                return stepNumber switch
+                {
+                    1 => "- Use multiplication as equal groups\n- Small whole numbers only\n- Formats like 3 groups of 4 or 3 x 4 are allowed",
+                    2 => "- Use multiplication by 2 only\n- Other factor between 0 and 12",
+                    3 => "- Use multiplication by 5 only\n- Other factor between 0 and 12",
+                    4 => "- Use multiplication by 10 only\n- Other factor between 0 and 12",
+                    _ => ""
+                };
+
+            case "division":
+                return stepNumber switch
+                {
+                    1 => "- Use equal sharing or grouping questions\n- Exact division only\n- Small whole numbers only",
+                    2 => "- Use division by 2 only\n- Quotient must be a whole number",
+                    3 => "- Use division by 5 only\n- Quotient must be a whole number",
+                    4 => "- Use division by 10 only\n- Quotient must be a whole number",
+                    _ => ""
+                };
+
+            case "order_of_operations":
+                return stepNumber switch
+                {
+                    1 => "- Use expressions with multiplication and addition\n- No parentheses\n- The correct solution must multiply before adding",
+                    2 => "- Use expressions with multiplication and subtraction\n- No parentheses\n- The correct solution must multiply before subtracting",
+                    3 => "- Use parentheses to force the first operation\n- Keep expressions short and numeric",
+                    4 => "- Use mixed expressions with 2-3 operations\n- May include parentheses\n- Result must be a whole number",
+                    _ => ""
+                };
+
+            case "expressions_with_variables":
+                return stepNumber switch
+                {
+                    1 => "- Give a value for x and ask the student to evaluate x + a\n- Use whole numbers only",
+                    2 => "- Give a value for x and ask the student to evaluate x - a\n- Result must be 0 or greater",
+                    3 => "- Give a value for x and ask the student to evaluate ax\n- Use small coefficients like 2, 3, 5, or 10",
+                    4 => "- Give a value for x and ask the student to evaluate x / a\n- Division must be exact",
+                    _ => ""
+                };
+
+            case "one_step_equations":
+                return stepNumber switch
+                {
+                    1 => "- Solve equations of the form x + a = b\n- Whole-number solution only",
+                    2 => "- Solve equations of the form x - a = b\n- Whole-number solution only",
+                    3 => "- Solve equations of the form ax = b\n- Use exact whole-number solutions",
+                    4 => "- Solve equations of the form x / a = b\n- Use exact whole-number solutions",
+                    _ => ""
+                };
+
+            case "two_step_equations":
+                return stepNumber switch
+                {
+                    1 => "- Solve equations of the form ax + b = c\n- Use small positive integers\n- Whole-number solution only",
+                    2 => "- Solve equations of the form ax - b = c\n- Use small positive integers\n- Whole-number solution only",
+                    3 => "- Solve equations of the form x / a + b = c\n- Division must stay exact\n- Whole-number solution only",
+                    4 => "- Solve equations of the form x / a - b = c\n- Division must stay exact\n- Whole-number solution only",
+                    _ => ""
+                };
+
+            case "systems_of_equations":
+                return stepNumber switch
+                {
+                    1 => "- Use one equation with a known x value and another equation y = x + a\n- Ask for the value of y after substitution\n- Whole-number answer only",
+                    2 => "- Use a two-equation system where one equation already isolates y\n- The student should solve the system and report x only\n- Whole-number solution only",
+                    3 => "- Use a two-equation system where one equation already isolates y\n- The student should solve the system and report y only\n- Whole-number solution only",
+                    4 => "- Use standard-form systems such as x + y = c and x - y = d\n- The student should solve the system and report x only\n- Whole-number solution only",
+                    5 => "- Use standard-form systems such as x + y = c and x - y = d\n- The student should solve the system and report y only\n- Whole-number solution only",
+                    _ => ""
+                };
+
+            default:
+                return "";
+        }
     }
 
     /// <summary>

@@ -16,13 +16,20 @@ public class ChallengeDataManager
         get { if (_instance == null) _instance = new ChallengeDataManager(); return _instance; }
     }
 
-    // ─── Fixed UUIDs — must match supabase/migrations/20260315070000_improved_schema.sql seed ──
+    // ─── Fixed UUIDs — must match the seeded Supabase catalog migrations ──
     public const string SUBJECT_MATH_ID    = "a1000000-0000-0000-0000-000000000000";
     public const string SUBJECT_PHYSICS_ID = "a2000000-0000-0000-0000-000000000000";
     public const string SUBJECT_HISTORY_ID = "a3000000-0000-0000-0000-000000000000";
 
     public const string CHALLENGE_ADDITION_ID    = "b1000000-0000-0000-0000-000000000000";
     public const string CHALLENGE_SUBTRACTION_ID = "b2000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_MULTIPLICATION_ID = "b5000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_DIVISION_ID = "b6000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_ORDER_OF_OPERATIONS_ID = "b7000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_EXPRESSIONS_ID = "b8000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_ONE_STEP_EQUATIONS_ID = "b9000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_TWO_STEP_EQUATIONS_ID = "ba000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_SYSTEMS_OF_EQUATIONS_ID = "bb000000-0000-0000-0000-000000000000";
     public const string CHALLENGE_FORCE_ID       = "b3000000-0000-0000-0000-000000000000";
     public const string CHALLENGE_ROME_ID        = "b4000000-0000-0000-0000-000000000000";
 
@@ -32,6 +39,37 @@ public class ChallengeDataManager
     public const string STEP_ADDITION_4_ID    = "c4000000-0000-0000-0000-000000000000";
     public const string STEP_SUBTRACTION_1_ID = "c5000000-0000-0000-0000-000000000000";
     public const string STEP_SUBTRACTION_2_ID = "c6000000-0000-0000-0000-000000000000";
+    public const string STEP_SUBTRACTION_3_ID = "c9000000-0000-0000-0000-000000000000";
+    public const string STEP_SUBTRACTION_4_ID = "ca000000-0000-0000-0000-000000000000";
+    public const string STEP_MULTIPLICATION_1_ID = "cb000000-0000-0000-0000-000000000000";
+    public const string STEP_MULTIPLICATION_2_ID = "cc000000-0000-0000-0000-000000000000";
+    public const string STEP_MULTIPLICATION_3_ID = "cd000000-0000-0000-0000-000000000000";
+    public const string STEP_MULTIPLICATION_4_ID = "ce000000-0000-0000-0000-000000000000";
+    public const string STEP_DIVISION_1_ID = "cf000000-0000-0000-0000-000000000000";
+    public const string STEP_DIVISION_2_ID = "d1000000-0000-0000-0000-000000000000";
+    public const string STEP_DIVISION_3_ID = "d2000000-0000-0000-0000-000000000000";
+    public const string STEP_DIVISION_4_ID = "d3000000-0000-0000-0000-000000000000";
+    public const string STEP_ORDER_OF_OPERATIONS_1_ID = "d4000000-0000-0000-0000-000000000000";
+    public const string STEP_ORDER_OF_OPERATIONS_2_ID = "d5000000-0000-0000-0000-000000000000";
+    public const string STEP_ORDER_OF_OPERATIONS_3_ID = "d6000000-0000-0000-0000-000000000000";
+    public const string STEP_ORDER_OF_OPERATIONS_4_ID = "d7000000-0000-0000-0000-000000000000";
+    public const string STEP_EXPRESSIONS_1_ID = "d8000000-0000-0000-0000-000000000000";
+    public const string STEP_EXPRESSIONS_2_ID = "d9000000-0000-0000-0000-000000000000";
+    public const string STEP_EXPRESSIONS_3_ID = "da000000-0000-0000-0000-000000000000";
+    public const string STEP_EXPRESSIONS_4_ID = "db000000-0000-0000-0000-000000000000";
+    public const string STEP_ONE_STEP_EQUATIONS_1_ID = "dc000000-0000-0000-0000-000000000000";
+    public const string STEP_ONE_STEP_EQUATIONS_2_ID = "dd000000-0000-0000-0000-000000000000";
+    public const string STEP_ONE_STEP_EQUATIONS_3_ID = "de000000-0000-0000-0000-000000000000";
+    public const string STEP_ONE_STEP_EQUATIONS_4_ID = "df000000-0000-0000-0000-000000000000";
+    public const string STEP_TWO_STEP_EQUATIONS_1_ID = "e1000000-0000-0000-0000-000000000000";
+    public const string STEP_TWO_STEP_EQUATIONS_2_ID = "e2000000-0000-0000-0000-000000000000";
+    public const string STEP_TWO_STEP_EQUATIONS_3_ID = "e3000000-0000-0000-0000-000000000000";
+    public const string STEP_TWO_STEP_EQUATIONS_4_ID = "e4000000-0000-0000-0000-000000000000";
+    public const string STEP_SYSTEMS_OF_EQUATIONS_1_ID = "e5000000-0000-0000-0000-000000000000";
+    public const string STEP_SYSTEMS_OF_EQUATIONS_2_ID = "e6000000-0000-0000-0000-000000000000";
+    public const string STEP_SYSTEMS_OF_EQUATIONS_3_ID = "e7000000-0000-0000-0000-000000000000";
+    public const string STEP_SYSTEMS_OF_EQUATIONS_4_ID = "e8000000-0000-0000-0000-000000000000";
+    public const string STEP_SYSTEMS_OF_EQUATIONS_5_ID = "e9000000-0000-0000-0000-000000000000";
     public const string STEP_FORCE_1_ID       = "c7000000-0000-0000-0000-000000000000";
     public const string STEP_ROME_1_ID        = "c8000000-0000-0000-0000-000000000000";
 
@@ -129,7 +167,7 @@ public class ChallengeDataManager
         try
         {
             string subjectJson   = await client.GetAsync("subjects",   "select=*&order=name.asc");
-            string challengeJson = await client.GetAsync("challenges",  "select=*");
+            string challengeJson = await client.GetAsync("challenges",  "select=*&order=created_at.asc");
             string prereqJson    = await client.GetAsync("challenge_prerequisites", "select=*");
             string stepJson      = await client.GetAsync("steps",       "select=*&order=number.asc");
             string stepPrereqJson= await client.GetAsync("step_prerequisites", "select=*");
@@ -229,20 +267,94 @@ public class ChallengeDataManager
 
     private void InitializeHardcodedChallenges()
     {
-        var addition = new Challenge(CHALLENGE_ADDITION_ID, "Addition", "Math", "Learn addition from basics to 2-digit numbers", "addition", SUBJECT_MATH_ID);
+        var addition = new Challenge(CHALLENGE_ADDITION_ID, "Addition", "Math", "Build fluency with sums from within 10 through two-digit addition", "addition", SUBJECT_MATH_ID);
         addition.Steps = new List<Step>
         {
-            MakeStep(STEP_ADDITION_1_ID, CHALLENGE_ADDITION_ID, 1, "Single Digit (0–5)",   "Math", "Addition", new List<string>()),
-            MakeStep(STEP_ADDITION_2_ID, CHALLENGE_ADDITION_ID, 2, "Single Digit (6–9)",   "Math", "Addition", new List<string> { STEP_ADDITION_1_ID }),
-            MakeStep(STEP_ADDITION_3_ID, CHALLENGE_ADDITION_ID, 3, "Two Digit No Carry",   "Math", "Addition", new List<string> { STEP_ADDITION_2_ID }),
-            MakeStep(STEP_ADDITION_4_ID, CHALLENGE_ADDITION_ID, 4, "Two Digit With Carry", "Math", "Addition", new List<string> { STEP_ADDITION_3_ID }, requireUltimate: true),
+            MakeStep(STEP_ADDITION_1_ID, CHALLENGE_ADDITION_ID, 1, "Add Within 10", "Math", "Addition", new List<string>()),
+            MakeStep(STEP_ADDITION_2_ID, CHALLENGE_ADDITION_ID, 2, "Make 10", "Math", "Addition", new List<string> { STEP_ADDITION_1_ID }),
+            MakeStep(STEP_ADDITION_3_ID, CHALLENGE_ADDITION_ID, 3, "Two-Digit No Carry", "Math", "Addition", new List<string> { STEP_ADDITION_2_ID }),
+            MakeStep(STEP_ADDITION_4_ID, CHALLENGE_ADDITION_ID, 4, "Two-Digit With Carry", "Math", "Addition", new List<string> { STEP_ADDITION_3_ID }),
         };
 
-        var subtraction = new Challenge(CHALLENGE_SUBTRACTION_ID, "Subtraction", "Math", "Learn subtraction", "subtraction", SUBJECT_MATH_ID);
+        var subtraction = new Challenge(CHALLENGE_SUBTRACTION_ID, "Subtraction", "Math", "Use subtraction to find differences, missing parts, and two-digit answers", "subtraction", SUBJECT_MATH_ID);
+        subtraction.Prerequisites = new List<string> { CHALLENGE_ADDITION_ID };
         subtraction.Steps = new List<Step>
         {
-            MakeStep(STEP_SUBTRACTION_1_ID, CHALLENGE_SUBTRACTION_ID, 1, "Single Digit", "Math", "Subtraction", new List<string>()),
-            MakeStep(STEP_SUBTRACTION_2_ID, CHALLENGE_SUBTRACTION_ID, 2, "Two Digit",    "Math", "Subtraction", new List<string> { STEP_SUBTRACTION_1_ID }),
+            MakeStep(STEP_SUBTRACTION_1_ID, CHALLENGE_SUBTRACTION_ID, 1, "Subtract Within 10", "Math", "Subtraction", new List<string>()),
+            MakeStep(STEP_SUBTRACTION_2_ID, CHALLENGE_SUBTRACTION_ID, 2, "Find the Missing Addend", "Math", "Subtraction", new List<string> { STEP_SUBTRACTION_1_ID }),
+            MakeStep(STEP_SUBTRACTION_3_ID, CHALLENGE_SUBTRACTION_ID, 3, "Two-Digit No Borrow", "Math", "Subtraction", new List<string> { STEP_SUBTRACTION_2_ID }),
+            MakeStep(STEP_SUBTRACTION_4_ID, CHALLENGE_SUBTRACTION_ID, 4, "Two-Digit With Borrow", "Math", "Subtraction", new List<string> { STEP_SUBTRACTION_3_ID }),
+        };
+
+        var multiplication = new Challenge(CHALLENGE_MULTIPLICATION_ID, "Multiplication", "Math", "Treat multiplication as repeated groups and build fluency with key facts", "multiplication", SUBJECT_MATH_ID);
+        multiplication.Prerequisites = new List<string> { CHALLENGE_SUBTRACTION_ID };
+        multiplication.Steps = new List<Step>
+        {
+            MakeStep(STEP_MULTIPLICATION_1_ID, CHALLENGE_MULTIPLICATION_ID, 1, "Equal Groups", "Math", "Multiplication", new List<string>()),
+            MakeStep(STEP_MULTIPLICATION_2_ID, CHALLENGE_MULTIPLICATION_ID, 2, "Multiply by 2", "Math", "Multiplication", new List<string> { STEP_MULTIPLICATION_1_ID }),
+            MakeStep(STEP_MULTIPLICATION_3_ID, CHALLENGE_MULTIPLICATION_ID, 3, "Multiply by 5", "Math", "Multiplication", new List<string> { STEP_MULTIPLICATION_2_ID }),
+            MakeStep(STEP_MULTIPLICATION_4_ID, CHALLENGE_MULTIPLICATION_ID, 4, "Multiply by 10", "Math", "Multiplication", new List<string> { STEP_MULTIPLICATION_3_ID }),
+        };
+
+        var division = new Challenge(CHALLENGE_DIVISION_ID, "Division", "Math", "Connect division to equal sharing and inverse multiplication facts", "division", SUBJECT_MATH_ID);
+        division.Prerequisites = new List<string> { CHALLENGE_MULTIPLICATION_ID };
+        division.Steps = new List<Step>
+        {
+            MakeStep(STEP_DIVISION_1_ID, CHALLENGE_DIVISION_ID, 1, "Sharing Equally", "Math", "Division", new List<string>()),
+            MakeStep(STEP_DIVISION_2_ID, CHALLENGE_DIVISION_ID, 2, "Divide by 2", "Math", "Division", new List<string> { STEP_DIVISION_1_ID }),
+            MakeStep(STEP_DIVISION_3_ID, CHALLENGE_DIVISION_ID, 3, "Divide by 5", "Math", "Division", new List<string> { STEP_DIVISION_2_ID }),
+            MakeStep(STEP_DIVISION_4_ID, CHALLENGE_DIVISION_ID, 4, "Divide by 10", "Math", "Division", new List<string> { STEP_DIVISION_3_ID }),
+        };
+
+        var orderOfOperations = new Challenge(CHALLENGE_ORDER_OF_OPERATIONS_ID, "Order of Operations", "Math", "Evaluate short expressions by choosing the correct operation order", "order_of_operations", SUBJECT_MATH_ID);
+        orderOfOperations.Prerequisites = new List<string> { CHALLENGE_DIVISION_ID };
+        orderOfOperations.Steps = new List<Step>
+        {
+            MakeStep(STEP_ORDER_OF_OPERATIONS_1_ID, CHALLENGE_ORDER_OF_OPERATIONS_ID, 1, "Multiply Then Add", "Math", "Order of Operations", new List<string>()),
+            MakeStep(STEP_ORDER_OF_OPERATIONS_2_ID, CHALLENGE_ORDER_OF_OPERATIONS_ID, 2, "Multiply Then Subtract", "Math", "Order of Operations", new List<string> { STEP_ORDER_OF_OPERATIONS_1_ID }),
+            MakeStep(STEP_ORDER_OF_OPERATIONS_3_ID, CHALLENGE_ORDER_OF_OPERATIONS_ID, 3, "Parentheses First", "Math", "Order of Operations", new List<string> { STEP_ORDER_OF_OPERATIONS_2_ID }),
+            MakeStep(STEP_ORDER_OF_OPERATIONS_4_ID, CHALLENGE_ORDER_OF_OPERATIONS_ID, 4, "Mixed Expressions", "Math", "Order of Operations", new List<string> { STEP_ORDER_OF_OPERATIONS_3_ID }),
+        };
+
+        var expressions = new Challenge(CHALLENGE_EXPRESSIONS_ID, "Expressions with Variables", "Math", "Evaluate expressions by replacing one variable with a given number", "expressions_with_variables", SUBJECT_MATH_ID);
+        expressions.Prerequisites = new List<string> { CHALLENGE_ORDER_OF_OPERATIONS_ID };
+        expressions.Steps = new List<Step>
+        {
+            MakeStep(STEP_EXPRESSIONS_1_ID, CHALLENGE_EXPRESSIONS_ID, 1, "Evaluate x + a", "Math", "Expressions with Variables", new List<string>()),
+            MakeStep(STEP_EXPRESSIONS_2_ID, CHALLENGE_EXPRESSIONS_ID, 2, "Evaluate x - a", "Math", "Expressions with Variables", new List<string> { STEP_EXPRESSIONS_1_ID }),
+            MakeStep(STEP_EXPRESSIONS_3_ID, CHALLENGE_EXPRESSIONS_ID, 3, "Evaluate ax", "Math", "Expressions with Variables", new List<string> { STEP_EXPRESSIONS_2_ID }),
+            MakeStep(STEP_EXPRESSIONS_4_ID, CHALLENGE_EXPRESSIONS_ID, 4, "Evaluate x / a", "Math", "Expressions with Variables", new List<string> { STEP_EXPRESSIONS_3_ID }),
+        };
+
+        var oneStepEquations = new Challenge(CHALLENGE_ONE_STEP_EQUATIONS_ID, "One-Step Equations", "Math", "Solve equations with one inverse operation", "one_step_equations", SUBJECT_MATH_ID);
+        oneStepEquations.Prerequisites = new List<string> { CHALLENGE_EXPRESSIONS_ID };
+        oneStepEquations.Steps = new List<Step>
+        {
+            MakeStep(STEP_ONE_STEP_EQUATIONS_1_ID, CHALLENGE_ONE_STEP_EQUATIONS_ID, 1, "Solve x + a = b", "Math", "One-Step Equations", new List<string>()),
+            MakeStep(STEP_ONE_STEP_EQUATIONS_2_ID, CHALLENGE_ONE_STEP_EQUATIONS_ID, 2, "Solve x - a = b", "Math", "One-Step Equations", new List<string> { STEP_ONE_STEP_EQUATIONS_1_ID }),
+            MakeStep(STEP_ONE_STEP_EQUATIONS_3_ID, CHALLENGE_ONE_STEP_EQUATIONS_ID, 3, "Solve ax = b", "Math", "One-Step Equations", new List<string> { STEP_ONE_STEP_EQUATIONS_2_ID }),
+            MakeStep(STEP_ONE_STEP_EQUATIONS_4_ID, CHALLENGE_ONE_STEP_EQUATIONS_ID, 4, "Solve x / a = b", "Math", "One-Step Equations", new List<string> { STEP_ONE_STEP_EQUATIONS_3_ID }),
+        };
+
+        var twoStepEquations = new Challenge(CHALLENGE_TWO_STEP_EQUATIONS_ID, "Two-Step Equations", "Math", "Solve equations by undoing two operations in the correct order", "two_step_equations", SUBJECT_MATH_ID);
+        twoStepEquations.Prerequisites = new List<string> { CHALLENGE_ONE_STEP_EQUATIONS_ID };
+        twoStepEquations.Steps = new List<Step>
+        {
+            MakeStep(STEP_TWO_STEP_EQUATIONS_1_ID, CHALLENGE_TWO_STEP_EQUATIONS_ID, 1, "Solve ax + b = c", "Math", "Two-Step Equations", new List<string>()),
+            MakeStep(STEP_TWO_STEP_EQUATIONS_2_ID, CHALLENGE_TWO_STEP_EQUATIONS_ID, 2, "Solve ax - b = c", "Math", "Two-Step Equations", new List<string> { STEP_TWO_STEP_EQUATIONS_1_ID }),
+            MakeStep(STEP_TWO_STEP_EQUATIONS_3_ID, CHALLENGE_TWO_STEP_EQUATIONS_ID, 3, "Solve x / a + b = c", "Math", "Two-Step Equations", new List<string> { STEP_TWO_STEP_EQUATIONS_2_ID }),
+            MakeStep(STEP_TWO_STEP_EQUATIONS_4_ID, CHALLENGE_TWO_STEP_EQUATIONS_ID, 4, "Solve x / a - b = c", "Math", "Two-Step Equations", new List<string> { STEP_TWO_STEP_EQUATIONS_3_ID }),
+        };
+
+        var systemsOfEquations = new Challenge(CHALLENGE_SYSTEMS_OF_EQUATIONS_ID, "Systems of Equations", "Math", "Use substitution and paired equations to solve for two variables", "systems_of_equations", SUBJECT_MATH_ID);
+        systemsOfEquations.Prerequisites = new List<string> { CHALLENGE_TWO_STEP_EQUATIONS_ID };
+        systemsOfEquations.Steps = new List<Step>
+        {
+            MakeStep(STEP_SYSTEMS_OF_EQUATIONS_1_ID, CHALLENGE_SYSTEMS_OF_EQUATIONS_ID, 1, "Substitute x into y = x + a", "Math", "Systems of Equations", new List<string>()),
+            MakeStep(STEP_SYSTEMS_OF_EQUATIONS_2_ID, CHALLENGE_SYSTEMS_OF_EQUATIONS_ID, 2, "Solve a System and Find x", "Math", "Systems of Equations", new List<string> { STEP_SYSTEMS_OF_EQUATIONS_1_ID }),
+            MakeStep(STEP_SYSTEMS_OF_EQUATIONS_3_ID, CHALLENGE_SYSTEMS_OF_EQUATIONS_ID, 3, "Solve a System and Find y", "Math", "Systems of Equations", new List<string> { STEP_SYSTEMS_OF_EQUATIONS_2_ID }),
+            MakeStep(STEP_SYSTEMS_OF_EQUATIONS_4_ID, CHALLENGE_SYSTEMS_OF_EQUATIONS_ID, 4, "Standard Form: Find x", "Math", "Systems of Equations", new List<string> { STEP_SYSTEMS_OF_EQUATIONS_3_ID }),
+            MakeStep(STEP_SYSTEMS_OF_EQUATIONS_5_ID, CHALLENGE_SYSTEMS_OF_EQUATIONS_ID, 5, "Standard Form: Find y", "Math", "Systems of Equations", new List<string> { STEP_SYSTEMS_OF_EQUATIONS_4_ID }),
         };
 
         var force = new Challenge(CHALLENGE_FORCE_ID, "Force and Motion", "Physics", "Newton's laws and force concepts", "force", SUBJECT_PHYSICS_ID);
@@ -260,6 +372,13 @@ public class ChallengeDataManager
 
         Register("Math",    addition);
         Register("Math",    subtraction);
+        Register("Math",    multiplication);
+        Register("Math",    division);
+        Register("Math",    orderOfOperations);
+        Register("Math",    expressions);
+        Register("Math",    oneStepEquations);
+        Register("Math",    twoStepEquations);
+        Register("Math",    systemsOfEquations);
         Register("Physics", force);
         Register("History", rome);
 

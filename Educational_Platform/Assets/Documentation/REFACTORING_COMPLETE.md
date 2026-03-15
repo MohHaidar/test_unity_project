@@ -29,17 +29,16 @@ All three phases of refactoring have been completed successfully. The system is 
 - ✅ Challenge navigation (GetStep, GetNextStep, GetFirstIncompleteStep)
 - ✅ Step status (NotStarted, InProgress, Completed)
 - ✅ Step phase (StreakBuilding, UltimateChallenge, Complete)
-- ✅ 3 subjects with example challenges: Math (Addition, Subtraction), Physics, History
+- ✅ 3 subjects with challenges: Math (9 challenges, 33 steps), Physics (1 placeholder), History (1 placeholder)
 
 ### Phase 2: Persistence ✅ COMPLETE
 **Files Updated:**
-- `Core/PlayerDataManager.cs` (280 lines) - CSV persistence with step-based data
+- `Core/PlayerDataManager.cs` — Supabase cache-first persistence
 
 **Features:**
-- ✅ Updated CSV format: `id, name, subject, challenge, step, mastery_by_step_json, streak, questions_count, last_updated`
-- ✅ Serializes/deserializes MasteryByStep dictionary to JSON
-- ✅ Load/save with new Player structure
-- ✅ Singleton pattern with caching
+- ✅ Supabase format with `player_step_progress` and `player_challenge_progress` tables
+- ✅ Cache-first singleton: LoadPlayerAsync() fetches from Supabase, LoadPlayer() returns cache
+- ✅ Fire-and-forget SavePlayer() keeps UI responsive
 
 ### Phase 3: AI Layer ✅ COMPLETE
 **Files Updated:**
@@ -90,17 +89,17 @@ if (question is DragDropQuestion ddQ) { DisplayDragDrop(ddQ); }
 if (question is FreeFormQuestion ffQ) { DisplayFreeForm(ffQ); }
 ```
 
-**Subjects (Add to ChallengeDataManager):**
+**Subjects (see CURRICULUM.md for full detail):**
 ```
-Math:
-  - Addition (4 steps)
-  - Subtraction (2 steps)
+Math (9 challenges, 33 steps):
+  - Addition (4 steps) → Subtraction (4 steps) → Multiplication (4 steps) → Division (4 steps)
+  - → Order of Operations (4 steps) → Expressions with Variables (4 steps)
+  - → One-Step Equations (4 steps) → Two-Step Equations (4 steps)
+  - → Systems of Equations (5 steps)
 Physics:
-  - Force (placeholder)
+  - Force and Motion (1 placeholder step)
 History:
-  - Ancient Rome (placeholder)
-
-// Add more: Science, Languages, etc.
+  - Ancient Rome (1 placeholder step)
 ```
 
 **Step Progression (Built-in):**
@@ -136,7 +135,7 @@ while (!step.IsFullyComplete) // IsStreakComplete only
 - Get answer
 - Evaluate with Ollama
 - Update player metrics
-- Save to CSV
+- Save to Supabase (async, cache-first)
 - Check if step complete
 - Auto-advance to next step
 
@@ -155,10 +154,9 @@ while (!step.IsFullyComplete) // IsStreakComplete only
 - Fallback hardcoded questions
 
 ✅ **Persistence:**
-- Player data saves to CSV
-- Resumes where left off
-- Multi-player support
-- Per-step mastery history
+- Player data syncs to Supabase (async writes, cache-first reads)
+- Resumes where left off (current step stored as UUID)
+- Per-step mastery and challenge completion tracked in relational tables
 
 ---
 

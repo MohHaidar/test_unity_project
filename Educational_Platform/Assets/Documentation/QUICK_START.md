@@ -5,7 +5,7 @@ Your codebase has been completely refactored. The system is now:
 - ✅ AI-driven (Ollama generates adaptive questions)
 - ✅ Step-based (5-streak progression per step)
 - ✅ Scalable (supports any subject, question type, or step count)
-- ✅ Persistent (saves player progress to CSV)
+- ✅ Persistent (saves player progress to Supabase cloud database)
 - ✅ Ready to play
 
 ---
@@ -125,7 +125,7 @@ This includes:
 3. **Player** = The learner
    - Tracks: Current subject, challenge, step
    - Stores: Mastery per step, streak in current step
-   - Persists: Saved to CSV file
+   - Persists: Saved to Supabase (async, resumes from cache on next load)
 
 ### Example Data Flow
 ```
@@ -151,32 +151,12 @@ Auto-advance to Step 2
 ## 🔧 How to Customize
 
 ### Change the Starting Step
-Edit `Core/PlayerDataManager.cs` → `LoadPlayer()`:
-```csharp
-// Default to Math > Addition > Step 2 instead
-_player.CurrentSubject = "Math";
-_player.CurrentChallenge = "Addition";
-_player.CurrentStep = 2; // Was 1
-```
+Edit `Core/PlayerDataManager.cs` — change the default step ID used when creating a new player.
+See `CURRICULUM.md` for the step UUID constants, or use `ChallengeDataManager.STEP_ADDITION_1_ID`.
 
-### Add a New Subject
-Edit `Core/ChallengeDataManager.cs`:
-```csharp
-public void AddPhysicsChallenges()
-{
-    var physics = new Challenge
-    {
-        Name = "Physics 101",
-        Subject = "Physics",
-        Steps = new List<Step>
-        {
-            new Step { Number = 1, Description = "Velocity basics" },
-            new Step { Number = 2, Description = "Acceleration" }
-        }
-    };
-    _challenges["Physics"].Add("Physics101", physics);
-}
-```
+### Add a New Challenge or Subject
+Follow the checklist in `Assets/Documentation/CURRICULUM.md` → "Adding a New Challenge".
+The core edit is in `ChallengeDataManager.cs` → `InitializeHardcodedChallenges()`.
 
 ### Add a New Question Type
 1. Create: `Core/DragDropQuestion.cs` implementing `IQuestion`
@@ -200,7 +180,7 @@ Assets/Scripts/
 │   ├── IQuestion.cs ← Question interface
 │   ├── MultipleChoiceQuestion.cs ← MC implementation
 │   ├── ChallengeDataManager.cs ← Challenge definitions
-│   └── PlayerDataManager.cs ← CSV persistence
+│   └── PlayerDataManager.cs ← Supabase persistence (cache-first)
 │
 ├── AI/
 │   ├── OllamaAPI.cs ← HTTP to Ollama
