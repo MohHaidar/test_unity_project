@@ -39,6 +39,21 @@ ChallengeSelectController (root GameObject)
 
 ---
 
+### **STEP 0: Add SupabaseClient to Scene (1 minute)**
+
+This scene is the **entry point** — it must host the `SupabaseClient` component so Supabase is ready before any data is loaded.
+
+1. In the Hierarchy, right-click → **Create Empty**
+2. Name it: `Services`
+3. Select `Services` → **Add Component** → search `SupabaseClient`
+4. If `Assets/Resources/SupabaseConfig.asset` doesn't exist yet, create it:
+   - Right-click `Assets/Resources` → **Create → Educational Platform → Supabase Config**
+   - Fill in your `Project Url` and `Anon Key` from Supabase dashboard → Settings → API
+
+> `SupabaseClient.Awake()` runs before `ChallengeSelectUI.Start()`, so the connection is ready when player data is requested.
+
+---
+
 ### **STEP 1: Create New Scene (1 minute)**
 
 1. In Project tab → `Assets/Scenes` folder

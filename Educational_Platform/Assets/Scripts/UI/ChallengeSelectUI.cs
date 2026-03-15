@@ -27,14 +27,19 @@ public class ChallengeSelectUI : MonoBehaviour
     private List<Challenge> _currentChallenges = new List<Challenge>();
     private Challenge _selectedChallenge;
 
-    private void Start()
+    private async void Start()
     {
-        _player = PlayerDataManager.Instance.LoadPlayer(1, "Player");
+        // SupabaseClient must be in this scene as a component on a GameObject.
+        // It initializes in Awake() before Start() runs, so it's ready here.
         if (subjectDropdown == null || challengeDropdown == null)
         {
             Debug.LogError("[ChallengeSelectUI] Dropdown references not set in Inspector");
             return;
         }
+
+        // Load player and challenges from Supabase (falls back gracefully if unavailable)
+        _player = await PlayerDataManager.Instance.LoadPlayerAsync(1, "Player");
+        await ChallengeDataManager.Instance.LoadFromSupabaseAsync();
 
         PopulateSubjects();
 

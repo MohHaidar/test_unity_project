@@ -1,8 +1,140 @@
-# 📚 Educational Platform - Complete Refactoring Documentation
+# 📚 Educational Platform — Documentation
 
-## 🎉 Status: ✅ REFACTORING COMPLETE & READY TO TEST
+## 🎉 Status: ✅ PRODUCTION-READY MVP
 
-All core architecture is complete. The system is AI-driven, scalable, and ready for scene setup and testing.
+AI-driven adaptive learning game with Supabase cloud persistence and CI/CD schema migrations.
+
+---
+
+## 📖 Documentation Index
+
+| Guide | Time | Purpose |
+|-------|------|---------|
+| **[QUICK_START.md](QUICK_START.md)** | 5 min | Verify Ollama + run the game |
+| **[SCENE_SETUP_INSTRUCTIONS.md](SCENE_SETUP_INSTRUCTIONS.md)** | 15 min | Set up GameScene UI in Unity |
+| **[CHALLENGE_SELECT_UI.md](CHALLENGE_SELECT_UI.md)** | 15 min | Set up ChallengeSelect scene |
+| **[SUPABASE_SETUP_GUIDE.md](SUPABASE_SETUP_GUIDE.md)** | 20 min | Configure Supabase cloud database |
+| **[CICD_RESEARCH.md](CICD_RESEARCH.md)** | Reference | CI/CD patterns and research notes |
+
+---
+
+## 🎯 What's Been Built
+
+### ✅ Phase 1: Data Layer
+- `Step.cs` — step progression with 5-streak goal, mastery tracking
+- `Challenge.cs` — challenge (chapter) structure with steps
+- `Player.cs` — player state: subject, challenge, step, mastery, EXP, coins, completed steps
+- `IQuestion.cs` — extensible question type interface
+- `MultipleChoiceQuestion.cs` — first question type implementation
+
+### ✅ Phase 2: Persistence (Supabase)
+- `PlayerDataManager.cs` — cache-first singleton, async Supabase reads/writes
+- `SupabaseClient.cs` — REST client using UnityWebRequest (no external SDK)
+- `SupabaseConfig.cs` — ScriptableObject for credentials (gitignored per-developer asset)
+- `JsonHelper.cs` — JSON array parser for Supabase REST responses
+- `supabase/migrations/` — versioned schema SQL tracked in Git
+- `.github/workflows/db-migrate.yml` — auto-applies migrations on push to `main`
+
+### ✅ Phase 3: AI Layer
+- `OllamaQuestionGenerator.cs` — generates step-aware adaptive questions via local Ollama
+- `OllamaPerformanceEvaluator.cs` — evaluates answers, returns mastery delta and error type
+
+### ✅ Phase 4: UI Layer
+- `QuestionFlowManager.cs` — coroutine-based game loop with EXP/coins rewards
+- `QuestionDisplay.cs` — polymorphic question rendering with shuffled options
+- `AnswerSubmitter.cs` — answer input capture
+- `ChallengeSelectUI.cs` — subject/challenge/step selector with lock logic
+
+---
+
+## 🚀 Quick Navigation
+
+**Run the game now:** → `QUICK_START.md`  
+**Set up scenes from scratch:** → `SCENE_SETUP_INSTRUCTIONS.md` + `CHALLENGE_SELECT_UI.md`  
+**Connect to Supabase:** → `SUPABASE_SETUP_GUIDE.md`  
+**Add a new subject:** → Edit `Core/ChallengeDataManager.cs`  
+**Add a new question type:** → Implement `IQuestion` interface  
+
+---
+
+## 📊 System Architecture
+
+```
+Assets/Scripts/
+├── Core/
+│   ├── Player.cs, Challenge.cs, Step.cs    ← data models
+│   ├── IQuestion.cs, MultipleChoiceQuestion.cs ← question system
+│   ├── ChallengeDataManager.cs             ← challenge catalog (hardcoded + Supabase)
+│   ├── PlayerDataManager.cs                ← player persistence (Supabase)
+│   ├── SupabaseClient.cs                   ← REST client (attach to Services GameObject)
+│   ├── SupabaseConfig.cs                   ← credentials ScriptableObject
+│   └── JsonHelper.cs                       ← JSON array utility
+├── AI/
+│   ├── OllamaAPI.cs                        ← HTTP client for Ollama
+│   ├── OllamaQuestionGenerator.cs          ← adaptive question generation
+│   └── OllamaPerformanceEvaluator.cs       ← answer evaluation
+└── UI/
+    ├── QuestionFlow/
+    │   ├── QuestionFlowManager.cs          ← main game loop
+    │   ├── QuestionDisplay.cs              ← renders questions
+    │   └── AnswerSubmitter.cs              ← captures answers
+    └── ChallengeSelectUI.cs                ← challenge/step selector
+
+Assets/Scenes/
+├── ChallengeSelect.unity   ← entry point (hosts SupabaseClient)
+└── GameScene.unity         ← gameplay
+```
+
+---
+
+## ⚡ Data Flow
+
+```
+ChallengeSelect loads
+  → SupabaseClient connects
+  → LoadPlayerAsync()        fetches player from Supabase → cache
+  → LoadFromSupabaseAsync()  loads challenges from Supabase (or hardcoded fallback)
+  → UI populated
+
+Player picks step → GameScene loads
+  → LoadPlayer() from cache (instant)
+  → GameLoop: question → answer → evaluate → SavePlayer() (async Supabase write)
+```
+
+---
+
+## 🗄️ Database Schema (Supabase)
+
+| Table | Purpose |
+|-------|---------|
+| `players` | Core player data |
+| `player_step_mastery` | Per-step mastery float values |
+| `player_completed_steps` | Completed step keys |
+| `question_history` | Per-answer logs |
+| `challenges` | Challenge catalog (optional seed) |
+| `steps` | Step catalog (optional seed) |
+
+Schema managed via: `supabase/migrations/` → `supabase db push`
+
+---
+
+## 🏗️ Pre-flight Checklist
+
+- [ ] Ollama installed and `ollama serve` running
+- [ ] Supabase project created and migrations applied (`supabase db push`)
+- [ ] `SupabaseConfig.asset` created in `Assets/Resources/` with your credentials
+- [ ] `SupabaseClient` component added to `Services` GameObject in ChallengeSelect scene
+- [ ] No missing script references in Inspector
+
+---
+
+## 🐛 Known Issues
+
+- **Ultimate Challenge**: `Step.RequireUltimateChallenge` flag exists but UI not implemented
+- **Physics/History**: Placeholder challenge entries with no real content
+- **Player ID**: Hardcoded to `1` — no login/auth system implemented
+- **Single question type**: Only `MultipleChoiceQuestion` — `IQuestion` interface ready for extension
+
 
 ---
 

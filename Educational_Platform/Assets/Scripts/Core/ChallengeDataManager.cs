@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 /// <summary>
 /// Manages loading and caching of challenge definitions.
-/// Currently hardcoded; can be updated to load from JSON later.
+/// Hardcoded challenges serve as default/fallback data.
+/// Call LoadFromSupabaseAsync() at session start to override with cloud data if available.
 /// </summary>
 public class ChallengeDataManager
 {
@@ -13,19 +15,73 @@ public class ChallengeDataManager
 
     public static ChallengeDataManager Instance
     {
-        get
-        {
-            if (_instance == null)
-            {
-                _instance = new ChallengeDataManager();
-            }
-            return _instance;
-        }
+        get { if (_instance == null) _instance = new ChallengeDataManager(); return _instance; }
     }
 
     public ChallengeDataManager()
     {
-        InitializeChallenges();
+        InitializeHardcodedChallenges();
+    }
+
+    /// <summary>
+    /// Loads challenges and steps from Supabase, overriding the hardcoded cache.
+    /// Falls back silently to hardcoded data if Supabase is unavailable or tables are empty.
+    /// </summary>
+    public async Task LoadFromSupabaseAsync()
+    {
+        var client = SupabaseClient.Instance;
+        if (client == null || !client.IsReady)
+        {
+            Debug.LogWarning("[ChallengeDataManager] SupabaseClient not ready — using hardcoded challenges.");
+            return;
+        }
+
+        try
+        {
+            string challengeJson = await client.GetAsync("challenges", "select=*");
+            var challengeRows = JsonHelper.FromJsonArray<ChallengeRow>(challengeJson);
+            if (challengeRows == null || challengeRows.Length == 0)
+            {
+                Debug.Log("[ChallengeDataManager] No challenges in Supabase — using hardcoded data.");
+                return;
+            }
+
+            string stepJson = await client.GetAsync("steps", "select=*&order=number.asc");
+            var stepRows = JsonHelper.FromJsonArray<StepRow>(stepJson);
+
+            var newCache = new Dictionary<string, Dictionary<string, Challenge>>();
+            foreach (var cr in challengeRows)
+            {
+                if (!newCache.ContainsKey(cr.subject))
+                    newCache[cr.subject] = new Dictionary<string, Challenge>();
+
+                var challenge = new Challenge(cr.id, cr.name, cr.subject, cr.description ?? "");
+                if (stepRows != null)
+                    challenge.Steps = stepRows
+                        .Where(s => s.challenge_id == cr.id)
+                        .Select(s => new Step
+                        {
+                            Id = s.id,
+                            Number = s.number,
+                            Description = s.description ?? "",
+                            Subject = s.subject,
+                            Challenge = cr.name,
+                            StreakGoal = s.streak_goal,
+                            MasteryTarget = s.mastery_target,
+                            RequireUltimateChallenge = s.require_ultimate,
+                            Status = StepStatus.NotStarted
+                        }).ToList();
+
+                newCache[cr.subject][cr.id] = challenge;
+            }
+
+            _challengeCache = newCache;
+            Debug.Log($"[ChallengeDataManager] Loaded {challengeRows.Length} challenges from Supabase.");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[ChallengeDataManager] LoadFromSupabaseAsync failed — using hardcoded data. {e.Message}");
+        }
     }
 
     /// <summary>
@@ -65,10 +121,10 @@ public class ChallengeDataManager
     }
 
     /// <summary>
-    /// Initializes hardcoded challenges.
-    /// TODO: Replace with JSON loading when ready.
+    /// Initializes hardcoded challenges (default/fallback data).
+    /// TODO: Seed these into Supabase once and rely on LoadFromSupabaseAsync() going forward.
     /// </summary>
-    private void InitializeChallenges()
+    private void InitializeHardcodedChallenges()
     {
         // Math Subject
         AddMathChallenges();
@@ -218,5 +274,27 @@ public class ChallengeDataManager
         historyChallenges["ancient_rome"] = romeChallenge;
 
         _challengeCache["History"] = historyChallenges;
+    }
+
+    // ─── DTOs ─────────────────────────────────────────────────────────────────
+
+    [System.Serializable] private class ChallengeRow
+    {
+        public string id;
+        public string name;
+        public string description;
+        public string subject;
+    }
+
+    [System.Serializable] private class StepRow
+    {
+        public string id;
+        public int number;
+        public string description;
+        public string subject;
+        public string challenge_id;
+        public int streak_goal;
+        public float mastery_target;
+        public bool require_ultimate;
     }
 }

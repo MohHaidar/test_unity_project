@@ -1,318 +1,142 @@
-# 📦 Refactoring Complete - What's Ready
+# 📦 What's Ready — Educational Platform
 
-## ✅ ALL PHASES COMPLETE
-
-Your Educational Platform has been completely refactored with an AI-driven architecture. Everything is ready for testing.
+## ✅ ALL PHASES COMPLETE (including Supabase integration)
 
 ---
 
-## 📋 What's Been Created
+## 📋 Phase Summary
 
-### Core Scripts (6 files - 20KB)
+### ✅ Phase 1–5: Core System (previously documented)
+- Step-based progression (5-streak goal, mastery tracking)
+- AI question generation and evaluation via Ollama
+- EXP, Coins, CompletedSteps rewards
+- ChallengeSelectUI with lock logic
+- See `REFACTORING_COMPLETE.md` for details
+
+### ✅ Phase 6: Supabase Cloud Integration
 ```
-✅ Step.cs (110 lines)
-   - Step progression with 5-streak goal
-   - Ultimate challenge design room
-   - IsFullyComplete property (accounts for optional ultimate challenge)
-   - GetCurrentPhase() method (StreakBuilding | UltimateChallenge | Complete)
-
-✅ Challenge.cs (55 lines)
-   - Challenge (chapter) structure with steps
-   - Navigation methods (GetStep, GetFirstIncompleteStep)
-   - Completion tracking
-
-✅ Player.cs (160 lines - Complete Rewrite)
-   - Step-based navigation (CurrentSubject, CurrentChallenge, CurrentStep)
-   - Per-step mastery tracking (MasteryByStep dictionary)
-   - Streak in current step
-   - Step navigation methods (AdvanceToNextStep, RestartCurrentStep)
-
-✅ IQuestion.cs (30 lines)
-   - Interface for extensible question types
-   - QuestionType, QuestionText, Difficulty, SkillFocus properties
-   - CheckAnswer() method for polymorphic evaluation
-
-✅ MultipleChoiceQuestion.cs (60 lines)
-   - Implements IQuestion interface
-   - Options list, CorrectAnswer field
-   - First question type implementation (reference for adding others)
-
-✅ ChallengeDataManager.cs (235 lines)
-   - Singleton for challenge definitions
-   - Hardcoded challenges: Math (Addition 4 steps, Subtraction 2 steps)
-   - Placeholder challenges: Physics, History
-   - Step 4 of Addition has RequireUltimateChallenge=true (example)
+SupabaseConfig.cs        ScriptableObject — ProjectUrl + AnonKey (gitignored per-developer)
+SupabaseClient.cs        MonoBehaviour REST client — GetAsync, PostAsync, UpsertAsync, PatchAsync, DeleteAsync
+JsonHelper.cs            JSON array parser for Supabase REST responses
+PlayerDataManager.cs     Rewritten — cache-first + async Supabase persistence (replaces CSV)
+ChallengeDataManager.cs  Updated — LoadFromSupabaseAsync() overrides hardcoded catalog if DB has data
 ```
 
-### Persistence Scripts (1 file - 10KB)
-```
-✅ PlayerDataManager.cs (Updated - 350 lines)
-   - New CSV format: id, name, subject, challenge, step, mastery_by_step_json, streak, questions_count, last_updated
-   - Serializes/deserializes MasteryByStep dictionary to JSON
-   - LoadPlayer() and SavePlayer() methods
-   - Singleton pattern with caching
-   - MasteryDictWrapper and MasteryPair helper classes for JSON serialization
-```
+**PlayerDataManager API (backward compatible):**
+- `LoadPlayer(id)` — synchronous, returns from cache. Call `LoadPlayerAsync` first.
+- `LoadPlayerAsync(id)` — fetches from Supabase, populates cache. Call once at session start.
+- `SavePlayer(player)` — cache update + async upsert to Supabase
+- `LogQuestionResultAsync(id, result)` — appends to `question_history` table
 
-### AI Scripts (2 files - 16KB)
+### ✅ Phase 7: CI/CD Schema Migrations
 ```
-✅ OllamaQuestionGenerator.cs (Updated - 230 lines)
-   - Updated signature: GenerateQuestion(Player, Step) → IQuestion
-   - Step-aware prompts (includes step description, current mastery, streak goal)
-   - Parses JSON responses into MultipleChoiceQuestion objects
-   - Fallback hardcoded question on error
-
-✅ OllamaPerformanceEvaluator.cs (Updated - 250 lines)
-   - Updated signature: Evaluate(Player, Step, IQuestion, answer, time) → EvaluationResult
-   - Polymorphic: works with any IQuestion type
-   - Helper methods: GetCorrectAnswerFromQuestion(), GetEstimatedTimeFromQuestion()
-   - Returns EvaluationResult with IsCorrect, MasteryDelta, ErrorType, ErrorExplanation
-```
-
-### UI Scripts (3 files)
-```
-✅ QuestionDisplay.cs (Updated)
-   - DisplayQuestion(IQuestion) - polymorphic dispatch
-   - Options are Fisher-Yates shuffled on every question (correct answer randomized)
-   - ShowFeedback(), ClearDisplay()
-
-✅ QuestionFlowManager.cs (Updated)
-   - Step-based game loop with outer (steps) + inner (questions) coroutine
-   - Awards EXP per answer: +5 correct, +1 incorrect, +2 time bonus
-   - Awards Coins + EXP on step completion: +50 each
-   - Marks step completed in player.CompletedSteps on first completion
-   - Player stats panel shows: Name, Subject, Challenge, EXP, Coins, Completed Steps count
-   - Saves player after every answer and step completion
-
-✅ ChallengeSelectUI.cs (NEW)
-   - Subject dropdown → Challenge dropdown → Step buttons in scroll view
-   - Step buttons color-coded: green=done, yellow=unlocked, red=locked
-   - Lock rule: step 1 always unlocked; step N unlocked if step N-1 in CompletedSteps
-   - On step click: SelectStep → SavePlayer → loads GameScene
-   - Falls back to SceneManager.LoadScene if custom SceneLoader not in scene
-```
-
-### Documentation (6 files)
-```
-✅ README.md - Complete documentation index, updated with EXP/Coins/Selectors
-✅ QUICK_START.md - 5-minute quickstart
-✅ SCENE_SETUP_INSTRUCTIONS.md - GameScene setup
-✅ UI_CREATION_GUIDE.md - GameScene UI step-by-step (updated with new features)
-✅ CHALLENGE_SELECT_UI.md (NEW) - Full step-by-step setup for ChallengeSelect scene
-✅ WHATS_READY.md - This file
-```
-
-✅ SCENE_SETUP_INSTRUCTIONS.md (9KB)
-   - Complete step-by-step guide
-   - Canvas creation
-   - Text element setup
-   - Button configuration
-   - Script attachment
-   - Inspector field assignment
-   - Visual design recommendations
-   - Troubleshooting
-
-✅ REFACTORING_COMPLETE.md - Technical summary
+supabase/migrations/20260315052219_initial_schema.sql   Full schema SQL (versioned, tracked in Git)
+.github/workflows/db-migrate.yml                        Auto-applies migrations on push to main
 ```
 
 ---
 
-## 🎯 Core Features Ready
+## 🎯 Core Features
 
-### ✅ Step-Based Progression
-- 5-streak goal per step (configurable)
-- Optional ultimate challenge (design room ready)
-- Step status: NotStarted, InProgress, Completed
-- Auto-advance to next step on completion
-
-### ✅ Per-Step Mastery Tracking
-- Dictionary: `{subject}:{challenge}:{step}` → float (0.0-1.0)
-- New players initialized at avg(MasteryTarget, 30%) instead of 0
-- Updated +0.03 to +0.05 per correct answer, -0.03 per wrong answer
-- Saved to CSV per question
-
-### ✅ Adaptive AI Questions
-- Ollama generates questions specific to student level
-- Prompt includes: step description, current mastery, streak goal, recent performance
-- Parses JSON responses
-- Polymorphic: works with any IQuestion type
-
-### ✅ Answer Evaluation
-- Ollama evaluates answers
-- Returns: IsCorrect, MasteryDelta, ErrorType, ErrorExplanation
-- Polymorphic: checks question type, extracts correct answer appropriately
-
-### ✅ Data Persistence
-- CSV format with JSON serialization of MasteryByStep, CompletedSteps
-- **New fields:** `coins`, `total_exp`, `completed_steps_json`
-- Load/save via PlayerDataManager singleton
-- Resumes where player left off
-- Multi-player support
-
-### ✅ EXP & Coins Rewards
-- **Per answer:** +5 EXP correct, +1 EXP incorrect, +2 EXP time bonus (answered within estimated time)
-- **Per step completed:** +50 EXP + 50 Coins
-- Saved to CSV after every answer
-- Displayed in the player stats panel during gameplay
-
-### ✅ Completed Steps Tracking
-- Each finished step recorded as key `"{subject}:{challenge}:{stepNumber}"`
-- Persisted in CSV as JSON array
-- Used by ChallengeSelectUI to color-code steps (green/yellow/red)
-- Included in AI prompt context for better-personalized questions on replay
-
-### ✅ Scalable Architecture
-- IQuestion interface for unlimited question types
-- ChallengeDataManager for unlimited subjects
-- ChallengeDataManager for unlimited steps per challenge
-- No code changes needed to add new subjects/steps
-
-### ✅ Complete Documentation
-- 4 comprehensive guides (36KB)
-- Code comments throughout
-- Example prompts (tested with Ollama)
-- Troubleshooting section
+| Feature | Status |
+|---------|--------|
+| Step-based progression (5-streak) | ✅ |
+| Per-step mastery tracking | ✅ |
+| Adaptive AI questions (Ollama) | ✅ |
+| Answer evaluation (Ollama) | ✅ |
+| EXP + Coins rewards | ✅ |
+| Completed steps tracking | ✅ |
+| Challenge/step selector UI | ✅ |
+| Cloud persistence (Supabase) | ✅ |
+| Schema migrations (CI/CD) | ✅ |
+| Multi-device player sync | ✅ |
+| Ultimate Challenge UI | ⏳ Design ready, not implemented |
 
 ---
 
-## 🎮 Game Flow (Ready to Test)
+## 🎮 Game Flow
 
 ```
-1. Scene starts
-   ↓
-2. Load player from CSV
-3. Load challenge definitions
-4. Get current step (hardcoded: Math > Addition > Step 1)
-   ↓
-5. Loop (while step.IsFullyComplete is false):
-   a) GenerateQuestion(player, step) → IQuestion
-   b) DisplayQuestion(question) → Shows 4 option buttons
-   c) Player clicks answer
-   d) Evaluate(player, step, question, answer) → EvaluationResult
-   e) Update step: streak++, mastery += delta
-   f) Save player to CSV
-   g) Show feedback
-   h) If streak < 5: Loop back to (a)
-   ↓
-6. Step complete (streak = 5)
-   Show "Step Complete" message
-   Player clicks "Next Step"
-   ↓
-7. Auto-advance to next step
-   ↓
-8. If more steps: Loop back to 5
-   If all steps done: Show "Challenge Complete"
+ChallengeSelect scene
+  ↓ SupabaseClient connects
+  ↓ LoadPlayerAsync() → cloud fetch → cache
+  ↓ LoadFromSupabaseAsync() → challenges loaded
+  ↓ Player picks subject/challenge/step
+
+GameScene
+  ↓ LoadPlayer() from cache
+  ↓ Loop: generate → display → answer → evaluate → save
+  ↓ Step complete: +50 EXP, +50 Coins, mark completed
+  ↓ Next step auto-advances
+  ↓ Back button → ChallengeSelect
 ```
 
 ---
 
-## 📊 Statistics
+## 📁 Current File Structure
 
-| Metric | Value |
-|--------|-------|
-| Files Created | 6 |
-| Files Updated | 5 |
-| Total Code | ~2000 lines |
-| Documentation | 4 guides (36KB) |
-| Code Quality | Production-ready |
-| Test Status | Ready for manual testing |
-| Scalability | Unlimited |
+```
+Assets/Scripts/
+├── Core/
+│   ├── Player.cs
+│   ├── Challenge.cs
+│   ├── Step.cs
+│   ├── IQuestion.cs
+│   ├── MultipleChoiceQuestion.cs
+│   ├── ChallengeDataManager.cs
+│   ├── PlayerDataManager.cs        ← Supabase (was CSV)
+│   ├── SupabaseClient.cs           ← NEW
+│   ├── SupabaseConfig.cs           ← NEW
+│   └── JsonHelper.cs               ← NEW
+├── AI/
+│   ├── OllamaAPI.cs
+│   ├── OllamaQuestionGenerator.cs
+│   └── OllamaPerformanceEvaluator.cs
+└── UI/
+    ├── QuestionFlow/
+    │   ├── QuestionFlowManager.cs
+    │   ├── QuestionDisplay.cs
+    │   └── AnswerSubmitter.cs
+    └── ChallengeSelectUI.cs
 
----
+Assets/Scenes/
+├── ChallengeSelect.unity   ← entry point
+└── GameScene.unity
 
-## 🏗️ Architecture Quality
+Assets/Resources/
+└── SupabaseConfig.asset    ← gitignored, created locally by each developer
 
-### Clean Separation of Concerns
-- **Data Layer:** Player, Challenge, Step, IQuestion
-- **Persistence Layer:** PlayerDataManager
-- **AI Layer:** OllamaQuestionGenerator, OllamaPerformanceEvaluator
-- **UI Layer:** QuestionDisplay, QuestionFlowManager
+supabase/
+└── migrations/
+    └── 20260315052219_initial_schema.sql
 
-### Extensibility
-- New Question Types: Implement IQuestion interface
-- New Subjects: Add to ChallengeDataManager
-- New Steps: Add to challenge definitions
-- New Features: No refactoring needed (architecture ready)
-
-### Robustness
-- Null checks throughout
-- Error handling and retries
-- Fallback hardcoded questions on Ollama failure
-- Detailed console logging
-
----
-
-## 🎓 How to Use
-
-### To Test Immediately
-1. Read: `Assets/Documentation/QUICK_START.md`
-2. Create simple scene with Canvas + StatusText
-3. Attach QuestionFlowManager
-4. Press Play
-
-### For Full Game Setup
-1. Follow: `Assets/Documentation/SCENE_SETUP_INSTRUCTIONS.md`
-2. Create complete scene with all UI
-3. Configure all serialized fields
-4. Press Play
-
-### To Customize
-1. Read: `Assets/Documentation/QUICK_START.md` → Customization section
-2. Edit: `ChallengeDataManager.cs` to add subjects
-3. Edit: `PlayerDataManager.cs` to change starting step
-4. Implement: New `IQuestion` classes for new question types
+.github/workflows/
+└── db-migrate.yml
+```
 
 ---
 
 ## ✅ Verification Checklist
 
 Before testing:
-- [ ] All scripts are in correct folders (Core/, AI/, UI/QuestionFlow/)
-- [ ] No compilation errors in Unity
-- [ ] Ollama is installed and working
-- [ ] Documentation files are readable
-- [ ] No missing script references
+- [ ] Ollama running: `ollama serve`
+- [ ] Supabase project created and `supabase db push` applied
+- [ ] `SupabaseConfig.asset` created in `Assets/Resources/` with your credentials
+- [ ] `SupabaseClient` component on `Services` GameObject in ChallengeSelect scene
+- [ ] No compilation errors in Unity Console
 
 ---
 
-## 🚀 Status Summary
+## 🚀 Status
 
-| Component | Status | Ready? |
-|-----------|--------|--------|
-| Data Layer | ✅ Complete | ✅ Yes |
-| Persistence | ✅ Complete | ✅ Yes |
-| AI Integration | ✅ Complete | ✅ Yes |
-| UI Layer | ✅ Complete | ✅ Yes |
-| Documentation | ✅ Complete | ✅ Yes |
-| Code Quality | ✅ High | ✅ Yes |
-| Testing | 🟡 Manual | ⏳ Next |
+| Layer | Status |
+|-------|--------|
+| Data models | ✅ Complete |
+| Cloud persistence | ✅ Complete |
+| AI integration | ✅ Complete |
+| UI layer | ✅ Complete |
+| CI/CD migrations | ✅ Complete |
+| Documentation | ✅ Updated |
 
----
 
-## 📞 Next Steps
-
-### Immediate
-Start Ollama: `ollama serve`
-
-### Short-term (5 min)
-Read: `Assets/Documentation/README.md`
-
-### Medium-term (15 min)
-Follow: `Assets/Documentation/QUICK_START.md` or `SCENE_SETUP_INSTRUCTIONS.md`
-
-### Long-term (when ready)
-- Implement Ultimate Challenge UI
-- Add ChallengeSelectUI
-- Add more subjects
-- Add more question types
-- Add leaderboard/progress tracking
-
----
-
-## 🎉 Conclusion
-
-Your system is complete and ready to test. All architecture is in place, all code is written, all documentation is comprehensive.
-
-**Next action:** Pick a guide and start testing! 🚀
-
-Status: **READY FOR MVP** ✅
+--
