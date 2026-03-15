@@ -90,3 +90,7 @@ crashlytics-build.properties
 /Educational_Platform/ignore.conf
 /Educational_Platform/.plastic
 /Educational_Platform/Assets/TextMesh Pro
+
+# Supabase credentials — each developer fills in their own, never commit
+/Educational_Platform/Assets/Resources/SupabaseConfig.asset
+/Educational_Platform/Assets/Resources/SupabaseConfig.asset.meta
