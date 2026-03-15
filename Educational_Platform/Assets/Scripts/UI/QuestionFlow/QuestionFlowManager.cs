@@ -177,6 +177,13 @@ public class QuestionFlowManager : MonoBehaviour
             // Question loop: keep asking until step is fully complete (5-streak + optional ultimate challenge)
             while (!_currentStep.IsFullyComplete)
             {
+                // Ultimate Challenge is not yet implemented — auto-complete so the streak alone finishes the step
+                if (_currentStep.IsStreakComplete && _currentStep.RequireUltimateChallenge && !_currentStep.UltimateChallengeCompleted)
+                {
+                    _currentStep.UltimateChallengeCompleted = true;
+                    break;
+                }
+
                 // Generate question
                 ShowStatus($"Generating question... (Streak: {_currentStep.StreakCurrent}/{_currentStep.StreakGoal})");
                 _currentQuestion = _questionGenerator.GenerateQuestion(_player, _currentStep);
@@ -289,7 +296,9 @@ public class QuestionFlowManager : MonoBehaviour
                     _currentStep.StreakGoal,
                     currentDiff,
                     _lastQuestionDifficulty,
-                    evaluation.IsCorrect ? _currentQuestion.SkillFocus : evaluation.ErrorExplanation);
+                    evaluation.IsCorrect
+                        ? _currentQuestion.SkillFocus
+                        : (evaluation.StudentHint ?? evaluation.ErrorExplanation));
                 _lastQuestionDifficulty = currentDiff;
                 _questionDisplay.ShowFeedback(evaluation.IsCorrect, feedbackMsg);
 

@@ -97,7 +97,8 @@ RETURN ONLY VALID JSON (no other text, no markdown):
   ""correctAnswer"": ""{GetCorrectAnswerFromQuestion(question)}"",
   ""studentAnswer"": ""{studentAnswer}"",
   ""errorType"": ""<null if correct, else: conceptual_gap|careless_mistake|timing_issue>"",
-  ""errorExplanation"": ""<brief explanation of the error or null if correct>"",
+  ""errorExplanation"": ""<brief analysis of the error type and root cause — for internal use>"",
+  ""studentHint"": ""<If incorrect: 1-2 sentences in second person, teaching tone. Explain the mistake and guide them to the right approach. E.g. 'You got 7, but remember you need to add both numbers together. Try counting up from 3 four more times.' Null if correct.>"",
   ""speedScore"": <0.0-1.0>,
   ""confidenceInPerformance"": <0.0-1.0>,
   ""masteryDelta"": <-0.10 to +0.10>,
@@ -163,6 +164,7 @@ RETURN ONLY VALID JSON (no other text, no markdown):
                 IsCorrect = isCorrect,
                 ErrorType = data.errorType,
                 ErrorExplanation = data.errorExplanation,
+                StudentHint = data.studentHint,
                 SpeedScore = data.speedScore,
                 ConfidenceInPerformance = data.confidenceInPerformance,
                 MasteryDelta = data.masteryDelta,
@@ -192,6 +194,7 @@ RETURN ONLY VALID JSON (no other text, no markdown):
             IsCorrect = isCorrect,
             ErrorType = isCorrect ? null : "unknown",
             ErrorExplanation = isCorrect ? null : "Answer is incorrect",
+            StudentHint = isCorrect ? null : "That's not quite right. Take your time and try working through it step by step.",
             SpeedScore = 0.5f,
             ConfidenceInPerformance = 0.3f,
             MasteryDelta = isCorrect ? 0.03f : -0.03f,
@@ -208,6 +211,7 @@ RETURN ONLY VALID JSON (no other text, no markdown):
         public string studentAnswer;
         public string errorType;
         public string errorExplanation;
+        public string studentHint;
         public float speedScore;
         public float confidenceInPerformance;
         public float masteryDelta;
@@ -222,8 +226,9 @@ RETURN ONLY VALID JSON (no other text, no markdown):
 public class EvaluationResult
 {
     public bool IsCorrect { get; set; }
-    public string ErrorType { get; set; } // "conceptual_gap", "careless_mistake", "timing_issue", or null
-    public string ErrorExplanation { get; set; }
+    public string ErrorType { get; set; }
+    public string ErrorExplanation { get; set; }  // internal analysis
+    public string StudentHint { get; set; }        // student-facing teaching message
     public float SpeedScore { get; set; } // 0.0-1.0
     public float ConfidenceInPerformance { get; set; } // 0.0-1.0
     public float MasteryDelta { get; set; } // -0.10 to +0.10
