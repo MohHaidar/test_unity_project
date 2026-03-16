@@ -184,13 +184,14 @@ RETURN ONLY VALID JSON (no other text, no markdown):
                 return stepNumber switch
                 {
                     1 => "- Use subtraction only\n- Numbers should stay within 10\n- Result must be 0 or greater",
-                    2 => "- Ask for the missing addend in an addition fact\n- Formats like 3 + ? = 8 are allowed\n- Correct answer must be a whole number from 0 to 10",
+                    2 => "- Ask for the missing addend in an addition fact\n- Phrase it as a full question, e.g. 'What number completes 3 + ? = 8?'\n- The question MUST start with 'What' or 'Find'\n- Correct answer must be a whole number from 0 to 10",
                     3 => "- Use two-digit subtraction without borrowing\n- Ones digit of the minuend must be greater than or equal to the ones digit of the subtrahend",
                     4 => "- Use two-digit subtraction with borrowing\n- At least one borrow should be required\n- Result must stay positive",
                     _ => ""
                 };
 
             case "multiplication":
+            case "multiplication_i":
                 return stepNumber switch
                 {
                     1 => "- Use multiplication as equal groups\n- Small whole numbers only\n- Formats like 3 groups of 4 or 3 x 4 are allowed",
@@ -201,12 +202,61 @@ RETURN ONLY VALID JSON (no other text, no markdown):
                 };
 
             case "division":
+            case "division_i":
                 return stepNumber switch
                 {
                     1 => "- Use equal sharing or grouping questions\n- Exact division only\n- Small whole numbers only",
                     2 => "- Use division by 2 only\n- Quotient must be a whole number",
                     3 => "- Use division by 5 only\n- Quotient must be a whole number",
                     4 => "- Use division by 10 only\n- Quotient must be a whole number",
+                    _ => ""
+                };
+
+            case "multiplication_ii":
+                return stepNumber switch
+                {
+                    1 => "- Use multiplication by 3 only\n- Other factor between 1 and 12",
+                    2 => "- Use multiplication by 4 only\n- Other factor between 1 and 12",
+                    3 => "- Use multiplication by 6 only\n- Other factor between 1 and 12",
+                    4 => "- Use multiplication by 7 only\n- Other factor between 1 and 12",
+                    _ => ""
+                };
+
+            case "division_ii":
+                return stepNumber switch
+                {
+                    1 => "- Use division by 3 only\n- Quotient must be a whole number between 1 and 12",
+                    2 => "- Use division by 4 only\n- Quotient must be a whole number between 1 and 12",
+                    3 => "- Use division by 6 only\n- Quotient must be a whole number between 1 and 12",
+                    4 => "- Use division by 7 only\n- Quotient must be a whole number between 1 and 12",
+                    _ => ""
+                };
+
+            case "multiplication_iii":
+                return stepNumber switch
+                {
+                    1 => "- Use multiplication by 8 only\n- Other factor between 1 and 12",
+                    2 => "- Use multiplication by 9 only\n- Other factor between 1 and 12",
+                    3 => "- Use ANY multiplication fact from the 1–9 times tables\n- Mix factors freely",
+                    _ => ""
+                };
+
+            case "division_iii":
+                return stepNumber switch
+                {
+                    1 => "- Use division by 8 only\n- Quotient must be a whole number between 1 and 12",
+                    2 => "- Use division by 9 only\n- Quotient must be a whole number between 1 and 12",
+                    3 => "- Use ANY exact division fact (divisors 1–9)\n- Mix divisors freely",
+                    _ => ""
+                };
+
+            case "arithmetic_review":
+                return stepNumber switch
+                {
+                    1 => "- Use ONLY addition or subtraction\n- Mix question types freely\n- Numbers up to 100",
+                    2 => "- Use ONLY multiplication or division\n- Use any facts from the 1–9 times tables\n- Division must be exact",
+                    3 => "- Use any of the four operations: +, -, ×, ÷\n- Mix freely\n- All results must be whole numbers",
+                    4 => "- Create a two-step mental math question using any two operations\n- Phrase as 'What is ...?' and give a single numeric answer\n- All intermediate and final results must be whole numbers",
                     _ => ""
                 };
 
@@ -233,31 +283,31 @@ RETURN ONLY VALID JSON (no other text, no markdown):
             case "one_step_equations":
                 return stepNumber switch
                 {
-                    1 => "- Solve equations of the form x + a = b\n- Whole-number solution only",
-                    2 => "- Solve equations of the form x - a = b\n- Whole-number solution only",
-                    3 => "- Solve equations of the form ax = b\n- Use exact whole-number solutions",
-                    4 => "- Solve equations of the form x / a = b\n- Use exact whole-number solutions",
+                    1 => "- Solve equations of the form x + a = b\n- Phrase as a question: 'What is the value of x in x + 3 = 7?'\n- Whole-number solution only",
+                    2 => "- Solve equations of the form x - a = b\n- Phrase as a question: 'What is the value of x in x - 4 = 2?'\n- Whole-number solution only",
+                    3 => "- Solve equations of the form ax = b\n- Phrase as a question: 'What is the value of x in 3x = 12?'\n- Use exact whole-number solutions",
+                    4 => "- Solve equations of the form x / a = b\n- Phrase as a question: 'What is the value of x in x / 4 = 5?'\n- Use exact whole-number solutions",
                     _ => ""
                 };
 
             case "two_step_equations":
                 return stepNumber switch
                 {
-                    1 => "- Solve equations of the form ax + b = c\n- Use small positive integers\n- Whole-number solution only",
-                    2 => "- Solve equations of the form ax - b = c\n- Use small positive integers\n- Whole-number solution only",
-                    3 => "- Solve equations of the form x / a + b = c\n- Division must stay exact\n- Whole-number solution only",
-                    4 => "- Solve equations of the form x / a - b = c\n- Division must stay exact\n- Whole-number solution only",
+                    1 => "- Solve equations of the form ax + b = c\n- Phrase as a question: 'What is the value of x in 2x + 3 = 11?'\n- Use small positive integers\n- Whole-number solution only",
+                    2 => "- Solve equations of the form ax - b = c\n- Phrase as a question: 'What is the value of x in 3x - 4 = 8?'\n- Use small positive integers\n- Whole-number solution only",
+                    3 => "- Solve equations of the form x / a + b = c\n- Phrase as a question: 'What is the value of x in x / 2 + 3 = 7?'\n- Division must stay exact\n- Whole-number solution only",
+                    4 => "- Solve equations of the form x / a - b = c\n- Phrase as a question: 'What is the value of x in x / 3 - 2 = 4?'\n- Division must stay exact\n- Whole-number solution only",
                     _ => ""
                 };
 
             case "systems_of_equations":
                 return stepNumber switch
                 {
-                    1 => "- Use one equation with a known x value and another equation y = x + a\n- Ask for the value of y after substitution\n- Whole-number answer only",
-                    2 => "- Use a two-equation system where one equation already isolates y\n- The student should solve the system and report x only\n- Whole-number solution only",
-                    3 => "- Use a two-equation system where one equation already isolates y\n- The student should solve the system and report y only\n- Whole-number solution only",
-                    4 => "- Use standard-form systems such as x + y = c and x - y = d\n- The student should solve the system and report x only\n- Whole-number solution only",
-                    5 => "- Use standard-form systems such as x + y = c and x - y = d\n- The student should solve the system and report y only\n- Whole-number solution only",
+                    1 => "- Use one equation with a known x value and another equation y = x + a\n- Phrase as a question: 'If x = 3 and y = x + 4, what is y?'\n- Whole-number answer only",
+                    2 => "- Use a two-equation system where one equation already isolates y\n- Phrase as a question: 'In the system y = x + 2 and y = 7, what is the value of x?'\n- Whole-number solution only",
+                    3 => "- Use a two-equation system where one equation already isolates y\n- Phrase as a question: 'In the system y = x + 2 and x = 5, what is the value of y?'\n- Whole-number solution only",
+                    4 => "- Use standard-form systems such as x + y = c and x - y = d\n- Phrase as a question: 'In the system x + y = 10 and x - y = 4, what is the value of x?'\n- Whole-number solution only",
+                    5 => "- Use standard-form systems such as x + y = c and x - y = d\n- Phrase as a question: 'In the system x + y = 10 and x - y = 4, what is the value of y?'\n- Whole-number solution only",
                     _ => ""
                 };
 

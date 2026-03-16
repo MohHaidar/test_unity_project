@@ -6,13 +6,17 @@ using UnityEngine.SceneManagement;
 using TMPro;
 
 /// <summary>
-/// ChallengeSelectUI: populate subjects -> challenges -> steps
+/// ChallengeSelectUI: populate subjects -> challenges -> steps.
 /// Expects in-scene UI elements wired in the Inspector:
 /// - TMP_Dropdown subjectDropdown
 /// - TMP_Dropdown challengeDropdown
 /// - Transform stepsContainer
 /// - GameObject stepButtonPrefab (Button prefab with TMP child)
 /// - Button backButton
+/// Optional stage display (wire in Inspector for the stage panel):
+/// - TMP_Text stageLabel     → shows "Stage 2 · Arithmetic Mastery"
+/// - TMP_Text stageProgress  → shows "1 / 5 challenges complete"
+/// - Slider stageProgressBar → filled 0–1 within the current stage
 /// </summary>
 public class ChallengeSelectUI : MonoBehaviour
 {
@@ -22,6 +26,11 @@ public class ChallengeSelectUI : MonoBehaviour
     public Transform stepsContainer;
     public GameObject stepButtonPrefab;
     public Button backButton;
+
+    [Header("Stage Display (optional)")]
+    public TextMeshProUGUI stageLabel;
+    public TextMeshProUGUI stageProgress;
+    public Slider stageProgressBar;
 
     private Player _player;
     private List<Challenge> _currentChallenges = new List<Challenge>();
@@ -68,7 +77,12 @@ public class ChallengeSelectUI : MonoBehaviour
         _currentChallenges = ChallengeDataManager.Instance.GetChallengesForSubject(subject);
 
         List<string> names = new List<string>();
-        foreach (var c in _currentChallenges) names.Add(c.Name);
+        foreach (var c in _currentChallenges)
+        {
+            bool unlocked = ChallengeDataManager.Instance.IsChallengeUnlocked(c.Id, _player);
+            string lockIcon = unlocked ? "" : "🔒 ";
+            names.Add($"{lockIcon}{c.Name} [S{c.StageNumber}]");
+        }
 
         challengeDropdown.ClearOptions();
         challengeDropdown.AddOptions(names);
@@ -91,7 +105,29 @@ public class ChallengeSelectUI : MonoBehaviour
     {
         if (index < 0 || index >= _currentChallenges.Count) return;
         _selectedChallenge = _currentChallenges[index];
+        RefreshStageDisplay();
         RefreshStepsUI();
+    }
+
+    private void RefreshStageDisplay()
+    {
+        if (_selectedChallenge == null) return;
+
+        string subject = subjectDropdown.options[subjectDropdown.value].text;
+        var allChallenges = ChallengeDataManager.Instance.GetChallengesForSubject(subject);
+        int stageNum = _selectedChallenge.StageNumber;
+        string stageName = _selectedChallenge.StageName;
+
+        if (stageLabel != null)
+            stageLabel.text = $"Stage {stageNum}  ·  {stageName}";
+
+        var (done, total) = _player.GetStageProgress(subject, stageNum, allChallenges);
+
+        if (stageProgress != null)
+            stageProgress.text = total > 0 ? $"{done} / {total} challenges complete" : "";
+
+        if (stageProgressBar != null)
+            stageProgressBar.value = total > 0 ? (float)done / total : 0f;
     }
 
     private void RefreshStepsUI()

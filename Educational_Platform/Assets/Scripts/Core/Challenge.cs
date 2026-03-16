@@ -21,6 +21,10 @@ public class Challenge
     // Challenge UUIDs that must be completed before this challenge is available
     public List<string> Prerequisites { get; set; } = new List<string>();
 
+    // Stage grouping — stages are visual milestones (e.g. Stage 1: Arithmetic Foundations)
+    public int StageNumber { get; set; } = 1;
+    public string StageName { get; set; } = "";
+
     public int TotalSteps => Steps.Count;
     public int CompletedSteps => Steps.Count(s => s.Status == StepStatus.Completed);
     public bool IsCompleted => CompletedSteps == TotalSteps;

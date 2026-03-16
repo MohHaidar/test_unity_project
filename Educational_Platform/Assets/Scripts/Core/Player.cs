@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -181,6 +182,59 @@ public class Player
         return !string.IsNullOrEmpty(CurrentStepId)
             ? CurrentStepId
             : $"{CurrentSubject}:{CurrentChallenge}:{CurrentStep}";
+    }
+
+    /// <summary>
+    /// Returns the stage number of the player's currently selected challenge.
+    /// </summary>
+    public int GetCurrentStageNumber(List<Challenge> allChallenges)
+    {
+        if (allChallenges == null) return 1;
+        var c = allChallenges.FirstOrDefault(ch =>
+            ch.Slug.Equals(CurrentChallenge, StringComparison.OrdinalIgnoreCase) ||
+            ch.Name.Equals(CurrentChallenge,  StringComparison.OrdinalIgnoreCase));
+        return c?.StageNumber ?? 1;
+    }
+
+    /// <summary>
+    /// Returns the stage name of the player's currently selected challenge.
+    /// </summary>
+    public string GetCurrentStageName(List<Challenge> allChallenges)
+    {
+        if (allChallenges == null) return "";
+        var c = allChallenges.FirstOrDefault(ch =>
+            ch.Slug.Equals(CurrentChallenge, StringComparison.OrdinalIgnoreCase) ||
+            ch.Name.Equals(CurrentChallenge,  StringComparison.OrdinalIgnoreCase));
+        return c?.StageName ?? "";
+    }
+
+    /// <summary>
+    /// Returns (completedChallenges, totalChallenges) for a given stage in a subject.
+    /// A challenge counts as completed when all its steps are in CompletedSteps.
+    /// </summary>
+    public (int completed, int total) GetStageProgress(string subject, int stageNumber, List<Challenge> allChallenges)
+    {
+        if (allChallenges == null) return (0, 0);
+        var stageChallenges = allChallenges
+            .Where(c => c.Subject == subject && c.StageNumber == stageNumber)
+            .ToList();
+        int total = stageChallenges.Count;
+        int completed = stageChallenges.Count(c =>
+            c.Steps.Count > 0 && c.Steps.All(s => CompletedSteps.Contains(s.Id)));
+        return (completed, total);
+    }
+
+    /// <summary>
+    /// Returns 0–1 overall progress through all challenges in a subject (step-level granularity).
+    /// </summary>
+    public float GetSubjectProgress(string subject, List<Challenge> allChallenges)
+    {
+        if (allChallenges == null) return 0f;
+        var subjectChallenges = allChallenges.Where(c => c.Subject == subject).ToList();
+        int totalSteps = subjectChallenges.Sum(c => c.Steps.Count);
+        if (totalSteps == 0) return 0f;
+        int doneSteps = subjectChallenges.Sum(c => c.Steps.Count(s => CompletedSteps.Contains(s.Id)));
+        return (float)doneSteps / totalSteps;
     }
 
     public override string ToString()
