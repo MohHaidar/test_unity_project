@@ -190,7 +190,6 @@ RETURN ONLY VALID JSON (no other text, no markdown):
                     _ => ""
                 };
 
-            case "multiplication":
             case "multiplication_i":
                 return stepNumber switch
                 {
@@ -201,7 +200,6 @@ RETURN ONLY VALID JSON (no other text, no markdown):
                     _ => ""
                 };
 
-            case "division":
             case "division_i":
                 return stepNumber switch
                 {
