@@ -15,6 +15,10 @@ ALTER TABLE challenges ADD COLUMN IF NOT EXISTS difficulty float NOT NULL DEFAUL
 ALTER TABLE steps      ADD COLUMN IF NOT EXISTS difficulty float NOT NULL DEFAULT 0.5;
 
 -- ── New Subtraction bridge steps ─────────────────────────────
+-- Renumber OLD steps 3→5 and 4→6 FIRST (unique constraint on challenge_id+number)
+UPDATE steps SET number = 5 WHERE id = 'c9000000-0000-0000-0000-000000000000';
+UPDATE steps SET number = 6 WHERE id = 'ca000000-0000-0000-0000-000000000000';
+
 INSERT INTO steps (id, challenge_id, number, title, description, streak_goal, mastery_target, require_ultimate, difficulty)
 VALUES
   ('fc000000-0000-0000-0000-000000000000',
@@ -34,20 +38,16 @@ ON CONFLICT (id) DO UPDATE SET
     difficulty  = EXCLUDED.difficulty;
 
 -- Prerequisites for new steps
-INSERT INTO step_prerequisites (step_id, prerequisite_step_id) VALUES
+INSERT INTO step_prerequisites (step_id, requires_step_id) VALUES
   ('fc000000-0000-0000-0000-000000000000', 'c6000000-0000-0000-0000-000000000000'),  -- Sub-Within-20 ← Missing-Addend
   ('fd000000-0000-0000-0000-000000000000', 'fc000000-0000-0000-0000-000000000000')   -- Sub-from-Tens ← Sub-Within-20
 ON CONFLICT DO NOTHING;
 
--- Renumber old subtraction steps (UUIDs stay the same)
-UPDATE steps SET number = 5 WHERE id = 'c9000000-0000-0000-0000-000000000000';
-UPDATE steps SET number = 6 WHERE id = 'ca000000-0000-0000-0000-000000000000';
-
 -- Old step 5 (c9) now follows new step 4 (fd) instead of step 2 (c6)
 UPDATE step_prerequisites
-   SET prerequisite_step_id = 'fd000000-0000-0000-0000-000000000000'
+   SET requires_step_id = 'fd000000-0000-0000-0000-000000000000'
  WHERE step_id               = 'c9000000-0000-0000-0000-000000000000'
-   AND prerequisite_step_id  = 'c6000000-0000-0000-0000-000000000000';
+   AND requires_step_id  = 'c6000000-0000-0000-0000-000000000000';
 
 -- ── Challenge difficulty values ───────────────────────────────
 -- Stage 1 · Arithmetic Foundations
@@ -62,7 +62,7 @@ UPDATE challenges SET difficulty = 0.33 WHERE id = 'bd000000-0000-0000-0000-0000
 UPDATE challenges SET difficulty = 0.37 WHERE id = 'bf000000-0000-0000-0000-000000000000'; -- Division III
 UPDATE challenges SET difficulty = 0.41 WHERE id = 'b7000000-0000-0000-0000-000000000000'; -- Order of Operations
 -- Stage 3 · Pre-Algebra Bridge
-UPDATE challenges SET difficulty = 0.46 WHERE id = 'bg000000-0000-0000-0000-000000000000'; -- Arithmetic Review
+UPDATE challenges SET difficulty = 0.46 WHERE id = 'b0000000-0000-0000-0000-000000000000'; -- Arithmetic Review
 UPDATE challenges SET difficulty = 0.51 WHERE id = 'b8000000-0000-0000-0000-000000000000'; -- Expressions with Variables
 -- Stage 4 · Algebra Foundations
 UPDATE challenges SET difficulty = 0.56 WHERE id = 'b9000000-0000-0000-0000-000000000000'; -- One-Step Equations

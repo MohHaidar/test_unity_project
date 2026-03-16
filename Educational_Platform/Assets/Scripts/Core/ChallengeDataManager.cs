@@ -80,7 +80,7 @@ public class ChallengeDataManager
     public const string CHALLENGE_MULTIPLICATION_III_ID = "bd000000-0000-0000-0000-000000000000";
     public const string CHALLENGE_DIVISION_II_ID        = "be000000-0000-0000-0000-000000000000";
     public const string CHALLENGE_DIVISION_III_ID       = "bf000000-0000-0000-0000-000000000000";
-    public const string CHALLENGE_ARITHMETIC_REVIEW_ID  = "bg000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_ARITHMETIC_REVIEW_ID  = "b0000000-0000-0000-0000-000000000000";
 
     // Multiplication II steps: ×3, ×4, ×6, ×7
     public const string STEP_MULT_II_1_ID = "ea000000-0000-0000-0000-000000000000";

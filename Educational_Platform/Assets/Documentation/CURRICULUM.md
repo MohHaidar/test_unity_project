@@ -211,7 +211,7 @@ Addition → Subtraction → Multiplication I → Division I → Multiplication 
 ### Stage 3 · Pre-Algebra Bridge
 
 #### Challenge 10 — Arithmetic Review
-> **ID:** `bg000000-0000-0000-0000-000000000000` · **Slug:** `arithmetic_review`
+> **ID:** `b0000000-0000-0000-0000-000000000000` · **Slug:** `arithmetic_review`
 > **Prereqs:** Order of Operations
 > **Goal:** Consolidate all four operations with mixed practice before entering algebra.
 
@@ -429,7 +429,8 @@ streak-friendly questions for each step:
 [ ] 1. Decide which stage the challenge belongs to. If it introduces a new cognitive level,
         consider creating a new stage.
 [ ] 2. Pick the next free UUID prefix for the challenge (bX000000-…) and for each step.
-        Next free challenge prefix after bg: bh, bi, …
+        Next free challenge prefix: all b0–bf slots are now used.
+        Future challenges should start a new letter range (e.g. `20…`, `21…`).
         Next free step prefix after fb: fc, fd, …
 [ ] 3. Add public const string CHALLENGE_XXX_ID and STEP_XXX_N_ID to ChallengeDataManager.cs.
 [ ] 4. Add the Challenge object (with StageNumber, StageName, and Difficulty) and Steps (each
@@ -473,7 +474,7 @@ The short prefix below is enough to uniquely identify each object in the seeded 
 | `bd…` | Challenge: Multiplication III (Math Stage 2) |
 | `be…` | Challenge: Division II (Math Stage 2) |
 | `bf…` | Challenge: Division III (Math Stage 2) |
-| `bg…` | Challenge: Arithmetic Review (Math Stage 3) |
+| `b0…` | Challenge: Arithmetic Review (Math Stage 3) |
 | `c1…–c4…` | Steps: Addition 1–4 |
 | `c5…, c6…, c9…, ca…` | Steps: Subtraction 1,2,5,6 (existing) |
 | `fc…, fd…` | Steps: Subtraction 3,4 (Subtract Within 20, Subtract from Tens) |

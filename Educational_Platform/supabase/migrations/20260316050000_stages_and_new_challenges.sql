@@ -65,7 +65,7 @@ VALUES
    'Divide by 8 and 9, then fluently mix all division facts',
    2, 'Arithmetic Mastery', now()),
 
-  ('bg000000-0000-0000-0000-000000000000',
+  ('b0000000-0000-0000-0000-000000000000',
    'a1000000-0000-0000-0000-000000000000',
    'Arithmetic Review', 'arithmetic_review',
    'Consolidate all four operations with mixed practice before entering algebra',
@@ -78,31 +78,31 @@ ON CONFLICT (id) DO UPDATE
       stage_name   = EXCLUDED.stage_name;
 
 -- ─── 4. Insert new steps ─────────────────────────────────────────────────────
-INSERT INTO steps (id, challenge_id, number, title, description, streak_goal, mastery_target, require_ultimate, created_at)
+INSERT INTO steps (id, challenge_id, number, title, description, streak_goal, mastery_target, require_ultimate)
 VALUES
   -- Multiplication II
-  ('ea000000-0000-0000-0000-000000000000', 'bc000000-0000-0000-0000-000000000000', 1, 'Multiply by 3', 'Multiply by 3', 5, 0.80, false, now()),
-  ('eb000000-0000-0000-0000-000000000000', 'bc000000-0000-0000-0000-000000000000', 2, 'Multiply by 4', 'Multiply by 4', 5, 0.80, false, now()),
-  ('ec000000-0000-0000-0000-000000000000', 'bc000000-0000-0000-0000-000000000000', 3, 'Multiply by 6', 'Multiply by 6', 5, 0.80, false, now()),
-  ('ed000000-0000-0000-0000-000000000000', 'bc000000-0000-0000-0000-000000000000', 4, 'Multiply by 7', 'Multiply by 7', 5, 0.80, false, now()),
+  ('ea000000-0000-0000-0000-000000000000', 'bc000000-0000-0000-0000-000000000000', 1, 'Multiply by 3', 'Multiply by 3', 5, 0.80, false),
+  ('eb000000-0000-0000-0000-000000000000', 'bc000000-0000-0000-0000-000000000000', 2, 'Multiply by 4', 'Multiply by 4', 5, 0.80, false),
+  ('ec000000-0000-0000-0000-000000000000', 'bc000000-0000-0000-0000-000000000000', 3, 'Multiply by 6', 'Multiply by 6', 5, 0.80, false),
+  ('ed000000-0000-0000-0000-000000000000', 'bc000000-0000-0000-0000-000000000000', 4, 'Multiply by 7', 'Multiply by 7', 5, 0.80, false),
   -- Division II
-  ('f1000000-0000-0000-0000-000000000000', 'be000000-0000-0000-0000-000000000000', 1, 'Divide by 3', 'Divide by 3', 5, 0.80, false, now()),
-  ('f2000000-0000-0000-0000-000000000000', 'be000000-0000-0000-0000-000000000000', 2, 'Divide by 4', 'Divide by 4', 5, 0.80, false, now()),
-  ('f3000000-0000-0000-0000-000000000000', 'be000000-0000-0000-0000-000000000000', 3, 'Divide by 6', 'Divide by 6', 5, 0.80, false, now()),
-  ('f4000000-0000-0000-0000-000000000000', 'be000000-0000-0000-0000-000000000000', 4, 'Divide by 7', 'Divide by 7', 5, 0.80, false, now()),
+  ('f1000000-0000-0000-0000-000000000000', 'be000000-0000-0000-0000-000000000000', 1, 'Divide by 3', 'Divide by 3', 5, 0.80, false),
+  ('f2000000-0000-0000-0000-000000000000', 'be000000-0000-0000-0000-000000000000', 2, 'Divide by 4', 'Divide by 4', 5, 0.80, false),
+  ('f3000000-0000-0000-0000-000000000000', 'be000000-0000-0000-0000-000000000000', 3, 'Divide by 6', 'Divide by 6', 5, 0.80, false),
+  ('f4000000-0000-0000-0000-000000000000', 'be000000-0000-0000-0000-000000000000', 4, 'Divide by 7', 'Divide by 7', 5, 0.80, false),
   -- Multiplication III
-  ('ee000000-0000-0000-0000-000000000000', 'bd000000-0000-0000-0000-000000000000', 1, 'Multiply by 8', 'Multiply by 8', 5, 0.80, false, now()),
-  ('ef000000-0000-0000-0000-000000000000', 'bd000000-0000-0000-0000-000000000000', 2, 'Multiply by 9', 'Multiply by 9', 5, 0.80, false, now()),
-  ('f0000000-0000-0000-0000-000000000000', 'bd000000-0000-0000-0000-000000000000', 3, 'Mixed Times Tables (1–9)', 'Mixed Times Tables (1–9)', 5, 0.80, false, now()),
+  ('ee000000-0000-0000-0000-000000000000', 'bd000000-0000-0000-0000-000000000000', 1, 'Multiply by 8', 'Multiply by 8', 5, 0.80, false),
+  ('ef000000-0000-0000-0000-000000000000', 'bd000000-0000-0000-0000-000000000000', 2, 'Multiply by 9', 'Multiply by 9', 5, 0.80, false),
+  ('f0000000-0000-0000-0000-000000000000', 'bd000000-0000-0000-0000-000000000000', 3, 'Mixed Times Tables (1–9)', 'Mixed Times Tables (1–9)', 5, 0.80, false),
   -- Division III
-  ('f5000000-0000-0000-0000-000000000000', 'bf000000-0000-0000-0000-000000000000', 1, 'Divide by 8', 'Divide by 8', 5, 0.80, false, now()),
-  ('f6000000-0000-0000-0000-000000000000', 'bf000000-0000-0000-0000-000000000000', 2, 'Divide by 9', 'Divide by 9', 5, 0.80, false, now()),
-  ('f7000000-0000-0000-0000-000000000000', 'bf000000-0000-0000-0000-000000000000', 3, 'Mixed Division Facts (1–9)', 'Mixed Division Facts (1–9)', 5, 0.80, false, now()),
+  ('f5000000-0000-0000-0000-000000000000', 'bf000000-0000-0000-0000-000000000000', 1, 'Divide by 8', 'Divide by 8', 5, 0.80, false),
+  ('f6000000-0000-0000-0000-000000000000', 'bf000000-0000-0000-0000-000000000000', 2, 'Divide by 9', 'Divide by 9', 5, 0.80, false),
+  ('f7000000-0000-0000-0000-000000000000', 'bf000000-0000-0000-0000-000000000000', 3, 'Mixed Division Facts (1–9)', 'Mixed Division Facts (1–9)', 5, 0.80, false),
   -- Arithmetic Review
-  ('f8000000-0000-0000-0000-000000000000', 'bg000000-0000-0000-0000-000000000000', 1, 'Mixed Addition and Subtraction', 'Mixed Addition and Subtraction', 5, 0.80, false, now()),
-  ('f9000000-0000-0000-0000-000000000000', 'bg000000-0000-0000-0000-000000000000', 2, 'Mixed Multiplication and Division', 'Mixed Multiplication and Division', 5, 0.80, false, now()),
-  ('fa000000-0000-0000-0000-000000000000', 'bg000000-0000-0000-0000-000000000000', 3, 'All Four Operations', 'All Four Operations', 5, 0.80, false, now()),
-  ('fb000000-0000-0000-0000-000000000000', 'bg000000-0000-0000-0000-000000000000', 4, 'Multi-Step Mental Math', 'Multi-Step Mental Math', 5, 0.80, false, now())
+  ('f8000000-0000-0000-0000-000000000000', 'b0000000-0000-0000-0000-000000000000', 1, 'Mixed Addition and Subtraction', 'Mixed Addition and Subtraction', 5, 0.80, false),
+  ('f9000000-0000-0000-0000-000000000000', 'b0000000-0000-0000-0000-000000000000', 2, 'Mixed Multiplication and Division', 'Mixed Multiplication and Division', 5, 0.80, false),
+  ('fa000000-0000-0000-0000-000000000000', 'b0000000-0000-0000-0000-000000000000', 3, 'All Four Operations', 'All Four Operations', 5, 0.80, false),
+  ('fb000000-0000-0000-0000-000000000000', 'b0000000-0000-0000-0000-000000000000', 4, 'Multi-Step Mental Math', 'Multi-Step Mental Math', 5, 0.80, false)
 
 ON CONFLICT (id) DO NOTHING;
 
@@ -146,7 +146,7 @@ INSERT INTO challenge_prerequisites (challenge_id, requires_challenge_id) VALUES
   ('bf000000-0000-0000-0000-000000000000', 'bd000000-0000-0000-0000-000000000000'), -- Div III  ← Mult III
   ('b7000000-0000-0000-0000-000000000000', 'bf000000-0000-0000-0000-000000000000'), -- OoO      ← Div III
   -- New Stage 3 chain
-  ('bg000000-0000-0000-0000-000000000000', 'b7000000-0000-0000-0000-000000000000'), -- Arith Review ← OoO
-  ('b8000000-0000-0000-0000-000000000000', 'bg000000-0000-0000-0000-000000000000')  -- Expressions ← Arith Review
+  ('b0000000-0000-0000-0000-000000000000', 'b7000000-0000-0000-0000-000000000000'), -- Arith Review ← OoO
+  ('b8000000-0000-0000-0000-000000000000', 'b0000000-0000-0000-0000-000000000000')  -- Expressions ← Arith Review
 
 ON CONFLICT DO NOTHING;
