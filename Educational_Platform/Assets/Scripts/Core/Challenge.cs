@@ -25,6 +25,13 @@ public class Challenge
     public int StageNumber { get; set; } = 1;
     public string StageName { get; set; } = "";
 
+    /// <summary>
+    /// Global difficulty on a 0.0–1.0 scale spanning the full subject journey (e.g. 0.0 = first steps
+    /// in Arithmetic, 1.0 = Calculus III for Math). Represents the challenge as a whole — use it for
+    /// high-level progression display and reward tiers. Step-level difficulty is on Step.Difficulty.
+    /// </summary>
+    public float Difficulty { get; set; } = 0.5f;
+
     public int TotalSteps => Steps.Count;
     public int CompletedSteps => Steps.Count(s => s.Status == StepStatus.Completed);
     public bool IsCompleted => CompletedSteps == TotalSteps;

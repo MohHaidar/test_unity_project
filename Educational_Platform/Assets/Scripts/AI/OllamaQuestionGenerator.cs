@@ -183,10 +183,12 @@ RETURN ONLY VALID JSON (no other text, no markdown):
             case "subtraction":
                 return stepNumber switch
                 {
-                    1 => "- Use subtraction only\n- Numbers should stay within 10\n- Result must be 0 or greater",
+                    1 => "- Use subtraction only\n- Numbers should stay within 10\n- Result must be 0 or greater\n- Example: 'What is 8 minus 3?'",
                     2 => "- Ask for the missing addend in an addition fact\n- Phrase it as a full question, e.g. 'What number completes 3 + ? = 8?'\n- The question MUST start with 'What' or 'Find'\n- Correct answer must be a whole number from 0 to 10",
-                    3 => "- Use two-digit subtraction without borrowing\n- Ones digit of the minuend must be greater than or equal to the ones digit of the subtrahend",
-                    4 => "- Use two-digit subtraction with borrowing\n- At least one borrow should be required\n- Result must stay positive",
+                    3 => "- Subtract within 20; one of the numbers may cross the tens boundary (e.g. 16 - 7)\n- Result must be 0 or greater\n- Example: 'What is 16 minus 7?'",
+                    4 => "- Subtract a single-digit number from a multiple of 10 (e.g. 30 - 7, 50 - 4)\n- Minuend must be a multiple of 10 between 10 and 90\n- Example: 'What is 40 minus 6?'",
+                    5 => "- Use two-digit subtraction without borrowing\n- Ones digit of the minuend must be greater than or equal to the ones digit of the subtrahend\n- Example: 'What is 47 minus 23?'",
+                    6 => "- Use two-digit subtraction that requires borrowing (regrouping)\n- At least one borrow must be required\n- Result must stay positive\n- Example: 'What is 52 minus 37?'",
                     _ => ""
                 };
 

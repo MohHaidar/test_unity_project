@@ -83,14 +83,16 @@ Addition → Subtraction → Multiplication I → Division I → Multiplication 
 > **Prereqs:** Addition
 > **Goal:** Use subtraction to find differences, missing parts, and two-digit answers.
 
-| # | Step | ID | Prereq Step |
-|---|------|----|-------------|
-| 1 | Subtract Within 10 | `c5000000-…` | _(none)_ |
-| 2 | Find the Missing Addend | `c6000000-…` | Step 1 |
-| 3 | Two-Digit No Borrow | `c9000000-…` | Step 2 |
-| 4 | Two-Digit With Borrow | `ca000000-…` | Step 3 |
+| # | Step | ID | Prereq Step | Difficulty |
+|---|------|----|-------------|------------|
+| 1 | Subtract Within 10 | `c5000000-…` | _(none)_ | 0.08 |
+| 2 | Find the Missing Addend | `c6000000-…` | Step 1 | 0.09 |
+| 3 | Subtract Within 20 | `fc000000-…` | Step 2 | 0.10 |
+| 4 | Subtract from Tens | `fd000000-…` | Step 3 | 0.11 |
+| 5 | Two-Digit No Borrow | `c9000000-…` | Step 4 | 0.12 |
+| 6 | Two-Digit With Borrow | `ca000000-…` | Step 5 | 0.13 |
 
-**Concept ladder:** removal / difference within 10 → thinking of subtraction as a missing addend (3 + ? = 8) → column subtraction without borrowing → column subtraction with borrowing.
+**Concept ladder:** removal / difference within 10 → subtraction as missing-addend (3 + ? = 8) → cross-ten subtraction within 20 (bridge-through-10) → anchor subtraction from multiples of 10 → place-value column subtraction without regrouping → column subtraction with regrouping (borrow).
 
 ---
 
@@ -372,9 +374,18 @@ streak-friendly questions for each step:
     Journey Overview table, even if they are not yet implemented. Seeing "Stage 4 of 10" motivates
     students more than an opaque progress bar.
 
+14. **Every challenge and step has a `Difficulty` (0.0–1.0).** This value represents where the
+    item sits on the full subject journey (0.0 = very first lesson, 1.0 = maximum subject mastery).
+    Use it to scale EXP/coin rewards so higher-difficulty steps feel more rewarding, and to power
+    the planned adaptive skip-unlock system (see Future Features below). Assignment guidelines:
+    - Stage 1 roughly maps to 0.01–0.20, Stage 2 to 0.20–0.45, Stage 3 to 0.45–0.55, Stage 4 to 0.55–0.70.
+    - Steps within a challenge should form a smooth sub-range (e.g., 0.08–0.13 for Subtraction).
+    - Systems of Equations (the current endpoint) sits at ~0.68 — earned, but only 40% through a
+      full Math journey to Calculus III. This keeps rewards motivating at every stage.
+
 ### Progression Pacing
 
-- **Stage 1 (Arithmetic Foundations):** 4 challenges, ~15 steps — foundational, high repetition, very accessible.
+- **Stage 1 (Arithmetic Foundations):** 4 challenges, ~17 steps — foundational, high repetition, very accessible.
 - **Stage 2 (Arithmetic Mastery):** 5 challenges, ~19 steps — intensive drill of all arithmetic facts.
 - **Stage 3 (Pre-Algebra Bridge):** 2 challenges, ~8 steps — consolidation then first variable concept.
 - **Stage 4 (Algebra Foundations):** 3 challenges, ~13 steps — equation solving, culminating in Systems.
@@ -382,7 +393,37 @@ streak-friendly questions for each step:
 
 ---
 
-## 📋 Adding a New Challenge — Checklist
+## 🔮 Future Features
+
+### Skip-Unlock for Advanced Players
+
+**Problem:** A player who already knows up to Calculus I must repeat every step from Addition onwards before reaching content at their level. This is de-motivating.
+
+**Planned mechanism (not yet implemented):**
+
+1. **Entry Assessment** — When a player starts a new subject (or explicitly triggers "Test my level"), the system probes them at increasing difficulty levels using the `Difficulty` value on each step. It asks a small number of questions (3–5) per difficulty bracket, starting from the midpoint of the subject range.
+
+2. **Mastery Confirmation** — If the player answers correctly at difficulty D, try D + 0.15. If they fail at D, fall back to D − 0.10. The system binary-searches for the player's actual mastery ceiling.
+
+3. **Batch Unlock** — Once the assessment confirms mastery up to difficulty D, all steps and challenges with `Difficulty ≤ D` are marked as completed with a synthetic mastery score (e.g., 0.85). The player starts at the first unlocked step above D.
+
+4. **Adaptive Rewards** — Steps that were skipped via assessment award reduced EXP/coins (e.g., 20% of normal) if the player ever revisits them. Steps just above the skip threshold award a bonus (e.g., 120% EXP) to celebrate the bridge from known to new material.
+
+5. **Gradual Reveal** — Rather than unlocking 50 steps at once (which can feel like the game is giving up its content), the assessment unlocks a "sprint path" — the minimum set of steps needed to reach the player's assessed level — and hides optional earlier steps unless the player explicitly asks to review them.
+
+**Foundation already in place:**
+- `Step.Difficulty` and `Challenge.Difficulty` (0.0–1.0) are the keys to querying the right difficulty bracket.
+- `PlayerDataManager.SavePlayer()` and `LogQuestionResultAsync()` can record assessment results.
+- `ChallengeDataManager.GetStepById()` / `GetChallenge()` allow arbitrary step selection by difficulty range.
+
+**Implementation notes for when this is built:**
+- Add an `AssessmentMode` flag to `QuestionFlowManager` that bypasses the normal streak requirement and instead collects a pass/fail signal per question.
+- Add a `SkipUnlockStep(stepId, syntheticMastery)` method to `PlayerDataManager`.
+- The reward scaling formula should reference `step.Difficulty` so skipped-and-revisited steps always give less than genuinely-completed ones.
+
+---
+
+
 
 ```
 [ ] 1. Decide which stage the challenge belongs to. If it introduces a new cognitive level,
@@ -391,8 +432,9 @@ streak-friendly questions for each step:
         Next free challenge prefix after bg: bh, bi, …
         Next free step prefix after fb: fc, fd, …
 [ ] 3. Add public const string CHALLENGE_XXX_ID and STEP_XXX_N_ID to ChallengeDataManager.cs.
-[ ] 4. Add the Challenge object (with StageNumber + StageName) and Steps to
-        InitializeHardcodedChallenges(). Set prerequisites to the last challenge in the chain.
+[ ] 4. Add the Challenge object (with StageNumber, StageName, and Difficulty) and Steps (each
+        with a Difficulty value on the 0.0–1.0 global scale) to InitializeHardcodedChallenges().
+        Set prerequisites to the last challenge in the chain.
 [ ] 5. Add step constraints to OllamaQuestionGenerator.GetStepConstraints() for the slug.
         Always include a sample question phrasing in the constraint string.
 [ ] 6. Create a new supabase/migrations/YYYYMMDDHHMMSS_<name>.sql with the new challenges,
@@ -416,26 +458,27 @@ The short prefix below is enough to uniquely identify each object in the seeded 
 | `a1…` | Subject: Math |
 | `a2…` | Subject: Physics |
 | `a3…` | Subject: History |
-| `b1…` | Challenge: Addition (Stage 1) |
-| `b2…` | Challenge: Subtraction (Stage 1) |
+| `b1…` | Challenge: Addition (Math Stage 1) |
+| `b2…` | Challenge: Subtraction (Math Stage 1) |
 | `b3…` | Challenge: Force and Motion (Physics Stage 1) |
 | `b4…` | Challenge: Ancient Rome (History Stage 1) |
-| `b5…` | Challenge: Multiplication I (Stage 1) |
-| `b6…` | Challenge: Division I (Stage 1) |
-| `b7…` | Challenge: Order of Operations (Stage 2) |
-| `b8…` | Challenge: Expressions with Variables (Stage 3) |
-| `b9…` | Challenge: One-Step Equations (Stage 4) |
-| `ba…` | Challenge: Two-Step Equations (Stage 4) |
-| `bb…` | Challenge: Systems of Equations (Stage 4) |
-| `bc…` | Challenge: Multiplication II (Stage 2) |
-| `bd…` | Challenge: Multiplication III (Stage 2) |
-| `be…` | Challenge: Division II (Stage 2) |
-| `bf…` | Challenge: Division III (Stage 2) |
-| `bg…` | Challenge: Arithmetic Review (Stage 3) |
+| `b5…` | Challenge: Multiplication I (Math Stage 1) |
+| `b6…` | Challenge: Division I (Math Stage 1) |
+| `b7…` | Challenge: Order of Operations (Math Stage 2) |
+| `b8…` | Challenge: Expressions with Variables (Math Stage 3) |
+| `b9…` | Challenge: One-Step Equations (Math Stage 4) |
+| `ba…` | Challenge: Two-Step Equations (Math Stage 4) |
+| `bb…` | Challenge: Systems of Equations (Math Stage 4) |
+| `bc…` | Challenge: Multiplication II (Math Stage 2) |
+| `bd…` | Challenge: Multiplication III (Math Stage 2) |
+| `be…` | Challenge: Division II (Math Stage 2) |
+| `bf…` | Challenge: Division III (Math Stage 2) |
+| `bg…` | Challenge: Arithmetic Review (Math Stage 3) |
 | `c1…–c4…` | Steps: Addition 1–4 |
-| `c5…, c6…, c9…, ca…` | Steps: Subtraction 1–4 |
-| `c7…` | Step: Force/Newton's First Law |
-| `c8…` | Step: Ancient Rome/Roman Republic |
+| `c5…, c6…, c9…, ca…` | Steps: Subtraction 1,2,5,6 (existing) |
+| `fc…, fd…` | Steps: Subtraction 3,4 (Subtract Within 20, Subtract from Tens) |
+| `c7…` | Step: Force / Newton's First Law |
+| `c8…` | Step: Ancient Rome / Roman Republic |
 | `cb…–ce…` | Steps: Multiplication I 1–4 |
 | `cf…, d1…–d3…` | Steps: Division I 1–4 |
 | `d4…–d7…` | Steps: Order of Operations 1–4 |
@@ -448,4 +491,4 @@ The short prefix below is enough to uniquely identify each object in the seeded 
 | `f1…–f4…` | Steps: Division II 1–4 |
 | `f5…–f7…` | Steps: Division III 1–3 |
 | `f8…–fb…` | Steps: Arithmetic Review 1–4 |
-| _(next: `fc…`)_ | _(next free step prefix)_ |
+| _(next: `fe…`)_ | _(next free step prefix after fc, fd)_ |

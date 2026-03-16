@@ -28,6 +28,13 @@ public class Step
     public float MasteryTarget { get; set; } = 0.80f;
     public float MasteryCurrent { get; set; } = 0.0f;
 
+    /// <summary>
+    /// Global difficulty on a 0.0–1.0 scale spanning the full subject journey (e.g. 0.0 = first steps
+    /// in Arithmetic, 1.0 = Calculus III for Math). Used for EXP/coin reward scaling and the
+    /// future skip-unlock assessment system.
+    /// </summary>
+    public float Difficulty { get; set; } = 0.5f;
+
     // Question tracking
     public int QuestionsCompleted { get; set; } = 0;
 
