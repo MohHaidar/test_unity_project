@@ -35,6 +35,12 @@ public class Step
     /// </summary>
     public float Difficulty { get; set; } = 0.5f;
 
+    /// <summary>
+    /// Preferred question interaction mode. Any = let the generator choose (defaults to MultipleChoice).
+    /// Assign FillInBlank or DragAndDrop for steps where typed/dragged answers are more natural.
+    /// </summary>
+    public QuestionMode QuestionMode { get; set; } = QuestionMode.Any;
+
     // Question tracking
     public int QuestionsCompleted { get; set; } = 0;
 
@@ -90,6 +96,17 @@ public class Step
     {
         return $"Step {Number}: {Description} | Streak: {StreakCurrent}/{StreakGoal} | Phase: {GetCurrentPhase()}";
     }
+}
+
+/// <summary>
+/// Preferred question interaction mode for a step.
+/// </summary>
+public enum QuestionMode
+{
+    Any,            // Generator chooses (defaults to MultipleChoice)
+    MultipleChoice,
+    FillInBlank,    // Player types answer(s) into one or more text boxes
+    DragAndDrop     // Player drags token(s) into blank drop zones (visual variant of FillInBlank)
 }
 
 /// <summary>

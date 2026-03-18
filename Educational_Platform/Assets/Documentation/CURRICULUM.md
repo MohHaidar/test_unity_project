@@ -82,17 +82,21 @@ Addition → Subtraction → Multiplication I → Division I → Multiplication 
 > **ID:** `b2000000-0000-0000-0000-000000000000` · **Slug:** `subtraction`
 > **Prereqs:** Addition
 > **Goal:** Use subtraction to find differences, missing parts, and two-digit answers.
+> **Question Mode:** All steps use `FillInBlank` — typed answers are more natural than multiple choice for subtraction.
 
 | # | Step | ID | Prereq Step | Difficulty |
 |---|------|----|-------------|------------|
 | 1 | Subtract Within 10 | `c5000000-…` | _(none)_ | 0.08 |
 | 2 | Find the Missing Addend | `c6000000-…` | Step 1 | 0.09 |
-| 3 | Subtract Within 20 | `fc000000-…` | Step 2 | 0.10 |
-| 4 | Subtract from Tens | `fd000000-…` | Step 3 | 0.11 |
-| 5 | Two-Digit No Borrow | `c9000000-…` | Step 4 | 0.12 |
-| 6 | Two-Digit With Borrow | `ca000000-…` | Step 5 | 0.13 |
+| 3 | Subtraction Fluency Within 10 | `fe000000-…` | Step 2 | 0.095 |
+| 4 | Subtract Within 20 | `fc000000-…` | Step 3 | 0.11 |
+| 5 | Subtract from Tens | `fd000000-…` | Step 4 | 0.12 |
+| 6 | Two-Digit No Borrow | `c9000000-…` | Step 5 | 0.13 |
+| 7 | Two-Digit With Borrow | `ca000000-…` | Step 6 | 0.14 |
 
-**Concept ladder:** removal / difference within 10 → subtraction as missing-addend (3 + ? = 8) → cross-ten subtraction within 20 (bridge-through-10) → anchor subtraction from multiples of 10 → place-value column subtraction without regrouping → column subtraction with regrouping (borrow).
+**Concept ladder:** removal / difference within 10 → subtraction as missing-addend (3 + ? = 8) → **fluency drill across all facts within 10** → cross-ten subtraction within 20 (bridge-through-10) → anchor subtraction from multiples of 10 → place-value column subtraction without regrouping → column subtraction with regrouping (borrow).
+
+**Difficulty-jump rule applied:** Each step should introduce at most one new idea. The gap between step 2 (missing addend) and step 4 (cross-ten) was too large, so step 3 was added to consolidate all within-10 facts for speed and accuracy before introducing bridging. The same rule applies when designing any other challenge — if the jump between two consecutive steps feels larger than one new idea, insert a bridge step.
 
 ---
 
@@ -379,13 +383,24 @@ streak-friendly questions for each step:
     Use it to scale EXP/coin rewards so higher-difficulty steps feel more rewarding, and to power
     the planned adaptive skip-unlock system (see Future Features below). Assignment guidelines:
     - Stage 1 roughly maps to 0.01–0.20, Stage 2 to 0.20–0.45, Stage 3 to 0.45–0.55, Stage 4 to 0.55–0.70.
-    - Steps within a challenge should form a smooth sub-range (e.g., 0.08–0.13 for Subtraction).
+    - Steps within a challenge should form a smooth sub-range (e.g., 0.08–0.14 for Subtraction).
     - Systems of Equations (the current endpoint) sits at ~0.68 — earned, but only 40% through a
       full Math journey to Calculus III. This keeps rewards motivating at every stage.
 
+15. **Each step has a `QuestionMode`.** Choose the mode that best matches how a student naturally
+    answers that type of question. Guidelines:
+    - **`Any`** (resolves to `MultipleChoice`): arithmetic steps where picking from options is intuitive
+      (addition, multiplication, order of operations).
+    - **`FillInBlank`**: steps where the answer is typed — subtraction, equations, expressions.
+      Typing is faster, more authentic, and harder to guess than selecting from 4 options.
+    - **`DragAndDrop`**: reserved for future steps where visual token placement adds value
+      (fractions, factoring). Currently falls back to typed FillInBlank.
+    - Always add a corresponding `BuildFillInBlankPrompt` step constraint in
+      `OllamaQuestionGenerator.GetStepConstraints()` when assigning FillInBlank or DragAndDrop.
+
 ### Progression Pacing
 
-- **Stage 1 (Arithmetic Foundations):** 4 challenges, ~17 steps — foundational, high repetition, very accessible.
+- **Stage 1 (Arithmetic Foundations):** 4 challenges, ~18 steps — foundational, high repetition, very accessible.
 - **Stage 2 (Arithmetic Mastery):** 5 challenges, ~19 steps — intensive drill of all arithmetic facts.
 - **Stage 3 (Pre-Algebra Bridge):** 2 challenges, ~8 steps — consolidation then first variable concept.
 - **Stage 4 (Algebra Foundations):** 3 challenges, ~13 steps — equation solving, culminating in Systems.

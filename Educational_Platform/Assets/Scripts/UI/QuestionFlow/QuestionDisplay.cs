@@ -2,16 +2,34 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// Displays questions to the player.
-/// Polymorphic: handles any IQuestion implementation (MultipleChoice, DragDrop, etc).
-/// Currently implements MultipleChoice; others can be added by creating Display methods.
+/// Polymorphic: handles MultipleChoiceQuestion and FillInBlankQuestion (typed + drag modes).
+///
+/// Unity Inspector wiring:
+///   Multiple Choice Panel  — GameObject wrapping questionText + optionButtons
+///   Fill In Blank Panel    — GameObject wrapping fibQuestionText, fibInputFields, fibInputLabels, fibSubmitButton
+///
+/// Both panels live as children of a shared canvas area; only one is active at a time.
+/// See FILL_IN_BLANK_UI.md for the full hierarchy and Inspector setup guide.
 /// </summary>
 public class QuestionDisplay : MonoBehaviour
 {
+    [Header("Multiple Choice")]
+    [SerializeField] private GameObject multipleChoicePanel;
     [SerializeField] private TextMeshProUGUI questionText;
     [SerializeField] private Button[] optionButtons = new Button[4];
+
+    [Header("Fill In Blank")]
+    [SerializeField] private GameObject fillInBlankPanel;
+    [SerializeField] private TextMeshProUGUI fibQuestionText;
+    [SerializeField] private TMP_InputField[] fibInputFields = new TMP_InputField[4];
+    [SerializeField] private TextMeshProUGUI[] fibInputLabels = new TextMeshProUGUI[4];
+    [SerializeField] private Button fibSubmitButton;
+
+    [Header("Shared")]
     [SerializeField] private TextMeshProUGUI feedbackText;
 
     private IQuestion _currentQuestion;
@@ -21,14 +39,11 @@ public class QuestionDisplay : MonoBehaviour
     {
         _answerSubmitter = GetComponent<AnswerSubmitter>();
         if (_answerSubmitter == null)
-        {
             Debug.LogError("[QuestionDisplay] AnswerSubmitter not found on this GameObject");
-        }
     }
 
     /// <summary>
-    /// Displays a question based on its type.
-    /// Polymorphic: handles different question types.
+    /// Displays a question based on its type; shows/hides the correct panel.
     /// </summary>
     public void DisplayQuestion(IQuestion question)
     {
@@ -40,10 +55,15 @@ public class QuestionDisplay : MonoBehaviour
 
         _currentQuestion = question;
 
-        // Display based on question type
         if (question is MultipleChoiceQuestion mcQuestion)
         {
+            SetPanelActive(showMC: true);
             DisplayMultipleChoice(mcQuestion);
+        }
+        else if (question is FillInBlankQuestion fibQuestion)
+        {
+            SetPanelActive(showMC: false);
+            DisplayFillInBlank(fibQuestion);
         }
         else
         {
@@ -53,27 +73,27 @@ public class QuestionDisplay : MonoBehaviour
         Debug.Log($"[QuestionDisplay] Displayed: {question}");
     }
 
-    /// <summary>
-    /// Displays a multiple choice question with 4 option buttons.
-    /// </summary>
+    private void SetPanelActive(bool showMC)
+    {
+        if (multipleChoicePanel != null) multipleChoicePanel.SetActive(showMC);
+        if (fillInBlankPanel != null)    fillInBlankPanel.SetActive(!showMC);
+    }
+
+    // ─── Multiple Choice ──────────────────────────────────────────────────────
+
     private void DisplayMultipleChoice(MultipleChoiceQuestion question)
     {
-        // Display question text
         if (questionText != null)
-        {
             questionText.text = question.QuestionText;
-        }
 
-        // Display options as buttons
         if (optionButtons.Length != 4)
         {
             Debug.LogError($"[QuestionDisplay] Expected 4 option buttons, found {optionButtons.Length}");
             return;
         }
 
-        // Shuffle options so the correct answer isn't always the first option
-        var shuffledOptions = new System.Collections.Generic.List<string>(question.Options);
-        System.Random rng = new System.Random();
+        var shuffledOptions = new List<string>(question.Options);
+        var rng = new System.Random();
         int n = shuffledOptions.Count;
         while (n > 1)
         {
@@ -83,110 +103,124 @@ public class QuestionDisplay : MonoBehaviour
             shuffledOptions[k] = shuffledOptions[n];
             shuffledOptions[n] = tmp;
         }
-        // Replace original options with shuffled order
         question.Options = shuffledOptions;
 
         for (int i = 0; i < 4; i++)
         {
-            if (optionButtons[i] == null)
-            {
-                Debug.LogError($"[QuestionDisplay] Option button {i} is not assigned");
-                continue;
-            }
+            if (optionButtons[i] == null) { Debug.LogError($"[QuestionDisplay] Option button {i} not assigned"); continue; }
 
-            // Set button text
             TextMeshProUGUI buttonText = optionButtons[i].GetComponentInChildren<TextMeshProUGUI>();
-            if (buttonText != null)
-            {
-                buttonText.text = question.Options[i];
-            }
+            if (buttonText != null) buttonText.text = question.Options[i];
 
-            // Set button click listener
             int optionIndex = i;
             optionButtons[i].onClick.RemoveAllListeners();
             optionButtons[i].onClick.AddListener(() => OnOptionSelected(question.Options[optionIndex]));
-
-            // Enable button
             optionButtons[i].interactable = true;
         }
 
-        // Clear feedback
-        if (feedbackText != null)
-        {
-            feedbackText.text = "";
-        }
+        if (feedbackText != null) feedbackText.text = "";
     }
 
-    /// <summary>
-    /// Called when a player clicks an option button.
-    /// </summary>
     private void OnOptionSelected(string selectedOption)
     {
-        if (_currentQuestion == null)
-        {
-            Debug.LogError("[QuestionDisplay] No question to answer");
-            return;
-        }
-
-        // Disable all buttons
+        if (_currentQuestion == null) { Debug.LogError("[QuestionDisplay] No question to answer"); return; }
         DisableAllButtons();
-
-        // Submit answer via AnswerSubmitter
-        if (_answerSubmitter != null)
-        {
-            _answerSubmitter.SubmitAnswer(selectedOption);
-        }
-        else
-        {
-            Debug.LogError("[QuestionDisplay] AnswerSubmitter is not available");
-        }
+        _answerSubmitter?.SubmitAnswer(selectedOption);
     }
 
+    // ─── Fill In Blank ────────────────────────────────────────────────────────
+
     /// <summary>
-    /// Shows feedback built by FeedbackBuilder. The message already contains rich text tags.
+    /// Renders a FillInBlankQuestion: sets question text, activates one input field per blank,
+    /// sets labels, and wires the submit button.
     /// </summary>
+    private void DisplayFillInBlank(FillInBlankQuestion question)
+    {
+        if (fibQuestionText != null)
+            fibQuestionText.text = question.QuestionText;
+
+        int blankCount = question.Blanks != null ? question.Blanks.Count : 0;
+
+        for (int i = 0; i < fibInputFields.Length; i++)
+        {
+            bool active = i < blankCount;
+
+            if (fibInputFields[i] != null)
+            {
+                fibInputFields[i].gameObject.SetActive(active);
+                if (active)
+                {
+                    fibInputFields[i].text = "";
+                    fibInputFields[i].interactable = true;
+                }
+            }
+
+            if (fibInputLabels != null && i < fibInputLabels.Length && fibInputLabels[i] != null)
+            {
+                fibInputLabels[i].gameObject.SetActive(active);
+                if (active)
+                    fibInputLabels[i].text = question.Blanks[i].Label;
+            }
+        }
+
+        if (fibSubmitButton != null)
+        {
+            fibSubmitButton.onClick.RemoveAllListeners();
+            fibSubmitButton.onClick.AddListener(OnFIBSubmit);
+            fibSubmitButton.interactable = true;
+        }
+
+        if (feedbackText != null) feedbackText.text = "";
+    }
+
+    private void OnFIBSubmit()
+    {
+        if (_currentQuestion == null) { Debug.LogError("[QuestionDisplay] No FIB question active"); return; }
+
+        var parts = new List<string>();
+        foreach (var field in fibInputFields)
+            if (field != null && field.gameObject.activeSelf)
+                parts.Add(field.text.Trim());
+
+        string answer = string.Join("|", parts);
+        DisableFIBInput();
+        _answerSubmitter?.SubmitAnswer(answer);
+    }
+
+    private void DisableFIBInput()
+    {
+        foreach (var field in fibInputFields)
+            if (field != null) field.interactable = false;
+        if (fibSubmitButton != null) fibSubmitButton.interactable = false;
+    }
+
+    // ─── Shared helpers ───────────────────────────────────────────────────────
+
+    /// <summary>Shows feedback message (rich text tags handled by the message itself).</summary>
     public void ShowFeedback(bool isCorrect, string richMessage)
     {
         if (feedbackText == null) return;
-        feedbackText.color = Color.white;   // let the embedded color tags handle coloring
-        feedbackText.text  = richMessage;
+        feedbackText.color = Color.white;
+        feedbackText.text = richMessage;
         Debug.Log($"[QuestionDisplay] Feedback shown (correct={isCorrect})");
     }
 
-    /// <summary>
-    /// Disables all option buttons (after answer submitted).
-    /// </summary>
     public void DisableAllButtons()
     {
         foreach (var button in optionButtons)
-        {
-            if (button != null)
-            {
-                button.interactable = false;
-            }
-        }
+            if (button != null) button.interactable = false;
     }
 
-    /// <summary>
-    /// Enables all option buttons (for next question).
-    /// </summary>
     public void EnableAllButtons()
     {
         foreach (var button in optionButtons)
-        {
-            if (button != null)
-            {
-                button.interactable = true;
-            }
-        }
+            if (button != null) button.interactable = true;
     }
 
-    /// <summary>
-    /// Clears the display between questions.
-    /// </summary>
     public void ClearDisplay()
     {
         if (questionText != null) questionText.text = "";
+        if (fibQuestionText != null) fibQuestionText.text = "";
         if (feedbackText != null) feedbackText.text = "";
 
         foreach (var button in optionButtons)
@@ -194,11 +228,15 @@ public class QuestionDisplay : MonoBehaviour
             if (button != null)
             {
                 button.interactable = false;
-                TextMeshProUGUI buttonText = button.GetComponentInChildren<TextMeshProUGUI>();
-                if (buttonText != null) buttonText.text = "";
+                var t = button.GetComponentInChildren<TextMeshProUGUI>();
+                if (t != null) t.text = "";
             }
         }
 
+        foreach (var field in fibInputFields)
+            if (field != null) { field.text = ""; field.interactable = false; }
+
+        DisableFIBInput();
         _currentQuestion = null;
     }
 }

@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Generates multiple choice math questions using Ollama.
+/// Generates math questions using Ollama.
+/// Supports MultipleChoiceQuestion and FillInBlankQuestion based on the step's QuestionMode.
 /// Adapts difficulty and focus area based on player metrics and current step.
 /// </summary>
 public class OllamaQuestionGenerator
@@ -16,6 +18,7 @@ public class OllamaQuestionGenerator
 
     /// <summary>
     /// Generates a new question tailored to the player's current step.
+    /// Mode is driven by Step.QuestionMode; Any defaults to MultipleChoice.
     /// Avoids repeating questions from the last 10 answers.
     /// </summary>
     public IQuestion GenerateQuestion(Player player, Step step)
@@ -26,11 +29,13 @@ public class OllamaQuestionGenerator
             return GetFallbackQuestion();
         }
 
-        string prompt = BuildPrompt(player, step);
+        QuestionMode mode = ResolveMode(step);
+        bool isFIB = mode == QuestionMode.FillInBlank || mode == QuestionMode.DragAndDrop;
 
-        // Retry loop: attempt multiple times before falling back
+        string prompt = isFIB ? BuildFillInBlankPrompt(player, step, mode) : BuildPrompt(player, step);
+
         int maxAttempts = 4;
-        float[] temps = new float[] { 0.3f, 0.5f, 0.7f, 0.9f };
+        float[] temps = { 0.3f, 0.5f, 0.7f, 0.9f };
 
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
@@ -39,32 +44,33 @@ public class OllamaQuestionGenerator
 
             if (string.IsNullOrEmpty(response))
             {
-                Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: Ollama returned empty response (temp={temp})");
-                continue; // try again with higher temperature
-            }
-
-            IQuestion question = ParseJSONResponse(response);
-            if (question == null)
-            {
-                Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: Failed to parse response (temp={temp})");
-                continue; // try again
-            }
-
-            // If the generated question was asked recently, skip and retry
-            if (IsQuestionRecentlyAsked(player, question))
-            {
-                Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: Question was asked recently, retrying (temp={temp})");
+                Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: empty response (temp={temp})");
                 continue;
             }
 
-            // Strict validation: if it fails, retry
-            if (question is MultipleChoiceQuestion mcq)
+            IQuestion question = isFIB ? ParseFIBResponse(response) : ParseJSONResponse(response);
+            if (question == null)
             {
-                if (!ValidateQuestion(mcq))
-                {
-                    Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: Question failed validation, retrying (temp={temp})");
-                    continue;
-                }
+                Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: parse failed (temp={temp})");
+                continue;
+            }
+
+            if (IsQuestionRecentlyAsked(player, question))
+            {
+                Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: duplicate, retrying (temp={temp})");
+                continue;
+            }
+
+            if (question is MultipleChoiceQuestion mcq && !ValidateQuestion(mcq))
+            {
+                Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: MC validation failed (temp={temp})");
+                continue;
+            }
+
+            if (question is FillInBlankQuestion fib && !ValidateFillInBlankQuestion(fib))
+            {
+                Debug.LogWarning($"[QuestionGenerator] Attempt {attempt + 1}: FIB validation failed (temp={temp})");
+                continue;
             }
 
             Debug.Log($"[QuestionGenerator] Generated on attempt {attempt + 1}: {question}");
@@ -75,28 +81,163 @@ public class OllamaQuestionGenerator
         return GetFallbackQuestion();
     }
 
-    /// <summary>
-    /// Checks if a question was asked in the last 10 questions.
-    /// </summary>
+    /// <summary>Resolves Any to MultipleChoice; passes through specific modes.</summary>
+    private QuestionMode ResolveMode(Step step)
+    {
+        return step.QuestionMode == QuestionMode.Any ? QuestionMode.MultipleChoice : step.QuestionMode;
+    }
+
     private bool IsQuestionRecentlyAsked(Player player, IQuestion newQuestion)
     {
-        int recentCount = System.Math.Min(10, player.QuestionHistory.Count);
-        int startIdx = System.Math.Max(0, player.QuestionHistory.Count - recentCount);
-
+        int recentCount = Math.Min(10, player.QuestionHistory.Count);
+        int startIdx = Math.Max(0, player.QuestionHistory.Count - recentCount);
         for (int i = startIdx; i < player.QuestionHistory.Count; i++)
-        {
-            if (player.QuestionHistory[i].QuestionText == newQuestion.QuestionText)
-            {
-                return true;
-            }
-        }
-
+            if (player.QuestionHistory[i].QuestionText == newQuestion.QuestionText) return true;
         return false;
     }
 
+    // ─── Fill-In-Blank prompt & parsing ──────────────────────────────────────
+
     /// <summary>
-    /// Builds the prompt sent to Ollama for question generation.
+    /// Builds the prompt for a fill-in-blank question.
+    /// The AI returns a compact JSON with a "blanks" array and optional "drag_options".
     /// </summary>
+    private string BuildFillInBlankPrompt(Player player, Step step, QuestionMode mode)
+    {
+        string recentPerformance = GetRecentPerformanceText(player);
+        float stepMastery = player.GetCurrentStepMastery();
+        string stepConstraints = GetStepConstraints(player.CurrentChallenge, step.Number);
+        bool wantDrag = mode == QuestionMode.DragAndDrop;
+
+        string dragInstruction = wantDrag
+            ? "- Provide 5-6 short token options in \"drag_options\" (include the correct answer(s) plus plausible distractors)."
+            : "- Set \"drag_options\" to an empty array [].";
+
+        string prompt = $@"You are an expert math teacher creating a fill-in-blank question.
+
+STUDENT PROFILE:
+- Step {step.Number}: {step.Description}
+- Mastery: {stepMastery:F2}  Streak: {player.StreakInCurrentStep}/{step.StreakGoal}
+
+STEP-SPECIFIC REQUIREMENTS:
+{stepConstraints}
+
+RECENT QUESTIONS:
+{recentPerformance}
+
+REQUIREMENTS:
+- Write a clear question sentence ending with _____ for each blank.
+- Each blank has a short label (e.g. ""answer"", ""x ="", ""y ="") and an exact correct answer.
+- Correct answers must be single integers — no decimals.
+- Do NOT repeat any recent question listed above.
+{dragInstruction}
+
+RETURN ONLY VALID JSON — no markdown, no extra text:
+
+{{
+  ""question"": ""<question text with _____ for each blank>"",
+  ""blanks"": [
+    {{""label"": ""<short label>"", ""correct"": ""<exact answer>""}}
+  ],
+  ""drag_options"": [],
+  ""difficulty"": {step.MasteryTarget:F2},
+  ""skillFocus"": ""{step.Description}""
+}}";
+
+        return prompt;
+    }
+
+    /// <summary>
+    /// Parses the compact FIB JSON from Ollama into a FillInBlankQuestion.
+    /// </summary>
+    private IQuestion ParseFIBResponse(string jsonText)
+    {
+        try
+        {
+            int jsonStart = jsonText.IndexOf('{');
+            int jsonEnd = jsonText.LastIndexOf('}');
+            if (jsonStart >= 0 && jsonEnd > jsonStart)
+                jsonText = jsonText.Substring(jsonStart, jsonEnd - jsonStart + 1);
+
+            FillInBlankJSON data = JsonUtility.FromJson<FillInBlankJSON>(jsonText);
+
+            if (data == null || string.IsNullOrEmpty(data.question) || data.blanks == null || data.blanks.Length == 0)
+            {
+                Debug.LogError("[QuestionGenerator] FIB: invalid JSON structure");
+                return null;
+            }
+
+            var question = new FillInBlankQuestion
+            {
+                QuestionText = data.question,
+                Difficulty = data.difficulty,
+                SkillFocus = data.skillFocus,
+                Blanks = new List<BlankField>(),
+                DragOptions = new List<string>()
+            };
+
+            foreach (var b in data.blanks)
+                question.Blanks.Add(new BlankField { Label = b.label, CorrectAnswer = b.correct });
+
+            if (data.drag_options != null)
+                foreach (var opt in data.drag_options)
+                    question.DragOptions.Add(opt);
+
+            return question;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[QuestionGenerator] FIB parse error: {e.Message}");
+            Debug.LogError($"[QuestionGenerator] Raw JSON: {jsonText}");
+            return null;
+        }
+    }
+
+    /// <summary>Validates a FillInBlankQuestion before returning it.</summary>
+    private bool ValidateFillInBlankQuestion(FillInBlankQuestion q)
+    {
+        if (string.IsNullOrWhiteSpace(q.QuestionText))
+        {
+            Debug.LogError("[QuestionGenerator] FIB: empty question text");
+            return false;
+        }
+        if (IsQuestionTextJustEquation(q.QuestionText))
+        {
+            Debug.LogError($"[QuestionGenerator] FIB: question lacks proper phrasing: '{q.QuestionText}'");
+            return false;
+        }
+        if (q.Blanks == null || q.Blanks.Count == 0)
+        {
+            Debug.LogError("[QuestionGenerator] FIB: no blanks");
+            return false;
+        }
+        foreach (var b in q.Blanks)
+        {
+            if (string.IsNullOrWhiteSpace(b.CorrectAnswer))
+            {
+                Debug.LogError("[QuestionGenerator] FIB: blank has empty correct answer");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    [System.Serializable]
+    private class FillInBlankJSON
+    {
+        public string question;
+        public BlankJSON[] blanks;
+        public string[] drag_options;
+        public float difficulty;
+        public string skillFocus;
+    }
+
+    [System.Serializable]
+    private class BlankJSON
+    {
+        public string label;
+        public string correct;
+    }
     private string BuildPrompt(Player player, Step step)
     {
         string recentPerformance = GetRecentPerformanceText(player);
@@ -183,12 +324,13 @@ RETURN ONLY VALID JSON (no other text, no markdown):
             case "subtraction":
                 return stepNumber switch
                 {
-                    1 => "- Use subtraction only\n- Numbers should stay within 10\n- Result must be 0 or greater\n- Example: 'What is 8 minus 3?'",
-                    2 => "- Ask for the missing addend in an addition fact\n- Phrase it as a full question, e.g. 'What number completes 3 + ? = 8?'\n- The question MUST start with 'What' or 'Find'\n- Correct answer must be a whole number from 0 to 10",
-                    3 => "- Subtract within 20; one of the numbers may cross the tens boundary (e.g. 16 - 7)\n- Result must be 0 or greater\n- Example: 'What is 16 minus 7?'",
-                    4 => "- Subtract a single-digit number from a multiple of 10 (e.g. 30 - 7, 50 - 4)\n- Minuend must be a multiple of 10 between 10 and 90\n- Example: 'What is 40 minus 6?'",
-                    5 => "- Use two-digit subtraction without borrowing\n- Ones digit of the minuend must be greater than or equal to the ones digit of the subtrahend\n- Example: 'What is 47 minus 23?'",
-                    6 => "- Use two-digit subtraction that requires borrowing (regrouping)\n- At least one borrow must be required\n- Result must stay positive\n- Example: 'What is 52 minus 37?'",
+                    1 => "- Use subtraction only\n- Numbers stay within 0–10\n- Result must be 0 or greater\n- Example: 'What is 8 minus 3?'",
+                    2 => "- Ask for the missing addend in an addition fact\n- Phrase as a full question, e.g. 'What number completes 3 + _____ = 8?'\n- The question MUST start with 'What' or 'Find'\n- Correct answer must be a whole number from 0 to 10",
+                    3 => "- Practise ALL subtraction facts within 0–10 for fluency\n- Vary the pairs freely across the full range (not just small numbers)\n- Example: 'What is 9 minus 4?' or 'Solve: 10 - 6 = _____'\n- Result must be 0 or greater",
+                    4 => "- Subtract within 20; one of the numbers may cross the tens boundary (e.g. 16 - 7)\n- Result must be 0 or greater\n- Example: 'What is 16 minus 7?'",
+                    5 => "- Subtract a single-digit number from a multiple of 10 (e.g. 30 - 7, 50 - 4)\n- Minuend must be a multiple of 10 between 10 and 90\n- Example: 'What is 40 minus 6?'",
+                    6 => "- Use two-digit subtraction without borrowing\n- Ones digit of the minuend must be ≥ ones digit of the subtrahend\n- Example: 'What is 47 minus 23?'",
+                    7 => "- Use two-digit subtraction that requires borrowing (regrouping)\n- At least one borrow must be required\n- Result must stay positive\n- Example: 'What is 52 minus 37?'",
                     _ => ""
                 };
 

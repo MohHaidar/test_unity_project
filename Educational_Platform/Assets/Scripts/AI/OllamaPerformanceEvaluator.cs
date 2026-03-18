@@ -109,27 +109,26 @@ RETURN ONLY VALID JSON (no other text, no markdown):
         return prompt;
     }
 
-    /// <summary>
-    /// Gets the correct answer from any IQuestion implementation.
-    /// </summary>
     private string GetCorrectAnswerFromQuestion(IQuestion question)
     {
         if (question is MultipleChoiceQuestion mcQuestion)
             return mcQuestion.CorrectAnswer;
 
-        // For future question types, implement as needed
+        if (question is FillInBlankQuestion fibQuestion)
+            return fibQuestion.CorrectAnswerString();
+
         return "unknown";
     }
 
-    /// <summary>
-    /// Gets the estimated time from any IQuestion implementation.
-    /// </summary>
     private int GetEstimatedTimeFromQuestion(IQuestion question)
     {
         if (question is MultipleChoiceQuestion mcQuestion)
             return mcQuestion.EstimatedTimeSeconds;
 
-        return 30; // Default
+        if (question is FillInBlankQuestion fibQuestion)
+            return fibQuestion.Blanks != null && fibQuestion.Blanks.Count > 1 ? 45 : 30;
+
+        return 30;
     }
 
     /// <summary>
