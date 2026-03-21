@@ -44,10 +44,16 @@ public class ChallengeDataManager
     public const string STEP_SUBTRACTION_5_ID = "fd000000-0000-0000-0000-000000000000";  // Subtract from Tens
     public const string STEP_SUBTRACTION_6_ID = "c9000000-0000-0000-0000-000000000000";  // Two-Digit No Borrow
     public const string STEP_SUBTRACTION_7_ID = "ca000000-0000-0000-0000-000000000000";  // Two-Digit With Borrow
-    public const string STEP_MULTIPLICATION_1_ID = "cb000000-0000-0000-0000-000000000000";
-    public const string STEP_MULTIPLICATION_2_ID = "cc000000-0000-0000-0000-000000000000";
-    public const string STEP_MULTIPLICATION_3_ID = "cd000000-0000-0000-0000-000000000000";
-    public const string STEP_MULTIPLICATION_4_ID = "ce000000-0000-0000-0000-000000000000";
+    // Unified Multiplication challenge steps (ordered by learning difficulty: 10>2>5>4>3>8>6>7>9>mixed)
+    public const string STEP_MULT_EQUAL_GROUPS_ID = "cb000000-0000-0000-0000-000000000000";
+    public const string STEP_MULT_BY_10_ID        = "cc000000-0000-0000-0000-000000000000";
+    public const string STEP_MULT_BY_2_ID         = "cd000000-0000-0000-0000-000000000000";
+    public const string STEP_MULT_BY_5_ID         = "ce000000-0000-0000-0000-000000000000";  // → unlocks Division I
+    // Legacy aliases (kept for external callers)
+    public const string STEP_MULTIPLICATION_1_ID  = STEP_MULT_EQUAL_GROUPS_ID;
+    public const string STEP_MULTIPLICATION_2_ID  = STEP_MULT_BY_10_ID;
+    public const string STEP_MULTIPLICATION_3_ID  = STEP_MULT_BY_2_ID;
+    public const string STEP_MULTIPLICATION_4_ID  = STEP_MULT_BY_5_ID;
     public const string STEP_DIVISION_1_ID = "cf000000-0000-0000-0000-000000000000";
     public const string STEP_DIVISION_2_ID = "d1000000-0000-0000-0000-000000000000";
     public const string STEP_DIVISION_3_ID = "d2000000-0000-0000-0000-000000000000";
@@ -77,21 +83,30 @@ public class ChallengeDataManager
     public const string STEP_ROME_1_ID        = "c8000000-0000-0000-0000-000000000000";
 
     // ─── New Math challenges (Stage 2 & 3) ──────────────────────────────────
-    public const string CHALLENGE_MULTIPLICATION_II_ID  = "bc000000-0000-0000-0000-000000000000";
-    public const string CHALLENGE_MULTIPLICATION_III_ID = "bd000000-0000-0000-0000-000000000000";
+    // Note: Multiplication II & III are retired — all multiplication is now in the single Multiplication challenge.
+    // Their step UUIDs are reused for the expanded step list (steps 5–11).
+    public const string CHALLENGE_MULTIPLICATION_II_ID  = "bc000000-0000-0000-0000-000000000000";  // retired
+    public const string CHALLENGE_MULTIPLICATION_III_ID = "bd000000-0000-0000-0000-000000000000";  // retired
     public const string CHALLENGE_DIVISION_II_ID        = "be000000-0000-0000-0000-000000000000";
     public const string CHALLENGE_DIVISION_III_ID       = "bf000000-0000-0000-0000-000000000000";
     public const string CHALLENGE_ARITHMETIC_REVIEW_ID  = "b0000000-0000-0000-0000-000000000000";
 
-    // Multiplication II steps: ×3, ×4, ×6, ×7
-    public const string STEP_MULT_II_1_ID = "ea000000-0000-0000-0000-000000000000";
-    public const string STEP_MULT_II_2_ID = "eb000000-0000-0000-0000-000000000000";
-    public const string STEP_MULT_II_3_ID = "ec000000-0000-0000-0000-000000000000";
-    public const string STEP_MULT_II_4_ID = "ed000000-0000-0000-0000-000000000000";
-    // Multiplication III steps: ×8, ×9, mixed
-    public const string STEP_MULT_III_1_ID = "ee000000-0000-0000-0000-000000000000";
-    public const string STEP_MULT_III_2_ID = "ef000000-0000-0000-0000-000000000000";
-    public const string STEP_MULT_III_3_ID = "f0000000-0000-0000-0000-000000000000";
+    // Multiplication steps 5–11 (reusing former Mult II/III UUIDs, new order: ×4,×3,×8,×6,×7,×9,mixed)
+    public const string STEP_MULT_BY_4_ID   = "ea000000-0000-0000-0000-000000000000";
+    public const string STEP_MULT_BY_3_ID   = "eb000000-0000-0000-0000-000000000000";  // → unlocks Division II
+    public const string STEP_MULT_BY_8_ID   = "ec000000-0000-0000-0000-000000000000";
+    public const string STEP_MULT_BY_6_ID   = "ed000000-0000-0000-0000-000000000000";
+    public const string STEP_MULT_BY_7_ID   = "ee000000-0000-0000-0000-000000000000";  // → unlocks Division III
+    public const string STEP_MULT_BY_9_ID   = "ef000000-0000-0000-0000-000000000000";
+    public const string STEP_MULT_MIXED_ID  = "f0000000-0000-0000-0000-000000000000";
+    // Legacy aliases
+    public const string STEP_MULT_II_1_ID  = STEP_MULT_BY_4_ID;
+    public const string STEP_MULT_II_2_ID  = STEP_MULT_BY_3_ID;
+    public const string STEP_MULT_II_3_ID  = STEP_MULT_BY_8_ID;
+    public const string STEP_MULT_II_4_ID  = STEP_MULT_BY_6_ID;
+    public const string STEP_MULT_III_1_ID = STEP_MULT_BY_7_ID;
+    public const string STEP_MULT_III_2_ID = STEP_MULT_BY_9_ID;
+    public const string STEP_MULT_III_3_ID = STEP_MULT_MIXED_ID;
     // Division II steps: ÷3, ÷4, ÷6, ÷7
     public const string STEP_DIV_II_1_ID = "f1000000-0000-0000-0000-000000000000";
     public const string STEP_DIV_II_2_ID = "f2000000-0000-0000-0000-000000000000";
@@ -113,6 +128,8 @@ public class ChallengeDataManager
     private Dictionary<string, Step>      _stepById        = new Dictionary<string, Step>();
     // subjectName → ordered list of challenges
     private Dictionary<string, List<Challenge>> _subjectChallenges = new Dictionary<string, List<Challenge>>();
+    // challengeId → list of step IDs that unlock it (reverse index of Step.UnlocksChallengeIds)
+    private Dictionary<string, List<string>> _challengeUnlockedBySteps = new Dictionary<string, List<string>>();
 
     public ChallengeDataManager()
     {
@@ -145,12 +162,27 @@ public class ChallengeDataManager
         _stepById.TryGetValue(id, out var s) ? s : null;
 
     /// <summary>
-    /// Returns true if all prerequisite challenges have all their steps in player.CompletedSteps.
-    /// Challenges with no prerequisites are always unlocked.
+    /// Returns true if all prerequisite challenges have all their steps in player.CompletedSteps,
+    /// OR if a step that unlocks this challenge is in player.CompletedSteps.
+    /// Challenges with no prerequisites and no step-unlocks are always unlocked.
     /// </summary>
     public bool IsChallengeUnlocked(string challengeId, Player player)
     {
         if (!_challengeById.TryGetValue(challengeId, out var challenge)) return false;
+
+        // Check step-based unlocks first: if any unlocking step is completed, challenge is available
+        if (_challengeUnlockedBySteps.TryGetValue(challengeId, out var unlockingSteps))
+        {
+            foreach (var stepId in unlockingSteps)
+            {
+                if (player.CompletedSteps != null && player.CompletedSteps.Contains(stepId))
+                    return true;
+            }
+            // Has step-unlock entries but none completed yet → locked
+            return false;
+        }
+
+        // Fall back to challenge-level prerequisites
         if (challenge.Prerequisites == null || challenge.Prerequisites.Count == 0) return true;
 
         foreach (var prereqId in challenge.Prerequisites)
@@ -163,6 +195,22 @@ public class ChallengeDataManager
             }
         }
         return true;
+    }
+
+    /// <summary>
+    /// Returns the challenges unlocked by completing a given step.
+    /// Used by QuestionFlowManager to show unlock notifications on step completion.
+    /// </summary>
+    public List<Challenge> GetUnlockedChallengesForStep(string stepId)
+    {
+        var result = new List<Challenge>();
+        if (!_stepById.TryGetValue(stepId, out var step)) return result;
+        foreach (var challengeId in step.UnlocksChallengeIds)
+        {
+            if (_challengeById.TryGetValue(challengeId, out var c))
+                result.Add(c);
+        }
+        return result;
     }
 
     /// <summary>
@@ -200,17 +248,19 @@ public class ChallengeDataManager
 
         try
         {
-            string subjectJson   = await client.GetAsync("subjects",   "select=*&order=name.asc");
-            string challengeJson = await client.GetAsync("challenges",  "select=*&order=created_at.asc");
-            string prereqJson    = await client.GetAsync("challenge_prerequisites", "select=*");
-            string stepJson      = await client.GetAsync("steps",       "select=*&order=number.asc");
-            string stepPrereqJson= await client.GetAsync("step_prerequisites", "select=*");
+            string subjectJson    = await client.GetAsync("subjects",              "select=*&order=name.asc");
+            string challengeJson  = await client.GetAsync("challenges",            "select=*&order=created_at.asc");
+            string prereqJson     = await client.GetAsync("challenge_prerequisites","select=*");
+            string stepJson       = await client.GetAsync("steps",                 "select=*&order=number.asc");
+            string stepPrereqJson = await client.GetAsync("step_prerequisites",    "select=*");
+            string stepUnlockJson = await client.GetAsync("step_unlocks",          "select=*");
 
             var subjectRows    = JsonHelper.FromJsonArray<SubjectRow>(subjectJson);
             var challengeRows  = JsonHelper.FromJsonArray<ChallengeRow>(challengeJson);
             var prereqRows     = JsonHelper.FromJsonArray<ChPrereqRow>(prereqJson);
             var stepRows       = JsonHelper.FromJsonArray<StepRow>(stepJson);
             var stepPreReqRows = JsonHelper.FromJsonArray<StepPrereqRow>(stepPrereqJson);
+            var stepUnlockRows = JsonHelper.FromJsonArray<StepUnlockRow>(stepUnlockJson);
 
             if (challengeRows == null || challengeRows.Length == 0)
             {
@@ -241,10 +291,20 @@ public class ChallengeDataManager
                     stepPrereqMap[spr.step_id].Add(spr.requires_step_id);
                 }
 
+            // Step unlocks: stepId → list of challenge IDs unlocked on completion
+            var stepUnlocksMap = new Dictionary<string, List<string>>();
+            if (stepUnlockRows != null)
+                foreach (var su in stepUnlockRows)
+                {
+                    if (!stepUnlocksMap.ContainsKey(su.step_id)) stepUnlocksMap[su.step_id] = new List<string>();
+                    stepUnlocksMap[su.step_id].Add(su.unlocks_challenge_id);
+                }
+
             // Build new catalog
-            var newChallengeById   = new Dictionary<string, Challenge>();
-            var newChallengeBySlug = new Dictionary<string, Challenge>();
-            var newSubjectChallenges = new Dictionary<string, List<Challenge>>();
+            var newChallengeById      = new Dictionary<string, Challenge>();
+            var newChallengeBySlug    = new Dictionary<string, Challenge>();
+            var newSubjectChallenges  = new Dictionary<string, List<Challenge>>();
+            var newStepUnlocksChallenge = new Dictionary<string, List<string>>();
 
             foreach (var cr in challengeRows)
             {
@@ -271,6 +331,7 @@ public class ChallengeDataManager
                             Difficulty = s.difficulty,
                             RequireUltimateChallenge = s.require_ultimate,
                             PrerequisiteStepIds = stepPrereqMap.TryGetValue(s.id, out var sp) ? sp : new List<string>(),
+                            UnlocksChallengeIds = stepUnlocksMap.TryGetValue(s.id, out var su) ? su : new List<string>(),
                             Status = StepStatus.NotStarted,
                             QuestionMode = QuestionMode.Any
                         }).ToList();
@@ -288,11 +349,21 @@ public class ChallengeDataManager
             _challengeBySlug   = newChallengeBySlug;
             _subjectChallenges = newSubjectChallenges;
 
-            // Rebuild step index
+            // Rebuild step index + step-unlock reverse index
             _stepById = new Dictionary<string, Step>();
+            _challengeUnlockedBySteps = new Dictionary<string, List<string>>();
             foreach (var ch in _challengeById.Values)
                 foreach (var step in ch.Steps)
+                {
                     _stepById[step.Id] = step;
+                    foreach (var unlockedId in step.UnlocksChallengeIds)
+                    {
+                        if (!_challengeUnlockedBySteps.ContainsKey(unlockedId))
+                            _challengeUnlockedBySteps[unlockedId] = new List<string>();
+                        if (!_challengeUnlockedBySteps[unlockedId].Contains(step.Id))
+                            _challengeUnlockedBySteps[unlockedId].Add(step.Id);
+                    }
+                }
 
             Debug.Log($"[ChallengeDataManager] Loaded from Supabase: {challengeRows.Length} challenges, {_stepById.Count} steps.");
         }
@@ -331,20 +402,51 @@ public class ChallengeDataManager
             MakeStep(STEP_SUBTRACTION_7_ID, CHALLENGE_SUBTRACTION_ID, 7, "Two-Digit With Borrow",        "Math", "Subtraction", new List<string> { STEP_SUBTRACTION_6_ID },           0.14f,  mode: QuestionMode.FillInBlank),
         };
 
-        var multiplication = new Challenge(CHALLENGE_MULTIPLICATION_ID, "Multiplication I", "Math", "Treat multiplication as repeated groups; build fluency with ×2, ×5, ×10", "multiplication", SUBJECT_MATH_ID)
+        var multiplication = new Challenge(CHALLENGE_MULTIPLICATION_ID, "Multiplication", "Math",
+            "Master all single-digit times tables through carefully sequenced steps; intermediate steps unlock matching Division challenges",
+            "multiplication", SUBJECT_MATH_ID)
             { StageNumber = 1, StageName = "Arithmetic Foundations", Difficulty = 0.15f };
         multiplication.Prerequisites = new List<string> { CHALLENGE_SUBTRACTION_ID };
         multiplication.Steps = new List<Step>
         {
-            MakeStep(STEP_MULTIPLICATION_1_ID, CHALLENGE_MULTIPLICATION_ID, 1, "Equal Groups",    "Math", "Multiplication I", new List<string>(),                                      0.14f),
-            MakeStep(STEP_MULTIPLICATION_2_ID, CHALLENGE_MULTIPLICATION_ID, 2, "Multiply by 2",  "Math", "Multiplication I", new List<string> { STEP_MULTIPLICATION_1_ID },           0.15f),
-            MakeStep(STEP_MULTIPLICATION_3_ID, CHALLENGE_MULTIPLICATION_ID, 3, "Multiply by 5",  "Math", "Multiplication I", new List<string> { STEP_MULTIPLICATION_2_ID },           0.16f),
-            MakeStep(STEP_MULTIPLICATION_4_ID, CHALLENGE_MULTIPLICATION_ID, 4, "Multiply by 10", "Math", "Multiplication I", new List<string> { STEP_MULTIPLICATION_3_ID },           0.17f),
+            // Step 1 — conceptual foundation
+            MakeStep(STEP_MULT_EQUAL_GROUPS_ID, CHALLENGE_MULTIPLICATION_ID,  1, "Equal Groups",
+                "Math", "Multiplication", new List<string>(),                                     0.13f),
+            // Step 2–4: easiest patterns first (10, 2, 5)
+            MakeStep(STEP_MULT_BY_10_ID,        CHALLENGE_MULTIPLICATION_ID,  2, "Multiply by 10",
+                "Math", "Multiplication", new List<string> { STEP_MULT_EQUAL_GROUPS_ID },         0.14f),
+            MakeStep(STEP_MULT_BY_2_ID,         CHALLENGE_MULTIPLICATION_ID,  3, "Multiply by 2",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_10_ID },                0.15f),
+            // ×5 completion → unlocks Division I (÷2, ÷5, ÷10)
+            MakeStep(STEP_MULT_BY_5_ID,         CHALLENGE_MULTIPLICATION_ID,  4, "Multiply by 5",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_2_ID },                 0.16f,
+                unlocksChallengeIds: new List<string> { CHALLENGE_DIVISION_ID }),
+            // Step 5–6: medium difficulty (4 = double of 2; 3 = new pattern)
+            MakeStep(STEP_MULT_BY_4_ID,         CHALLENGE_MULTIPLICATION_ID,  5, "Multiply by 4",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_5_ID },                 0.18f),
+            // ×3 completion → unlocks Division II (÷3, ÷4)
+            MakeStep(STEP_MULT_BY_3_ID,         CHALLENGE_MULTIPLICATION_ID,  6, "Multiply by 3",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_4_ID },                 0.20f,
+                unlocksChallengeIds: new List<string> { CHALLENGE_DIVISION_II_ID }),
+            // Step 7–9: harder tables (8 = double of 4; 6 = double of 3; 7 = trickiest)
+            MakeStep(STEP_MULT_BY_8_ID,         CHALLENGE_MULTIPLICATION_ID,  7, "Multiply by 8",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_3_ID },                 0.23f),
+            MakeStep(STEP_MULT_BY_6_ID,         CHALLENGE_MULTIPLICATION_ID,  8, "Multiply by 6",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_8_ID },                 0.25f),
+            // ×7 completion → unlocks Division III (÷6, ÷7, ÷8)
+            MakeStep(STEP_MULT_BY_7_ID,         CHALLENGE_MULTIPLICATION_ID,  9, "Multiply by 7",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_6_ID },                 0.27f,
+                unlocksChallengeIds: new List<string> { CHALLENGE_DIVISION_III_ID }),
+            // Step 10–11: complete and consolidate
+            MakeStep(STEP_MULT_BY_9_ID,         CHALLENGE_MULTIPLICATION_ID, 10, "Multiply by 9",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_7_ID },                 0.28f),
+            MakeStep(STEP_MULT_MIXED_ID,        CHALLENGE_MULTIPLICATION_ID, 11, "Mixed Times Tables (1–10)",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_9_ID },                 0.30f),
         };
 
-        var division = new Challenge(CHALLENGE_DIVISION_ID, "Division I", "Math", "Connect division to equal sharing; build fluency with ÷2, ÷5, ÷10", "division", SUBJECT_MATH_ID)
+        var division = new Challenge(CHALLENGE_DIVISION_ID, "Division I", "Math", "Connect division to equal sharing; build fluency with ÷2, ÷5, ÷10 — unlocked after mastering ×5", "division", SUBJECT_MATH_ID)
             { StageNumber = 1, StageName = "Arithmetic Foundations", Difficulty = 0.19f };
-        division.Prerequisites = new List<string> { CHALLENGE_MULTIPLICATION_ID };
+        // No challenge prerequisites: Division I is unlocked by the ×5 step in Multiplication
         division.Steps = new List<Step>
         {
             MakeStep(STEP_DIVISION_1_ID, CHALLENGE_DIVISION_ID, 1, "Sharing Equally", "Math", "Division I", new List<string>(),                               0.18f),
@@ -354,20 +456,9 @@ public class ChallengeDataManager
         };
 
         // ── Stage 2: Arithmetic Mastery ──────────────────────────────────────
-        var multiplicationII = new Challenge(CHALLENGE_MULTIPLICATION_II_ID, "Multiplication II", "Math", "Master the ×3, ×4, ×6, ×7 times tables", "multiplication_ii", SUBJECT_MATH_ID)
-            { StageNumber = 2, StageName = "Arithmetic Mastery", Difficulty = 0.24f };
-        multiplicationII.Prerequisites = new List<string> { CHALLENGE_DIVISION_ID };
-        multiplicationII.Steps = new List<Step>
-        {
-            MakeStep(STEP_MULT_II_1_ID, CHALLENGE_MULTIPLICATION_II_ID, 1, "Multiply by 3", "Math", "Multiplication II", new List<string>(),                               0.22f),
-            MakeStep(STEP_MULT_II_2_ID, CHALLENGE_MULTIPLICATION_II_ID, 2, "Multiply by 4", "Math", "Multiplication II", new List<string> { STEP_MULT_II_1_ID },           0.23f),
-            MakeStep(STEP_MULT_II_3_ID, CHALLENGE_MULTIPLICATION_II_ID, 3, "Multiply by 6", "Math", "Multiplication II", new List<string> { STEP_MULT_II_2_ID },           0.25f),
-            MakeStep(STEP_MULT_II_4_ID, CHALLENGE_MULTIPLICATION_II_ID, 4, "Multiply by 7", "Math", "Multiplication II", new List<string> { STEP_MULT_II_3_ID },           0.27f),
-        };
-
-        var divisionII = new Challenge(CHALLENGE_DIVISION_II_ID, "Division II", "Math", "Divide by 3, 4, 6, and 7 using known times-table inverses", "division_ii", SUBJECT_MATH_ID)
+        var divisionII = new Challenge(CHALLENGE_DIVISION_II_ID, "Division II", "Math", "Divide by 3 and 4 using known times-table inverses — unlocked after mastering ×3", "division_ii", SUBJECT_MATH_ID)
             { StageNumber = 2, StageName = "Arithmetic Mastery", Difficulty = 0.29f };
-        divisionII.Prerequisites = new List<string> { CHALLENGE_MULTIPLICATION_II_ID };
+        // No challenge prerequisites: Division II is unlocked by the ×3 step in Multiplication
         divisionII.Steps = new List<Step>
         {
             MakeStep(STEP_DIV_II_1_ID, CHALLENGE_DIVISION_II_ID, 1, "Divide by 3", "Math", "Division II", new List<string>(),                               0.28f),
@@ -376,19 +467,9 @@ public class ChallengeDataManager
             MakeStep(STEP_DIV_II_4_ID, CHALLENGE_DIVISION_II_ID, 4, "Divide by 7", "Math", "Division II", new List<string> { STEP_DIV_II_3_ID },           0.31f),
         };
 
-        var multiplicationIII = new Challenge(CHALLENGE_MULTIPLICATION_III_ID, "Multiplication III", "Math", "Complete the times tables: master ×8, ×9, then fluently mix all facts", "multiplication_iii", SUBJECT_MATH_ID)
-            { StageNumber = 2, StageName = "Arithmetic Mastery", Difficulty = 0.33f };
-        multiplicationIII.Prerequisites = new List<string> { CHALLENGE_DIVISION_II_ID };
-        multiplicationIII.Steps = new List<Step>
-        {
-            MakeStep(STEP_MULT_III_1_ID, CHALLENGE_MULTIPLICATION_III_ID, 1, "Multiply by 8",           "Math", "Multiplication III", new List<string>(),                                0.32f),
-            MakeStep(STEP_MULT_III_2_ID, CHALLENGE_MULTIPLICATION_III_ID, 2, "Multiply by 9",           "Math", "Multiplication III", new List<string> { STEP_MULT_III_1_ID },           0.33f),
-            MakeStep(STEP_MULT_III_3_ID, CHALLENGE_MULTIPLICATION_III_ID, 3, "Mixed Times Tables (1–9)","Math", "Multiplication III", new List<string> { STEP_MULT_III_2_ID },           0.35f),
-        };
-
-        var divisionIII = new Challenge(CHALLENGE_DIVISION_III_ID, "Division III", "Math", "Divide by 8 and 9, then fluently mix all division facts", "division_iii", SUBJECT_MATH_ID)
+        var divisionIII = new Challenge(CHALLENGE_DIVISION_III_ID, "Division III", "Math", "Divide by 6, 7, and 8, then fluently mix all division facts — unlocked after mastering ×7", "division_iii", SUBJECT_MATH_ID)
             { StageNumber = 2, StageName = "Arithmetic Mastery", Difficulty = 0.37f };
-        divisionIII.Prerequisites = new List<string> { CHALLENGE_MULTIPLICATION_III_ID };
+        // No challenge prerequisites: Division III is unlocked by the ×7 step in Multiplication
         divisionIII.Steps = new List<Step>
         {
             MakeStep(STEP_DIV_III_1_ID, CHALLENGE_DIVISION_III_ID, 1, "Divide by 8",             "Math", "Division III", new List<string>(),                                0.36f),
@@ -486,9 +567,7 @@ public class ChallengeDataManager
         Register("Math", subtraction);
         Register("Math", multiplication);
         Register("Math", division);
-        Register("Math", multiplicationII);
         Register("Math", divisionII);
-        Register("Math", multiplicationIII);
         Register("Math", divisionIII);
         Register("Math", orderOfOperations);
         Register("Math", arithmeticReview);
@@ -508,10 +587,20 @@ public class ChallengeDataManager
         _challengeBySlug[c.Slug.ToLower()] = c;
         if (!_subjectChallenges.ContainsKey(subjectName)) _subjectChallenges[subjectName] = new List<Challenge>();
         _subjectChallenges[subjectName].Add(c);
-        foreach (var s in c.Steps) _stepById[s.Id] = s;
+        foreach (var s in c.Steps)
+        {
+            _stepById[s.Id] = s;
+            foreach (var unlockedChallengeId in s.UnlocksChallengeIds)
+            {
+                if (!_challengeUnlockedBySteps.ContainsKey(unlockedChallengeId))
+                    _challengeUnlockedBySteps[unlockedChallengeId] = new List<string>();
+                if (!_challengeUnlockedBySteps[unlockedChallengeId].Contains(s.Id))
+                    _challengeUnlockedBySteps[unlockedChallengeId].Add(s.Id);
+            }
+        }
     }
 
-    private static Step MakeStep(string id, string challengeId, int number, string description, string subject, string challenge, List<string> prereqStepIds, float difficulty = 0.5f, bool requireUltimate = false, QuestionMode mode = QuestionMode.Any)
+    private static Step MakeStep(string id, string challengeId, int number, string description, string subject, string challenge, List<string> prereqStepIds, float difficulty = 0.5f, bool requireUltimate = false, QuestionMode mode = QuestionMode.Any, List<string> unlocksChallengeIds = null)
     {
         return new Step
         {
@@ -527,16 +616,18 @@ public class ChallengeDataManager
             QuestionMode = mode,
             RequireUltimateChallenge = requireUltimate,
             PrerequisiteStepIds = prereqStepIds,
+            UnlocksChallengeIds = unlocksChallengeIds ?? new List<string>(),
             Status = StepStatus.NotStarted
         };
     }
 
     // ─── DTOs ─────────────────────────────────────────────────────────────────
 
-    [System.Serializable] private class SubjectRow   { public string id; public string name; }
-    [System.Serializable] private class ChallengeRow { public string id; public string subject_id; public string name; public string slug; public string description; public int stage_number; public string stage_name; public float difficulty; }
-    [System.Serializable] private class ChPrereqRow  { public string challenge_id; public string requires_challenge_id; }
-    [System.Serializable] private class StepRow      { public string id; public string challenge_id; public int number; public string title; public string description; public int streak_goal; public float mastery_target; public bool require_ultimate; public float difficulty; }
-    [System.Serializable] private class StepPrereqRow{ public string step_id; public string requires_step_id; }
+    [System.Serializable] private class SubjectRow    { public string id; public string name; }
+    [System.Serializable] private class ChallengeRow  { public string id; public string subject_id; public string name; public string slug; public string description; public int stage_number; public string stage_name; public float difficulty; }
+    [System.Serializable] private class ChPrereqRow   { public string challenge_id; public string requires_challenge_id; }
+    [System.Serializable] private class StepRow       { public string id; public string challenge_id; public int number; public string title; public string description; public int streak_goal; public float mastery_target; public bool require_ultimate; public float difficulty; }
+    [System.Serializable] private class StepPrereqRow { public string step_id; public string requires_step_id; }
+    [System.Serializable] private class StepUnlockRow { public string step_id; public string unlocks_challenge_id; }
 }
 

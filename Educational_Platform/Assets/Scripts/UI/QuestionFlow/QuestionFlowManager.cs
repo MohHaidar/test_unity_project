@@ -550,7 +550,7 @@ public class QuestionFlowManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Shows the congratulations overlay with earned rewards.
+    /// Shows the congratulations overlay with earned rewards and any newly unlocked challenges.
     /// </summary>
     private void ShowStepCompleteOverlay(int expEarned, int coinsEarned, bool firstCompletion)
     {
@@ -561,10 +561,23 @@ public class QuestionFlowManager : MonoBehaviour
             string rewards = firstCompletion
                 ? $"+{expEarned} EXP   +{coinsEarned} Coins"
                 : "No rewards (already completed)";
+
+            string unlockLine = "";
+            if (firstCompletion && _currentStep.UnlocksChallengeIds != null && _currentStep.UnlocksChallengeIds.Count > 0)
+            {
+                var unlocked = ChallengeDataManager.Instance.GetUnlockedChallengesForStep(_currentStep.Id);
+                if (unlocked.Count > 0)
+                {
+                    var names = string.Join(", ", unlocked.ConvertAll(c => c.Name));
+                    unlockLine = $"\n<color=#7FFF00>🔓 Unlocked: {names}</color>";
+                }
+            }
+
             stepCompleteText.text =
                 $"<b>{title}</b>\n" +
                 $"Step {_currentStep.Number}: {_currentStep.Description}\n\n" +
-                $"<color=yellow>{rewards}</color>\n\n" +
+                $"<color=yellow>{rewards}</color>" +
+                unlockLine + "\n\n" +
                 $"Total EXP: {_player.TotalExp}   Coins: {_player.Coins}";
         }
         ShowStatus("");

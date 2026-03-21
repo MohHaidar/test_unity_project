@@ -20,6 +20,9 @@ public class Step
     // Step UUIDs that must be completed before this step unlocks
     public List<string> PrerequisiteStepIds { get; set; } = new List<string>();
 
+    // Challenge UUIDs that become available when this step is completed
+    public List<string> UnlocksChallengeIds { get; set; } = new List<string>();
+
     // Streak-based progression
     public int StreakGoal { get; set; } = 5;
     public int StreakCurrent { get; set; } = 0;

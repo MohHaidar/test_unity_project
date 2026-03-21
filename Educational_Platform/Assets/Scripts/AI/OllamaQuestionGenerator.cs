@@ -334,33 +334,51 @@ RETURN ONLY VALID JSON (no other text, no markdown):
                     _ => ""
                 };
 
-            case "multiplication_i":
+            case "multiplication":
+            case "multiplication_i":  // legacy slug alias
                 return stepNumber switch
                 {
-                    1 => "- Use multiplication as equal groups\n- Small whole numbers only\n- Formats like 3 groups of 4 or 3 x 4 are allowed",
-                    2 => "- Use multiplication by 2 only\n- Other factor between 0 and 12",
-                    3 => "- Use multiplication by 5 only\n- Other factor between 0 and 12",
-                    4 => "- Use multiplication by 10 only\n- Other factor between 0 and 12",
-                    _ => ""
+                    1  => "- Use multiplication as equal groups\n- Small whole numbers only\n- Formats like 3 groups of 4 or 3 × 4 are allowed",
+                    2  => "- Use multiplication by 10 only\n- Other factor between 0 and 12",
+                    3  => "- Use multiplication by 2 only\n- Other factor between 0 and 12",
+                    4  => "- Use multiplication by 5 only\n- Other factor between 0 and 12",
+                    5  => "- Use multiplication by 4 only\n- Other factor between 1 and 12",
+                    6  => "- Use multiplication by 3 only\n- Other factor between 1 and 12",
+                    7  => "- Use multiplication by 8 only\n- Other factor between 1 and 12",
+                    8  => "- Use multiplication by 6 only\n- Other factor between 1 and 12",
+                    9  => "- Use multiplication by 7 only\n- Other factor between 1 and 12",
+                    10 => "- Use multiplication by 9 only\n- Other factor between 1 and 12",
+                    11 => "- Use ANY multiplication fact from the 1–10 times tables\n- Mix factors freely",
+                    _  => ""
                 };
 
-            case "division_i":
-                return stepNumber switch
-                {
-                    1 => "- Use equal sharing or grouping questions\n- Exact division only\n- Small whole numbers only",
-                    2 => "- Use division by 2 only\n- Quotient must be a whole number",
-                    3 => "- Use division by 5 only\n- Quotient must be a whole number",
-                    4 => "- Use division by 10 only\n- Quotient must be a whole number",
-                    _ => ""
-                };
-
-            case "multiplication_ii":
+            case "multiplication_ii":   // retired slug — treated as late-range mult steps
                 return stepNumber switch
                 {
                     1 => "- Use multiplication by 3 only\n- Other factor between 1 and 12",
                     2 => "- Use multiplication by 4 only\n- Other factor between 1 and 12",
                     3 => "- Use multiplication by 6 only\n- Other factor between 1 and 12",
                     4 => "- Use multiplication by 7 only\n- Other factor between 1 and 12",
+                    _ => ""
+                };
+
+            case "multiplication_iii":  // retired slug — treated as final mult steps
+                return stepNumber switch
+                {
+                    1 => "- Use multiplication by 8 only\n- Other factor between 1 and 12",
+                    2 => "- Use multiplication by 9 only\n- Other factor between 1 and 12",
+                    3 => "- Use ANY multiplication fact from the 1–10 times tables\n- Mix factors freely",
+                    _ => ""
+                };
+
+            case "division_i":
+            case "division":  // legacy slug alias
+                return stepNumber switch
+                {
+                    1 => "- Use equal sharing or grouping questions\n- Exact division only\n- Small whole numbers only",
+                    2 => "- Use division by 2 only\n- Quotient must be a whole number",
+                    3 => "- Use division by 5 only\n- Quotient must be a whole number",
+                    4 => "- Use division by 10 only\n- Quotient must be a whole number",
                     _ => ""
                 };
 
@@ -371,15 +389,6 @@ RETURN ONLY VALID JSON (no other text, no markdown):
                     2 => "- Use division by 4 only\n- Quotient must be a whole number between 1 and 12",
                     3 => "- Use division by 6 only\n- Quotient must be a whole number between 1 and 12",
                     4 => "- Use division by 7 only\n- Quotient must be a whole number between 1 and 12",
-                    _ => ""
-                };
-
-            case "multiplication_iii":
-                return stepNumber switch
-                {
-                    1 => "- Use multiplication by 8 only\n- Other factor between 1 and 12",
-                    2 => "- Use multiplication by 9 only\n- Other factor between 1 and 12",
-                    3 => "- Use ANY multiplication fact from the 1–9 times tables\n- Mix factors freely",
                     _ => ""
                 };
 
