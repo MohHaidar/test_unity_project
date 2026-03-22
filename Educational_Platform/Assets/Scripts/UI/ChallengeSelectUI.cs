@@ -49,6 +49,7 @@ public class ChallengeSelectUI : MonoBehaviour
         // Load player and challenges from Supabase (falls back gracefully if unavailable)
         _player = await PlayerDataManager.Instance.LoadPlayerAsync(1, "Player");
         await ChallengeDataManager.Instance.LoadFromSupabaseAsync();
+        await CharacterManager.Instance.LoadFromSupabaseAsync();
 
         PopulateSubjects();
 

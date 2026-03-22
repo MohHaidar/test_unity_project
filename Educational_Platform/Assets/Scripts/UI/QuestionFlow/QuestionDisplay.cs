@@ -6,14 +6,15 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Displays questions to the player.
-/// Polymorphic: handles MultipleChoiceQuestion and FillInBlankQuestion (typed + drag modes).
+/// Polymorphic: handles MultipleChoiceQuestion, FillInBlankQuestion, and ConversationQuestion.
 ///
 /// Unity Inspector wiring:
 ///   Multiple Choice Panel  — GameObject wrapping questionText + optionButtons
 ///   Fill In Blank Panel    — GameObject wrapping fibQuestionText, fibInputFields, fibInputLabels, fibSubmitButton
+///   Conversation Panel     — GameObject wrapping characterPortrait, characterNameText, characterDialogueText
+///                            (shown together with Multiple Choice Panel for ConversationQuestion)
 ///
-/// Both panels live as children of a shared canvas area; only one is active at a time.
-/// See FILL_IN_BLANK_UI.md for the full hierarchy and Inspector setup guide.
+/// See FILL_IN_BLANK_UI.md and PARLOUR_UI.md for hierarchy and Inspector setup guides.
 /// </summary>
 public class QuestionDisplay : MonoBehaviour
 {
@@ -28,6 +29,17 @@ public class QuestionDisplay : MonoBehaviour
     [SerializeField] private TMP_InputField[] fibInputFields = new TMP_InputField[4];
     [SerializeField] private TextMeshProUGUI[] fibInputLabels = new TextMeshProUGUI[4];
     [SerializeField] private Button fibSubmitButton;
+
+    [Header("Conversation (Parlour)")]
+    [SerializeField] private GameObject conversationPanel;
+    [SerializeField] private Image characterPortrait;
+    [SerializeField] private TextMeshProUGUI characterNameText;
+    [SerializeField] private TextMeshProUGUI characterDialogueText;
+
+    [Header("Free Response (Parlour)")]
+    [SerializeField] private GameObject freeResponseRow;
+    [SerializeField] private TMP_InputField freeResponseInput;
+    [SerializeField] private Button freeResponseSubmitButton;
 
     [Header("Shared")]
     [SerializeField] private TextMeshProUGUI feedbackText;
@@ -55,14 +67,19 @@ public class QuestionDisplay : MonoBehaviour
 
         _currentQuestion = question;
 
-        if (question is MultipleChoiceQuestion mcQuestion)
+        if (question is ConversationQuestion convQuestion)
         {
-            SetPanelActive(showMC: true);
+            SetPanelActive(showMC: true, showConversation: true);
+            DisplayConversation(convQuestion);
+        }
+        else if (question is MultipleChoiceQuestion mcQuestion)
+        {
+            SetPanelActive(showMC: true, showConversation: false);
             DisplayMultipleChoice(mcQuestion);
         }
         else if (question is FillInBlankQuestion fibQuestion)
         {
-            SetPanelActive(showMC: false);
+            SetPanelActive(showMC: false, showConversation: false);
             DisplayFillInBlank(fibQuestion);
         }
         else
@@ -73,10 +90,95 @@ public class QuestionDisplay : MonoBehaviour
         Debug.Log($"[QuestionDisplay] Displayed: {question}");
     }
 
-    private void SetPanelActive(bool showMC)
+    private void SetPanelActive(bool showMC, bool showConversation = false)
     {
         if (multipleChoicePanel != null) multipleChoicePanel.SetActive(showMC);
-        if (fillInBlankPanel != null)    fillInBlankPanel.SetActive(!showMC);
+        if (fillInBlankPanel    != null) fillInBlankPanel.SetActive(!showMC && !showConversation);
+        if (conversationPanel   != null) conversationPanel.SetActive(showConversation);
+    }
+
+    // ─── Conversation (Parlour) ───────────────────────────────────────────────
+
+    private void DisplayConversation(ConversationQuestion question)
+    {
+        // Load character portrait from Resources/Characters/<AvatarKey>
+        if (characterPortrait != null)
+        {
+            Sprite portrait = Resources.Load<Sprite>($"Characters/{question.CharacterName}");
+            if (portrait != null)
+                characterPortrait.sprite = portrait;
+            else
+                characterPortrait.sprite = Resources.Load<Sprite>("Characters/character_placeholder");
+        }
+
+        if (characterNameText     != null) characterNameText.text     = question.CharacterName;
+        if (characterDialogueText != null) characterDialogueText.text = question.CharacterDialogue;
+
+        // Reuse the MC panel for question text + options (it's already active)
+        DisplayMultipleChoiceForConversation(question);
+    }
+
+    private void DisplayMultipleChoiceForConversation(ConversationQuestion question)
+    {
+        if (questionText != null)
+            questionText.text = question.QuestionText;
+
+        var shuffledOptions = new List<string>(question.Options);
+        var rng = new System.Random();
+        int n = shuffledOptions.Count;
+        while (n > 1) { n--; int k = rng.Next(n + 1); var t = shuffledOptions[k]; shuffledOptions[k] = shuffledOptions[n]; shuffledOptions[n] = t; }
+        question.Options = shuffledOptions;
+
+        int buttonCount = Mathf.Min(optionButtons.Length, shuffledOptions.Count);
+        for (int i = 0; i < optionButtons.Length; i++)
+        {
+            if (optionButtons[i] == null) continue;
+            bool active = i < buttonCount;
+            optionButtons[i].gameObject.SetActive(active);
+            if (!active) continue;
+
+            var buttonText = optionButtons[i].GetComponentInChildren<TextMeshProUGUI>();
+            if (buttonText != null) buttonText.text = shuffledOptions[i];
+
+            int idx = i;
+            optionButtons[i].onClick.RemoveAllListeners();
+            optionButtons[i].onClick.AddListener(() => OnOptionSelected(question.Options[idx]));
+            optionButtons[i].interactable = true;
+        }
+
+        // Free-response row — shown when the question allows it
+        if (freeResponseRow != null)
+            freeResponseRow.SetActive(question.AllowFreeResponse);
+
+        if (question.AllowFreeResponse)
+        {
+            if (freeResponseInput != null)
+            {
+                freeResponseInput.text = "";
+                freeResponseInput.interactable = true;
+            }
+            if (freeResponseSubmitButton != null)
+            {
+                freeResponseSubmitButton.onClick.RemoveAllListeners();
+                freeResponseSubmitButton.onClick.AddListener(OnFreeResponseSubmit);
+                freeResponseSubmitButton.interactable = true;
+            }
+        }
+
+        if (feedbackText != null) feedbackText.text = "";
+    }
+
+    private void OnFreeResponseSubmit()
+    {
+        if (_currentQuestion == null) return;
+        string answer = freeResponseInput != null ? freeResponseInput.text.Trim() : "";
+        if (string.IsNullOrEmpty(answer)) return;
+
+        DisableAllButtons();
+        if (freeResponseInput  != null) freeResponseInput.interactable  = false;
+        if (freeResponseSubmitButton != null) freeResponseSubmitButton.interactable = false;
+
+        _answerSubmitter?.SubmitAnswer(answer);
     }
 
     // ─── Multiple Choice ──────────────────────────────────────────────────────
@@ -209,19 +311,27 @@ public class QuestionDisplay : MonoBehaviour
     {
         foreach (var button in optionButtons)
             if (button != null) button.interactable = false;
+        if (freeResponseInput        != null) freeResponseInput.interactable        = false;
+        if (freeResponseSubmitButton != null) freeResponseSubmitButton.interactable = false;
     }
 
     public void EnableAllButtons()
     {
         foreach (var button in optionButtons)
             if (button != null) button.interactable = true;
+        if (freeResponseInput        != null) freeResponseInput.interactable        = true;
+        if (freeResponseSubmitButton != null) freeResponseSubmitButton.interactable = true;
     }
 
     public void ClearDisplay()
     {
-        if (questionText != null) questionText.text = "";
-        if (fibQuestionText != null) fibQuestionText.text = "";
-        if (feedbackText != null) feedbackText.text = "";
+        if (questionText          != null) questionText.text          = "";
+        if (fibQuestionText       != null) fibQuestionText.text       = "";
+        if (feedbackText          != null) feedbackText.text          = "";
+        if (characterNameText     != null) characterNameText.text     = "";
+        if (characterDialogueText != null) characterDialogueText.text = "";
+        if (freeResponseInput     != null) freeResponseInput.text     = "";
+        if (freeResponseRow       != null) freeResponseRow.SetActive(false);
 
         foreach (var button in optionButtons)
         {

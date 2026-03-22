@@ -366,3 +366,214 @@ Keep rules short and unambiguous.
 | Add visual | `- INCLUDE a visual using bracket-dot format: "[● ●]  [● ●]"` |
 | Control question phrasing | `- Ask "How many items are there in total?"` |
 | Restrict answer type | `- Correct answer must be a single fraction in simplest form` |
+
+---
+
+## Part D — Parlour Challenges (Verbal Communication Subject)
+
+Parlour challenges are conversation-based and use a fundamentally different generator
+(`ParlourQuestionGenerator`) and question type (`ConversationQuestion`). They live in
+the `Verbal Communication` subject and have slugs that start with `parlour_`.
+
+### How Parlour Challenges Work
+
+```
+1. Player selects a parlour challenge (e.g. "The Coffee Shop")
+2. QuestionFlowManager detects slug starts with "parlour_" → uses ParlourQuestionGenerator
+3. Generator reads step.PromptConstraints JSON to get: character_id, skill_focus, scene
+4. CharacterManager resolves the character (name, personality, speaking style)
+5. A three-part prompt is sent to Ollama:
+     BLOCK 1: Character personality + speaking style
+     BLOCK 2: Player context (EXP tier, completed steps, mastery gaps)
+     BLOCK 3: Scene, skill focus, difficulty guidance
+6. Ollama returns JSON with: dialogue, question, options[4], correct, explanation
+7. ConversationDisplay renders: character portrait + dialogue bubble → question + options
+```
+
+### Quick Reference for Parlour Content
+
+| Task | Supabase only? | Code needed? |
+|------|---------------|--------------|
+| Add a new parlour step | ✅ Yes | ❌ No |
+| Add a new character | ✅ Yes | ❌ No (portrait asset needed) |
+| Add a new parlour challenge | ✅ Yes | ❌ No |
+| Change character for a step | ✅ Yes (edit prompt_constraints) | ❌ No |
+| Add a character portrait sprite | ❌ No | ✅ Put in Assets/Resources/Characters/ |
+
+### UUID Allocation (Verbal Communication)
+
+| UUID | Type | Content |
+|------|------|---------|
+| `a4000000-...` | Subject | Verbal Communication |
+| `0c000000-...` | Character | Maya |
+| `0c100000-...` | Character | Victor |
+| `0c200000-...` | Character | Zoe |
+| `0c300000-...` | Character | Dr. Chen |
+| `0c400000-...` | Character | Alex |
+| `26000000-...` | Challenge | The Coffee Shop |
+| `27000000-...` | Challenge | The Job Interview |
+| `28000000-...` | Challenge | The Book Club |
+| `14000000-...` | Step | CS: First Impressions |
+| `15000000-...` | Step | CS: Reading the Context |
+| `16000000-...` | Step | CS: Tone Matching |
+| `17000000-...` | Step | CS: Reading the Room |
+| `18000000-...` | Step | CS: Between the Lines |
+| `19000000-...` | Step | CS: Graceful Exit |
+| `1a000000-...` | Step | JI: Making an Entrance |
+| `1b000000-...` | Step | JI: Tell Me About Yourself |
+| `1c000000-...` | Step | JI: Tricky Questions |
+| `1d000000-...` | Step | JI: Staying Composed |
+| `1e000000-...` | Step | JI: Reading the Offer |
+| `1f000000-...` | Step | JI: Closing Statement |
+| `20000000-...` | Step | BC: Opening Discussion |
+| `21000000-...` | Step | BC: Word Choice Matters |
+| `22000000-...` | Step | BC: What Did the Author Mean? |
+| `23000000-...` | Step | BC: A Polite Disagreement |
+| `24000000-...` | Step | BC: Tone and Intent |
+| `25000000-...` | Step | BC: Your Turn |
+
+**Next free parlour step UUIDs:** `29000000-...` onwards
+**Next free parlour challenge UUIDs:** `29000000-...` onwards (use same range)
+**Next free character UUIDs:** `0c500000-...` onwards
+
+### Adding a New Character
+
+#### Supabase
+```sql
+INSERT INTO characters (id, name, personality, speaking_style, avatar_key, subject_id) VALUES
+  ('0c500000-0000-0000-0000-000000000000',
+   'Sam',
+   'Empathetic and reflective. Sam listens carefully before responding and often mirrors the player''s emotional register.',
+   'Gentle pacing. Uses "I hear you..." or "It sounds like...". Medium-length sentences. Warm but never gushing.',
+   'sam_placeholder',
+   'a4000000-0000-0000-0000-000000000000');
+```
+
+#### C# (hardcoded fallback in CharacterManager.cs)
+```csharp
+public const string CHAR_SAM_ID = "0c500000-0000-0000-0000-000000000000";
+
+Register(new Character(
+    CHAR_SAM_ID,
+    "Sam",
+    "Empathetic and reflective. Listens carefully before responding.",
+    "Gentle pacing. Uses \"I hear you...\". Warm but never gushing.",
+    "sam_placeholder",
+    VC_SUBJECT_ID));
+```
+
+#### Portrait Asset
+Place sprite at: `Assets/Resources/Characters/Sam.png`
+The AvatarKey in the DB must match the filename without extension (`"Sam"`).
+`CharacterManager.CHAR_SAM_ID` constant maps to the DB row.
+
+---
+
+### Adding a New Parlour Challenge
+
+#### SQL (Supabase migration or SQL editor)
+```sql
+-- 1. Challenge row
+INSERT INTO challenges (id, subject_id, name, slug, description, stage_number, stage_name, difficulty) VALUES
+  ('2a000000-0000-0000-0000-000000000000',
+   'a4000000-0000-0000-0000-000000000000',
+   'The Negotiation Room',
+   'parlour_negotiation',                      -- MUST start with "parlour_"
+   'Navigate difficult conversations with Alex, reading power dynamics and subtext',
+   2, 'Parlour Advanced', 0.50);
+
+-- 2. Steps (one INSERT per step, prompt_constraints is JSON)
+INSERT INTO steps (id, challenge_id, number, title, description, streak_goal, mastery_target, difficulty, prompt_constraints) VALUES
+  ('2a100000-0000-0000-0000-000000000000',
+   '2a000000-0000-0000-0000-000000000000',
+   1, 'Opening Move',
+   'Alex opens the negotiation with a loaded statement — how do you respond?',
+   5, 0.80, 0.40,
+   '{"character_id":"0c400000-0000-0000-0000-000000000000","skill_focus":"reading_power_dynamics","scene":"a tense negotiation room, Alex sits across the table with a neutral expression","difficulty_note":"Alex says something that sounds reasonable but is actually a test — player must read between the lines"}');
+
+-- 3. Step chain prerequisites
+INSERT INTO step_prerequisites (step_id, requires_step_id) VALUES
+  ('2a200000-0000-0000-0000-000000000000', '2a100000-0000-0000-0000-000000000000');
+  -- repeat for each step →
+
+-- 4. Challenge unlock: requires Job Interview step 4 (Staying Composed)
+INSERT INTO challenge_step_prerequisites (challenge_id, requires_step_id) VALUES
+  ('2a000000-0000-0000-0000-000000000000', '1d000000-0000-0000-0000-000000000000');
+
+-- 5. Character assignments
+INSERT INTO character_step_assignments (character_id, step_id) VALUES
+  ('0c400000-0000-0000-0000-000000000000', '2a100000-0000-0000-0000-000000000000');
+```
+
+#### C# (hardcoded fallback in ChallengeDataManager.cs — `AddParlourChallenges()`)
+```csharp
+public const string CHALLENGE_NEGOTIATION_ID    = "2a000000-0000-0000-0000-000000000000";
+public const string STEP_NEG_OPENING_MOVE_ID    = "2a100000-0000-0000-0000-000000000000";
+// ...
+
+var negotiation = new Challenge(CHALLENGE_NEGOTIATION_ID, "The Negotiation Room", VC,
+    "Navigate difficult conversations with Alex, reading power dynamics and subtext",
+    "parlour_negotiation", SUBJECT_VERBAL_COMMUNICATION_ID)
+    { StageNumber = 2, StageName = "Parlour Advanced", Difficulty = 0.50f };
+negotiation.PrerequisiteStepIds = new List<string> { STEP_JI_STAYING_COMPOSED_ID };
+// Add steps with MakeStep(...)...
+Register(VC, negotiation);
+```
+
+---
+
+### Prompt Constraints Format for Parlour Steps
+
+```json
+{
+  "character_id": "<UUID from characters table>",
+  "skill_focus":  "<tag — used in the AI prompt and stored on the ConversationQuestion>",
+  "scene":        "<2–3 sentence description of the physical/social scene>",
+  "difficulty_note": "<guidance for the AI on how to calibrate the distractor options>"
+}
+```
+
+**Skill focus tags (use consistently for analytics):**
+| Tag | Meaning |
+|-----|---------|
+| `informal_register` | Casual vs. formal language contrast |
+| `formal_register` | Professional language requirements |
+| `context_reading` | Implied meaning from situational context |
+| `tone_matching` | Matching the conversational energy |
+| `subtext` | Reading unstated meaning |
+| `ambiguity_resolution` | Disambiguating a statement that could mean two things |
+| `closing_register` | Ending a conversation gracefully |
+| `professional_tone` | Appropriate self-presentation in a formal setting |
+| `composure_under_pressure` | Maintaining register when challenged |
+| `negotiation_register` | Language patterns in negotiation/offer contexts |
+| `vocabulary` | Exact word meaning and synonyms |
+| `vocabulary_nuance` | Connotation differences between near-synonyms |
+| `interpretation` | Literal vs. figurative/thematic reading |
+| `subtext_in_disagreement` | Polite disagreement with hidden tension |
+| `tone_recognition` | Distinguishing critique from praise |
+| `comprehension_synthesis` | Summarising overall meaning accurately |
+
+---
+
+### The Five Characters
+
+| Name | UUID prefix | Best for | Tone |
+|------|------------|---------|------|
+| Maya | `0c000000` | Beginners, achievements, casual | Warm, casual, uses "we" |
+| Victor | `0c100000` | Formal register, interviews | No contractions, structured |
+| Zoe | `0c200000` | Tone matching, humour, ambiguity | Punchy, rhetorical questions |
+| Dr. Chen | `0c300000` | Vocabulary, interpretation | Measured, Socratic |
+| Alex | `0c400000` | Subtext, negotiation, pressure | Deadpan, indirect |
+
+---
+
+### Parlour Scaling Contract
+
+Once Phase 1–4 is fully in place, adding new parlour content requires **zero code changes**:
+
+1. ✅ Insert character row → character loads from Supabase
+2. ✅ Add portrait sprite → loads from `Resources/Characters/<AvatarKey>`
+3. ✅ Insert challenge row with `slug` starting `parlour_` → auto-detected by game
+4. ✅ Insert steps with `prompt_constraints` JSON → AI uses them for generation
+5. ✅ Insert `character_step_assignments` rows → character is assigned to step
+6. ✅ Insert `challenge_step_prerequisites` rows → challenge unlock condition set

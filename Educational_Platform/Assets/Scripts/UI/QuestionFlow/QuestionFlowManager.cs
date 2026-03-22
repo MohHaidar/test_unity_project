@@ -51,9 +51,12 @@ public class QuestionFlowManager : MonoBehaviour
     private float _lastQuestionDifficulty = -1f;
 
     private OllamaQuestionGenerator _questionGenerator;
+    private ParlourQuestionGenerator _parlourGenerator;
     private OllamaPerformanceEvaluator _performanceEvaluator;
     private QuestionDisplay _questionDisplay;
     private AnswerSubmitter _answerSubmitter;
+
+    private bool _isParlourChallenge = false;
 
     private bool _isWaitingForAnswer = false;
     private bool _isProcessingEvaluation = false;
@@ -80,6 +83,14 @@ public class QuestionFlowManager : MonoBehaviour
         // Initialize AI
         _questionGenerator = new OllamaQuestionGenerator("gpt-oss:20b-cloud");
         _performanceEvaluator = new OllamaPerformanceEvaluator("gpt-oss:20b-cloud");
+
+        // Detect parlour challenges (slug starts with "parlour_")
+        _isParlourChallenge = _currentChallenge.Slug.StartsWith("parlour_", System.StringComparison.OrdinalIgnoreCase);
+        if (_isParlourChallenge)
+        {
+            _parlourGenerator = new ParlourQuestionGenerator("gpt-oss:20b-cloud");
+            Debug.Log($"[QuestionFlowManager] Parlour mode active for challenge: {_currentChallenge.Slug}");
+        }
 
         // Check Ollama is available
         if (!new OllamaAPI().IsOllamaAvailable())
@@ -243,13 +254,17 @@ public class QuestionFlowManager : MonoBehaviour
                     break;
                 }
 
-                // Generate question
+                // Generate question (route to parlour generator for parlour challenges)
                 ShowStatus($"Generating question... (Streak: {_currentStep.StreakCurrent}/{_currentStep.StreakGoal})");
-                _currentQuestion = _questionGenerator.GenerateQuestion(_player, _currentStep);
+                _currentQuestion = _isParlourChallenge && _parlourGenerator != null
+                    ? _parlourGenerator.GenerateQuestion(_player, _currentStep)
+                    : _questionGenerator.GenerateQuestion(_player, _currentStep);
 
                 // Show debug log after generation
                 if (debugMode && debugLogText != null)
-                    debugLogText.text = _questionGenerator.LastGenerationDebugLog;
+                    debugLogText.text = _isParlourChallenge && _parlourGenerator != null
+                        ? _parlourGenerator.LastGenerationDebugLog
+                        : _questionGenerator.LastGenerationDebugLog;
 
                 if (_currentQuestion == null)
                 {
