@@ -186,19 +186,19 @@ public class ChallengeDataManager
     {
         if (!_challengeById.TryGetValue(challengeId, out var challenge)) return false;
 
-        // Check step-based unlocks first: if any unlocking step is completed, challenge is available
-        if (_challengeUnlockedBySteps.TryGetValue(challengeId, out var unlockingSteps))
+        // Step-based prerequisites (AND logic): every listed step must be completed
+        if (challenge.PrerequisiteStepIds != null && challenge.PrerequisiteStepIds.Count > 0)
         {
-            foreach (var stepId in unlockingSteps)
+            if (player.CompletedSteps == null) return false;
+            foreach (var stepId in challenge.PrerequisiteStepIds)
             {
-                if (player.CompletedSteps != null && player.CompletedSteps.Contains(stepId))
-                    return true;
+                if (!player.CompletedSteps.Contains(stepId))
+                    return false;
             }
-            // Has step-unlock entries but none completed yet → locked
-            return false;
+            return true;
         }
 
-        // Fall back to challenge-level prerequisites
+        // Fall back to challenge-level prerequisites (all steps of each prereq challenge)
         if (challenge.Prerequisites == null || challenge.Prerequisites.Count == 0) return true;
 
         foreach (var prereqId in challenge.Prerequisites)
@@ -214,17 +214,23 @@ public class ChallengeDataManager
     }
 
     /// <summary>
-    /// Returns the challenges unlocked by completing a given step.
-    /// Used by QuestionFlowManager to show unlock notifications on step completion.
+    /// Returns challenges that just became fully unlocked because the given step was completed.
+    /// A challenge is "just unlocked" when this step was its last missing prerequisite.
+    /// Call this after adding the step to player.CompletedSteps.
     /// </summary>
-    public List<Challenge> GetUnlockedChallengesForStep(string stepId)
+    public List<Challenge> GetChallengesJustUnlockedByStep(string stepId, Player player)
     {
         var result = new List<Challenge>();
-        if (!_stepById.TryGetValue(stepId, out var step)) return result;
-        foreach (var challengeId in step.UnlocksChallengeIds)
+        if (!_challengeUnlockedBySteps.TryGetValue(stepId, out var candidateIds)) return result;
+
+        foreach (var challengeId in candidateIds)
         {
-            if (_challengeById.TryGetValue(challengeId, out var c))
-                result.Add(c);
+            if (!_challengeById.TryGetValue(challengeId, out var challenge)) continue;
+            // True only if ALL prereq steps (including the just-completed one) are now done
+            if (challenge.PrerequisiteStepIds != null &&
+                challenge.PrerequisiteStepIds.All(pid =>
+                    player.CompletedSteps != null && player.CompletedSteps.Contains(pid)))
+                result.Add(challenge);
         }
         return result;
     }
@@ -264,19 +270,19 @@ public class ChallengeDataManager
 
         try
         {
-            string subjectJson    = await client.GetAsync("subjects",              "select=*&order=name.asc");
-            string challengeJson  = await client.GetAsync("challenges",            "select=*&order=created_at.asc");
-            string prereqJson     = await client.GetAsync("challenge_prerequisites","select=*");
-            string stepJson       = await client.GetAsync("steps",                 "select=*&order=number.asc");
-            string stepPrereqJson = await client.GetAsync("step_prerequisites",    "select=*");
-            string stepUnlockJson = await client.GetAsync("step_unlocks",          "select=*");
+            string subjectJson       = await client.GetAsync("subjects",                    "select=*&order=name.asc");
+            string challengeJson     = await client.GetAsync("challenges",                   "select=*&order=created_at.asc");
+            string prereqJson        = await client.GetAsync("challenge_prerequisites",      "select=*");
+            string chStepPrereqJson  = await client.GetAsync("challenge_step_prerequisites", "select=*");
+            string stepJson          = await client.GetAsync("steps",                        "select=*&order=number.asc");
+            string stepPrereqJson    = await client.GetAsync("step_prerequisites",           "select=*");
 
-            var subjectRows    = JsonHelper.FromJsonArray<SubjectRow>(subjectJson);
-            var challengeRows  = JsonHelper.FromJsonArray<ChallengeRow>(challengeJson);
-            var prereqRows     = JsonHelper.FromJsonArray<ChPrereqRow>(prereqJson);
-            var stepRows       = JsonHelper.FromJsonArray<StepRow>(stepJson);
-            var stepPreReqRows = JsonHelper.FromJsonArray<StepPrereqRow>(stepPrereqJson);
-            var stepUnlockRows = JsonHelper.FromJsonArray<StepUnlockRow>(stepUnlockJson);
+            var subjectRows       = JsonHelper.FromJsonArray<SubjectRow>(subjectJson);
+            var challengeRows     = JsonHelper.FromJsonArray<ChallengeRow>(challengeJson);
+            var prereqRows        = JsonHelper.FromJsonArray<ChPrereqRow>(prereqJson);
+            var chStepPrereqRows  = JsonHelper.FromJsonArray<ChStepPrereqRow>(chStepPrereqJson);
+            var stepRows          = JsonHelper.FromJsonArray<StepRow>(stepJson);
+            var stepPreReqRows    = JsonHelper.FromJsonArray<StepPrereqRow>(stepPrereqJson);
 
             if (challengeRows == null || challengeRows.Length == 0)
             {
@@ -307,26 +313,26 @@ public class ChallengeDataManager
                     stepPrereqMap[spr.step_id].Add(spr.requires_step_id);
                 }
 
-            // Step unlocks: stepId → list of challenge IDs unlocked on completion
-            var stepUnlocksMap = new Dictionary<string, List<string>>();
-            if (stepUnlockRows != null)
-                foreach (var su in stepUnlockRows)
+            // Challenge step prerequisites: challengeId → list of required step IDs (ALL must be done)
+            var chStepPrereqMap = new Dictionary<string, List<string>>();
+            if (chStepPrereqRows != null)
+                foreach (var csp in chStepPrereqRows)
                 {
-                    if (!stepUnlocksMap.ContainsKey(su.step_id)) stepUnlocksMap[su.step_id] = new List<string>();
-                    stepUnlocksMap[su.step_id].Add(su.unlocks_challenge_id);
+                    if (!chStepPrereqMap.ContainsKey(csp.challenge_id)) chStepPrereqMap[csp.challenge_id] = new List<string>();
+                    chStepPrereqMap[csp.challenge_id].Add(csp.requires_step_id);
                 }
 
             // Build new catalog
-            var newChallengeById      = new Dictionary<string, Challenge>();
-            var newChallengeBySlug    = new Dictionary<string, Challenge>();
-            var newSubjectChallenges  = new Dictionary<string, List<Challenge>>();
-            var newStepUnlocksChallenge = new Dictionary<string, List<string>>();
+            var newChallengeById     = new Dictionary<string, Challenge>();
+            var newChallengeBySlug   = new Dictionary<string, Challenge>();
+            var newSubjectChallenges = new Dictionary<string, List<Challenge>>();
 
             foreach (var cr in challengeRows)
             {
                 string subjectName = subjectNames.TryGetValue(cr.subject_id, out var sn) ? sn : cr.subject_id;
                 var challenge = new Challenge(cr.id, cr.name, subjectName, cr.description ?? "", cr.slug, cr.subject_id);
-                challenge.Prerequisites = chPrereqMap.TryGetValue(cr.id, out var prereqs) ? prereqs : new List<string>();
+                challenge.Prerequisites        = chPrereqMap.TryGetValue(cr.id, out var prereqs) ? prereqs : new List<string>();
+                challenge.PrerequisiteStepIds  = chStepPrereqMap.TryGetValue(cr.id, out var spIds) ? spIds : new List<string>();
                 challenge.StageNumber = cr.stage_number > 0 ? cr.stage_number : 1;
                 challenge.StageName = cr.stage_name ?? "";
                 challenge.Difficulty = cr.difficulty;
@@ -348,7 +354,6 @@ public class ChallengeDataManager
                             RequireUltimateChallenge = s.require_ultimate,
                             PromptConstraints = s.prompt_constraints ?? "",
                             PrerequisiteStepIds = stepPrereqMap.TryGetValue(s.id, out var sp) ? sp : new List<string>(),
-                            UnlocksChallengeIds = stepUnlocksMap.TryGetValue(s.id, out var su) ? su : new List<string>(),
                             Status = StepStatus.NotStarted,
                             QuestionMode = QuestionMode.Any
                         }).ToList();
@@ -366,21 +371,24 @@ public class ChallengeDataManager
             _challengeBySlug   = newChallengeBySlug;
             _subjectChallenges = newSubjectChallenges;
 
-            // Rebuild step index + step-unlock reverse index
+            // Rebuild step index and the step→challenge reverse index (for fast unlock checking)
             _stepById = new Dictionary<string, Step>();
             _challengeUnlockedBySteps = new Dictionary<string, List<string>>();
             foreach (var ch in _challengeById.Values)
+            {
                 foreach (var step in ch.Steps)
-                {
                     _stepById[step.Id] = step;
-                    foreach (var unlockedId in step.UnlocksChallengeIds)
+
+                // Reverse index: each prereq step points back to this challenge
+                if (ch.PrerequisiteStepIds != null)
+                    foreach (var stepId in ch.PrerequisiteStepIds)
                     {
-                        if (!_challengeUnlockedBySteps.ContainsKey(unlockedId))
-                            _challengeUnlockedBySteps[unlockedId] = new List<string>();
-                        if (!_challengeUnlockedBySteps[unlockedId].Contains(step.Id))
-                            _challengeUnlockedBySteps[unlockedId].Add(step.Id);
+                        if (!_challengeUnlockedBySteps.ContainsKey(stepId))
+                            _challengeUnlockedBySteps[stepId] = new List<string>();
+                        if (!_challengeUnlockedBySteps[stepId].Contains(ch.Id))
+                            _challengeUnlockedBySteps[stepId].Add(ch.Id);
                     }
-                }
+            }
 
             Debug.Log($"[ChallengeDataManager] Loaded from Supabase: {challengeRows.Length} challenges, {_stepById.Count} steps.");
         }
@@ -440,8 +448,7 @@ public class ChallengeDataManager
             // ── Times tables (ordered by difficulty: 10>2>5>4>3>8>6>7>9>mixed) ──
             // ×10 unlocks the Division challenge
             MakeStep(STEP_MULT_BY_10_ID, CHALLENGE_MULTIPLICATION_ID,  6, "Multiply by 10",
-                "Math", "Multiplication", new List<string> { STEP_MULT_EG_BRIDGE_ID },             0.14f,
-                unlocksChallengeIds: new List<string> { CHALLENGE_DIVISION_ID }),
+                "Math", "Multiplication", new List<string> { STEP_MULT_EG_BRIDGE_ID },             0.14f),
             MakeStep(STEP_MULT_BY_2_ID,  CHALLENGE_MULTIPLICATION_ID,  7, "Multiply by 2",
                 "Math", "Multiplication", new List<string> { STEP_MULT_BY_10_ID },                 0.15f),
             MakeStep(STEP_MULT_BY_5_ID,  CHALLENGE_MULTIPLICATION_ID,  8, "Multiply by 5",
@@ -463,12 +470,12 @@ public class ChallengeDataManager
         };
 
         // Division: one challenge, steps mirror mult order (÷10>÷2>÷5>÷4>÷3>÷8>÷6>÷7>÷9>mixed)
-        // Unlocked by completing Mult ×10 (step 6). Each inner step also requires the matching mult step.
+        // Unlocked when the player completes Mult ×10 (AND semantics via PrerequisiteStepIds)
         var division = new Challenge(CHALLENGE_DIVISION_ID, "Division", "Math",
             "Connect division to equal sharing; steps unlock in step with the Multiplication times tables you've mastered",
             "division", SUBJECT_MATH_ID)
             { StageNumber = 1, StageName = "Arithmetic Foundations", Difficulty = 0.19f };
-        // No challenge prerequisites — Division is unlocked by the ×10 step above
+        division.PrerequisiteStepIds = new List<string> { STEP_MULT_BY_10_ID };
         division.Steps = new List<Step>
         {
             MakeStep(STEP_DIV_SHARING_EQUALLY_ID, CHALLENGE_DIVISION_ID,  1, "Sharing Equally",
@@ -605,16 +612,17 @@ public class ChallengeDataManager
         if (!_subjectChallenges.ContainsKey(subjectName)) _subjectChallenges[subjectName] = new List<Challenge>();
         _subjectChallenges[subjectName].Add(c);
         foreach (var s in c.Steps)
-        {
             _stepById[s.Id] = s;
-            foreach (var unlockedChallengeId in s.UnlocksChallengeIds)
+
+        // Build reverse index: stepId → list of challengeIds that require it (AND semantics)
+        if (c.PrerequisiteStepIds != null)
+            foreach (var stepId in c.PrerequisiteStepIds)
             {
-                if (!_challengeUnlockedBySteps.ContainsKey(unlockedChallengeId))
-                    _challengeUnlockedBySteps[unlockedChallengeId] = new List<string>();
-                if (!_challengeUnlockedBySteps[unlockedChallengeId].Contains(s.Id))
-                    _challengeUnlockedBySteps[unlockedChallengeId].Add(s.Id);
+                if (!_challengeUnlockedBySteps.ContainsKey(stepId))
+                    _challengeUnlockedBySteps[stepId] = new List<string>();
+                if (!_challengeUnlockedBySteps[stepId].Contains(c.Id))
+                    _challengeUnlockedBySteps[stepId].Add(c.Id);
             }
-        }
     }
 
     private static Step MakeStep(string id, string challengeId, int number, string description, string subject, string challenge, List<string> prereqStepIds, float difficulty = 0.5f, bool requireUltimate = false, QuestionMode mode = QuestionMode.Any, List<string> unlocksChallengeIds = null)
@@ -640,11 +648,11 @@ public class ChallengeDataManager
 
     // ─── DTOs ─────────────────────────────────────────────────────────────────
 
-    [System.Serializable] private class SubjectRow    { public string id; public string name; }
-    [System.Serializable] private class ChallengeRow  { public string id; public string subject_id; public string name; public string slug; public string description; public int stage_number; public string stage_name; public float difficulty; }
-    [System.Serializable] private class ChPrereqRow   { public string challenge_id; public string requires_challenge_id; }
-    [System.Serializable] private class StepRow       { public string id; public string challenge_id; public int number; public string title; public string description; public int streak_goal; public float mastery_target; public bool require_ultimate; public float difficulty; public string prompt_constraints; }
-    [System.Serializable] private class StepPrereqRow { public string step_id; public string requires_step_id; }
-    [System.Serializable] private class StepUnlockRow { public string step_id; public string unlocks_challenge_id; }
+    [System.Serializable] private class SubjectRow       { public string id; public string name; }
+    [System.Serializable] private class ChallengeRow     { public string id; public string subject_id; public string name; public string slug; public string description; public int stage_number; public string stage_name; public float difficulty; }
+    [System.Serializable] private class ChPrereqRow      { public string challenge_id; public string requires_challenge_id; }
+    [System.Serializable] private class ChStepPrereqRow  { public string challenge_id; public string requires_step_id; }
+    [System.Serializable] private class StepRow          { public string id; public string challenge_id; public int number; public string title; public string description; public int streak_goal; public float mastery_target; public bool require_ultimate; public float difficulty; public string prompt_constraints; }
+    [System.Serializable] private class StepPrereqRow    { public string step_id; public string requires_step_id; }
 }
 

@@ -665,9 +665,9 @@ public class QuestionFlowManager : MonoBehaviour
                 : "No rewards (already completed)";
 
             string unlockLine = "";
-            if (firstCompletion && _currentStep.UnlocksChallengeIds != null && _currentStep.UnlocksChallengeIds.Count > 0)
+            if (firstCompletion)
             {
-                var unlocked = ChallengeDataManager.Instance.GetUnlockedChallengesForStep(_currentStep.Id);
+                var unlocked = ChallengeDataManager.Instance.GetChallengesJustUnlockedByStep(_currentStep.Id, _player);
                 if (unlocked.Count > 0)
                 {
                     var names = string.Join(", ", unlocked.ConvertAll(c => c.Name));

@@ -20,7 +20,11 @@ public class Step
     // Step UUIDs that must be completed before this step unlocks
     public List<string> PrerequisiteStepIds { get; set; } = new List<string>();
 
-    // Challenge UUIDs that become available when this step is completed
+    /// <summary>
+    /// Obsolete: challenge unlocking is now declared on the Challenge via
+    /// Challenge.PrerequisiteStepIds (AND semantics). This list is no longer read by the engine.
+    /// </summary>
+    [System.Obsolete("Use Challenge.PrerequisiteStepIds instead.")]
     public List<string> UnlocksChallengeIds { get; set; } = new List<string>();
 
     /// <summary>

@@ -31,6 +31,26 @@ The game has two data sources that it merges at startup:
 When Supabase is reachable, its data wins completely.
 When offline, the hardcoded catalog is used as-is.
 
+### Challenge Unlock Model (AND semantics)
+
+A challenge becomes available when **all** of its prerequisite steps are completed.
+This is declared on the **challenge** itself (not on individual steps):
+
+```
+challenge_step_prerequisites
+  challenge_id   → the challenge that will be unlocked
+  requires_step_id → a step that must be completed (one row per required step)
+```
+
+All rows for a given `challenge_id` must be satisfied before the challenge unlocks.
+The unlock message ("🔓 Unlocked: Division") appears on the step completion overlay of
+the **last** step that satisfies the requirement.
+
+Example: Division requires completing `×10` (one row). If you later add
+`requires_step_id = Sharing Equally step`, Division would need BOTH to unlock.
+
+### Prompt Constraints
+
 The key property that makes new steps fully Supabase-driven is **`prompt_constraints`**:
 if a step has this field populated in the DB, the Ollama question generator uses it
 directly — no code changes needed.
@@ -68,10 +88,14 @@ INSERT INTO step_prerequisites (step_id, requires_step_id)
 VALUES ('NEW_UUID-0000-0000-0000-000000000000',
         'PREV_STEP_UUID-0000-0000-0000-000000000000');
 
--- 4. (Optional) Unlock a challenge when this step is completed
-INSERT INTO step_unlocks (step_id, unlocks_challenge_id)
-VALUES ('NEW_UUID-0000-0000-0000-000000000000',
-        'TARGET_CHALLENGE_UUID-0000-0000-0000-000000000000');
+-- 4. (Optional) Unlock a challenge when ALL its prerequisite steps are completed
+--    Add one row per required step to challenge_step_prerequisites
+INSERT INTO challenge_step_prerequisites (challenge_id, requires_step_id)
+VALUES ('TARGET_CHALLENGE_UUID-0000-0000-000000000000',
+        'NEW_UUID-0000-0000-0000-000000000000');
+-- If the challenge needs MULTIPLE steps, add one row per step:
+-- INSERT INTO challenge_step_prerequisites (challenge_id, requires_step_id)
+-- VALUES ('TARGET_CHALLENGE_UUID', 'ANOTHER_STEP_UUID');
 ```
 
 #### As a migration file (recommended for reproducibility)

@@ -21,6 +21,14 @@ public class Challenge
     // Challenge UUIDs that must be completed before this challenge is available
     public List<string> Prerequisites { get; set; } = new List<string>();
 
+    /// <summary>
+    /// Step UUIDs that must ALL be completed before this challenge becomes available.
+    /// Use this instead of (or alongside) Prerequisites when the unlock condition involves
+    /// specific steps from one or more challenges.
+    /// All listed steps must be in Player.CompletedSteps for IsChallengeUnlocked to return true.
+    /// </summary>
+    public List<string> PrerequisiteStepIds { get; set; } = new List<string>();
+
     // Stage grouping — stages are visual milestones (e.g. Stage 1: Arithmetic Foundations)
     public int StageNumber { get; set; } = 1;
     public string StageName { get; set; } = "";
