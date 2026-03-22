@@ -148,7 +148,7 @@ public class OllamaQuestionGenerator
     {
         string recentPerformance = GetRecentPerformanceText(player);
         float stepMastery = player.GetCurrentStepMastery();
-        string stepConstraints = GetStepConstraints(player.CurrentChallenge, step.Number);
+        string stepConstraints = GetStepConstraints(step, player.CurrentChallenge);
         bool wantDrag = mode == QuestionMode.DragAndDrop;
 
         string dragInstruction = wantDrag
@@ -292,9 +292,8 @@ RETURN ONLY VALID JSON — no markdown, no extra text:
     {
         string recentPerformance = GetRecentPerformanceText(player);
         float stepMastery = player.GetCurrentStepMastery();
-        
         // Build step-specific constraints
-        string stepConstraints = GetStepConstraints(player.CurrentChallenge, step.Number);
+        string stepConstraints = GetStepConstraints(step, player.CurrentChallenge);
 
         string prompt = $@"You are an expert math teacher creating personalized math questions.
 
@@ -351,8 +350,15 @@ RETURN ONLY VALID JSON (no other text, no markdown):
     /// <summary>
     /// Returns step-specific constraints to guide question generation.
     /// </summary>
-    private string GetStepConstraints(string challenge, int stepNumber)
+    private string GetStepConstraints(Step step, string challengeSlugOverride = null)
     {
+        // If the step carries its own constraints (loaded from Supabase), use them directly.
+        // This means any step added purely via DB requires zero code changes here.
+        if (!string.IsNullOrWhiteSpace(step?.PromptConstraints))
+            return step.PromptConstraints;
+
+        int stepNumber = step?.Number ?? 0;
+        string challenge = challengeSlugOverride ?? step?.Challenge ?? "";
         string normalizedChallenge = challenge
             .Trim()
             .ToLowerInvariant()

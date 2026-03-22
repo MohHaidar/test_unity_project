@@ -23,6 +23,15 @@ public class Step
     // Challenge UUIDs that become available when this step is completed
     public List<string> UnlocksChallengeIds { get; set; } = new List<string>();
 
+    /// <summary>
+    /// Ollama prompt constraints for this step. When non-empty, the question generator uses
+    /// these directly instead of the hardcoded switch in GetStepConstraints(). This means
+    /// new steps added purely via Supabase (with prompt_constraints populated) require
+    /// zero code changes to generate correct questions.
+    /// Example: "- Use multiplication by 7 only\n- Other factor between 1 and 12"
+    /// </summary>
+    public string PromptConstraints { get; set; } = "";
+
     // Streak-based progression
     public int StreakGoal { get; set; } = 5;
     public int StreakCurrent { get; set; } = 0;

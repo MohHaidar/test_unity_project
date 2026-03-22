@@ -346,6 +346,7 @@ public class ChallengeDataManager
                             MasteryTarget = s.mastery_target > 0 ? s.mastery_target : 0.80f,
                             Difficulty = s.difficulty,
                             RequireUltimateChallenge = s.require_ultimate,
+                            PromptConstraints = s.prompt_constraints ?? "",
                             PrerequisiteStepIds = stepPrereqMap.TryGetValue(s.id, out var sp) ? sp : new List<string>(),
                             UnlocksChallengeIds = stepUnlocksMap.TryGetValue(s.id, out var su) ? su : new List<string>(),
                             Status = StepStatus.NotStarted,
@@ -642,7 +643,7 @@ public class ChallengeDataManager
     [System.Serializable] private class SubjectRow    { public string id; public string name; }
     [System.Serializable] private class ChallengeRow  { public string id; public string subject_id; public string name; public string slug; public string description; public int stage_number; public string stage_name; public float difficulty; }
     [System.Serializable] private class ChPrereqRow   { public string challenge_id; public string requires_challenge_id; }
-    [System.Serializable] private class StepRow       { public string id; public string challenge_id; public int number; public string title; public string description; public int streak_goal; public float mastery_target; public bool require_ultimate; public float difficulty; }
+    [System.Serializable] private class StepRow       { public string id; public string challenge_id; public int number; public string title; public string description; public int streak_goal; public float mastery_target; public bool require_ultimate; public float difficulty; public string prompt_constraints; }
     [System.Serializable] private class StepPrereqRow { public string step_id; public string requires_step_id; }
     [System.Serializable] private class StepUnlockRow { public string step_id; public string unlocks_challenge_id; }
 }
