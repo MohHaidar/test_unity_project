@@ -124,7 +124,7 @@ public class ParlourQuestionGenerator
             _     => "experienced learner (500+ EXP)"
         };
 
-        // Find any mastery gaps (steps below 0.6 mastery)
+        // Mastery gaps
         var weakAreas = new List<string>();
         if (player.MasteryByStep != null)
             foreach (var kv in player.MasteryByStep)
@@ -138,14 +138,124 @@ public class ParlourQuestionGenerator
             ? $"Areas needing improvement: {string.Join(", ", weakAreas.Take(3))}"
             : "No significant weak areas identified yet";
 
+        // Recent answer history — last 8 entries, verbal/conversation questions prioritised
+        string historyBlock = BuildHistoryBlock(player, debugLog);
+
         string context = $"- Player: {player.Name}\n" +
                          $"- Progress: {expTier}\n" +
                          $"- Steps completed overall: {completedCount}\n" +
                          $"- {weakText}\n" +
-                         $"- Current streak in this step: {player.StreakInCurrentStep}";
+                         $"- Current streak in this step: {player.StreakInCurrentStep}\n" +
+                         historyBlock;
 
-        debugLog.AppendLine($"Player context: {expTier}, {completedCount} steps done");
+        debugLog.AppendLine($"Player context: {expTier}, {completedCount} steps done, {player.QuestionHistory?.Count ?? 0} history entries");
         return context;
+    }
+
+    private string BuildHistoryBlock(Player player, System.Text.StringBuilder debugLog)
+    {
+        var history = player.QuestionHistory;
+        if (history == null || history.Count == 0)
+        {
+            debugLog.AppendLine("History block: empty");
+            return "- Recent answers: none yet";
+        }
+
+        var sb = new System.Text.StringBuilder();
+
+        // ── SHORT-TERM: last 8 answers, any subject ──────────────────────────
+        int take = Math.Min(8, history.Count);
+        var recent = history.Skip(history.Count - take).ToList();
+
+        sb.AppendLine("- Recent answers (last 8, all subjects, oldest → newest):");
+        foreach (var r in recent)
+        {
+            string mark    = r.IsCorrect ? "✓" : "✗";
+            string subject = !string.IsNullOrEmpty(r.SubjectName) ? $"[{r.SubjectName}]" : "";
+            string step    = !string.IsNullOrEmpty(r.StepDescription) ? $" ({r.StepDescription})" : "";
+            string timing  = r.TimeTakenSeconds > 0 ? $" {r.TimeTakenSeconds:F0}s" : "";
+            string error   = (!r.IsCorrect && !string.IsNullOrEmpty(r.ErrorType)) ? $" [{r.ErrorType}]" : "";
+            string q       = r.QuestionText?.Length > 50 ? r.QuestionText.Substring(0, 47) + "…" : (r.QuestionText ?? "?");
+            string ans     = r.StudentAnswer?.Length > 35 ? r.StudentAnswer.Substring(0, 32) + "…" : (r.StudentAnswer ?? "?");
+
+            sb.AppendLine($"  {mark} {subject}{step} \"{q}\" → \"{ans}\"{timing}{error}");
+        }
+
+        // Short-term pattern
+        int recentCorrect = recent.Count(r => r.IsCorrect);
+        int recentWrong   = recent.Count - recentCorrect;
+        string shortPattern;
+        if (recentWrong >= (int)(recent.Count * 0.6f))
+            shortPattern = "Struggling recently — needs encouragement and clearer scaffolding.";
+        else if (recentCorrect == recent.Count)
+            shortPattern = "On a strong streak — ready for nuance and harder distractors.";
+        else
+            shortPattern = "Mixed recent performance — balanced challenge appropriate.";
+
+        // Most common recent error type
+        var recentErrors = recent.Where(r => !r.IsCorrect && !string.IsNullOrEmpty(r.ErrorType))
+                                 .GroupBy(r => r.ErrorType)
+                                 .OrderByDescending(g => g.Count())
+                                 .FirstOrDefault();
+        if (recentErrors != null)
+            shortPattern += $" Recurring error: {recentErrors.Key}.";
+
+        sb.AppendLine($"- Short-term pattern: {shortPattern}");
+
+        // ── LONG-TERM: per-subject breakdown across full history ─────────────
+        if (history.Count >= 5)
+        {
+            var bySubject = history
+                .Where(r => !string.IsNullOrEmpty(r.SubjectName))
+                .GroupBy(r => r.SubjectName)
+                .OrderByDescending(g => g.Count())
+                .ToList();
+
+            if (bySubject.Count > 0)
+            {
+                sb.AppendLine("- Long-term profile across subjects:");
+                foreach (var subjectGroup in bySubject)
+                {
+                    var entries   = subjectGroup.ToList();
+                    int total     = entries.Count;
+                    int correct   = entries.Count(r => r.IsCorrect);
+                    float pct     = total > 0 ? (correct / (float)total * 100f) : 0f;
+
+                    // Trend: compare first half vs second half accuracy
+                    string trend = "";
+                    if (total >= 6)
+                    {
+                        int half        = total / 2;
+                        float earlyAcc  = entries.Take(half).Count(r => r.IsCorrect) / (float)half;
+                        float lateAcc   = entries.Skip(half).Count(r => r.IsCorrect) / (float)(total - half);
+                        float delta     = lateAcc - earlyAcc;
+                        trend = delta > 0.15f ? " ↑ improving" : delta < -0.15f ? " ↓ declining" : " → steady";
+                    }
+
+                    // Most practiced step in this subject
+                    var topStep = entries
+                        .Where(r => !string.IsNullOrEmpty(r.StepDescription))
+                        .GroupBy(r => r.StepDescription)
+                        .OrderByDescending(g => g.Count())
+                        .FirstOrDefault();
+                    string topStepNote = topStep != null ? $", most practiced: {topStep.Key}" : "";
+
+                    sb.AppendLine($"  • {subjectGroup.Key}: {total} questions, {pct:F0}% correct{trend}{topStepNote}");
+                }
+
+                // Cross-subject insight
+                if (bySubject.Count >= 2)
+                {
+                    var best  = bySubject.OrderByDescending(g => g.Count(r => r.IsCorrect) / (float)g.Count()).First();
+                    var worst = bySubject.OrderBy(g => g.Count(r => r.IsCorrect) / (float)g.Count()).First();
+                    if (best.Key != worst.Key)
+                        sb.AppendLine($"- Cross-subject insight: strongest in {best.Key}, needs most work in {worst.Key}.");
+                }
+            }
+        }
+
+        debugLog.AppendLine($"History block: {history.Count} total, {take} recent, {history.Select(r => r.SubjectName).Distinct().Count()} subjects");
+        return sb.ToString().TrimEnd();
     }
 
     private string BuildPrompt(Player player, Step step, Character character, ParlourConstraints c, string playerContext)
@@ -159,7 +269,11 @@ Speaking Style: {character.SpeakingStyle}
 
 === PLAYER CONTEXT ===
 {playerContext}
-The character may subtly reference the player's journey if it fits naturally — never force it.
+Use the answer history above to inform the character's dialogue:
+- If the player has been struggling (many ✗), make the situation more approachable and the correct answer more clearly distinct.
+- If the player is on a strong streak (many ✓), introduce more nuance or subtext — make the wrong options more tempting.
+- If there's a recurring error type (e.g. "conceptual_gap"), craft a scenario that gently targets that gap.
+- The character may subtly acknowledge progress or encourage without directly stating stats.
 
 === SCENE ===
 {c.Scene}

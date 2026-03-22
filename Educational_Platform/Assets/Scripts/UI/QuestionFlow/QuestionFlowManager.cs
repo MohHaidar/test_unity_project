@@ -323,14 +323,17 @@ public class QuestionFlowManager : MonoBehaviour
                 // Record answer
                 QuestionResult result = new QuestionResult
                 {
-                    QuestionText = _currentQuestion.QuestionText,
-                    StudentAnswer = studentAnswer,
-                    CorrectAnswer = GetCorrectAnswer(_currentQuestion),
-                    IsCorrect = evaluation.IsCorrect,
-                    TimeTakenSeconds = timeTaken,
-                    Difficulty = _currentQuestion.Difficulty,
-                    ErrorType = evaluation.ErrorType,
-                    AnsweredAt = System.DateTime.Now
+                    QuestionText      = _currentQuestion.QuestionText,
+                    StudentAnswer     = studentAnswer,
+                    CorrectAnswer     = GetCorrectAnswer(_currentQuestion),
+                    IsCorrect         = evaluation.IsCorrect,
+                    TimeTakenSeconds  = timeTaken,
+                    Difficulty        = _currentQuestion.Difficulty,
+                    ErrorType         = evaluation.ErrorType,
+                    AnsweredAt        = System.DateTime.Now,
+                    SubjectName       = _player.CurrentSubject,
+                    ChallengeSlug     = _currentChallenge?.Slug,
+                    StepDescription   = _currentStep?.Description
                 };
 
                 _player.RecordAnswer(result);

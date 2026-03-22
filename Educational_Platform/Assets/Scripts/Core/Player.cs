@@ -258,6 +258,11 @@ public class QuestionResult
     public string ErrorType { get; set; } // "conceptual_gap", "careless_mistake", "timing_issue", or null if correct
     public DateTime AnsweredAt { get; set; } = DateTime.Now;
 
+    // Cross-subject context — set by QuestionFlowManager at answer time
+    public string SubjectName { get; set; }   // e.g. "Math", "Verbal Communication"
+    public string ChallengeSlug { get; set; } // e.g. "multiplication_1", "parlour_coffee_shop"
+    public string StepDescription { get; set; } // e.g. "Active Listening"
+
     public override string ToString()
     {
         return $"{(IsCorrect ? "✓" : "✗")} {QuestionText} → {StudentAnswer} ({TimeTakenSeconds:F1}s)";
