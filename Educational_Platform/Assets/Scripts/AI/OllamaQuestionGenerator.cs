@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -387,21 +388,27 @@ RETURN ONLY VALID JSON (no other text, no markdown):
             case "multiplication_i":  // legacy slug alias
                 return stepNumber switch
                 {
-                    1  => "- Use multiplication as equal groups\n- Small whole numbers only\n- Formats like 3 groups of 4 or 3 × 4 are allowed",
-                    2  => "- Use multiplication by 10 only\n- Other factor between 0 and 12",
-                    3  => "- Use multiplication by 2 only\n- Other factor between 0 and 12",
-                    4  => "- Use multiplication by 5 only\n- Other factor between 0 and 12",
-                    5  => "- Use multiplication by 4 only\n- Other factor between 1 and 12",
-                    6  => "- Use multiplication by 3 only\n- Other factor between 1 and 12",
-                    7  => "- Use multiplication by 8 only\n- Other factor between 1 and 12",
-                    8  => "- Use multiplication by 6 only\n- Other factor between 1 and 12",
-                    9  => "- Use multiplication by 7 only\n- Other factor between 1 and 12",
-                    10 => "- Use multiplication by 9 only\n- Other factor between 1 and 12",
-                    11 => "- Use ANY multiplication fact from the 1–10 times tables\n- Mix factors freely",
+                    // ── Equal Groups (visual counting, steps 1–5) ────────────────────
+                    1  => "- Show EXACTLY 2 equal groups of objects\n- 2 to 6 items per group\n- INCLUDE a visual in the question text using this format: \"[● ● ●]  [● ● ●]\" where each ● is one item\n- Ask: \"How many items are there in total?\"\n- Correct answer = groups × items",
+                    2  => "- Show EXACTLY 3 equal groups of objects\n- 2 to 5 items per group\n- INCLUDE a visual: \"[● ●]  [● ●]  [● ●]\"\n- Ask: \"How many items are there in total?\"\n- Correct answer = groups × items",
+                    3  => "- Show EXACTLY 4 equal groups of objects\n- 2 to 4 items per group\n- INCLUDE a visual showing 4 bracket-groups\n- Ask: \"How many items are there in total?\"\n- Correct answer = groups × items",
+                    4  => "- Show EXACTLY 5 equal groups of objects\n- 2 to 4 items per group\n- INCLUDE a visual showing 5 bracket-groups\n- Ask: \"How many items are there in total?\"\n- Correct answer = groups × items",
+                    5  => "- Show 2 to 5 equal groups (vary between questions)\n- 2 to 5 items per group\n- INCLUDE a visual showing the groups\n- May also show a rectangular array (rows × columns) as an alternative\n- Ask: \"How many items are there in total?\" or \"What multiplication fact does this show?\"",
+                    // ── Times tables (steps 6–15) ────────────────────────────────────
+                    6  => "- Use multiplication by 10 only\n- Other factor between 0 and 12",
+                    7  => "- Use multiplication by 2 only\n- Other factor between 0 and 12",
+                    8  => "- Use multiplication by 5 only\n- Other factor between 0 and 12",
+                    9  => "- Use multiplication by 4 only\n- Other factor between 1 and 12",
+                    10 => "- Use multiplication by 3 only\n- Other factor between 1 and 12",
+                    11 => "- Use multiplication by 8 only\n- Other factor between 1 and 12",
+                    12 => "- Use multiplication by 6 only\n- Other factor between 1 and 12",
+                    13 => "- Use multiplication by 7 only\n- Other factor between 1 and 12",
+                    14 => "- Use multiplication by 9 only\n- Other factor between 1 and 12",
+                    15 => "- Use ANY multiplication fact from the 1–10 times tables\n- Mix factors freely",
                     _  => ""
                 };
 
-            case "multiplication_ii":   // retired slug — treated as late-range mult steps
+            case "multiplication_ii":   // retired slug
                 return stepNumber switch
                 {
                     1 => "- Use multiplication by 3 only\n- Other factor between 1 and 12",
@@ -411,7 +418,7 @@ RETURN ONLY VALID JSON (no other text, no markdown):
                     _ => ""
                 };
 
-            case "multiplication_iii":  // retired slug — treated as final mult steps
+            case "multiplication_iii":  // retired slug
                 return stepNumber switch
                 {
                     1 => "- Use multiplication by 8 only\n- Other factor between 1 and 12",
@@ -420,34 +427,25 @@ RETURN ONLY VALID JSON (no other text, no markdown):
                     _ => ""
                 };
 
-            case "division_i":
-            case "division":  // legacy slug alias
+            // ── Division (single challenge, mirrors multiplication order) ──────────
+            case "division":
+            case "division_i":    // legacy slug alias
+            case "division_ii":   // retired slug alias
+            case "division_iii":  // retired slug alias
                 return stepNumber switch
                 {
-                    1 => "- Use equal sharing or grouping questions\n- Exact division only\n- Small whole numbers only",
-                    2 => "- Use division by 2 only\n- Quotient must be a whole number",
-                    3 => "- Use division by 5 only\n- Quotient must be a whole number",
-                    4 => "- Use division by 10 only\n- Quotient must be a whole number",
-                    _ => ""
-                };
-
-            case "division_ii":
-                return stepNumber switch
-                {
-                    1 => "- Use division by 3 only\n- Quotient must be a whole number between 1 and 12",
-                    2 => "- Use division by 4 only\n- Quotient must be a whole number between 1 and 12",
-                    3 => "- Use division by 6 only\n- Quotient must be a whole number between 1 and 12",
-                    4 => "- Use division by 7 only\n- Quotient must be a whole number between 1 and 12",
-                    _ => ""
-                };
-
-            case "division_iii":
-                return stepNumber switch
-                {
-                    1 => "- Use division by 8 only\n- Quotient must be a whole number between 1 and 12",
-                    2 => "- Use division by 9 only\n- Quotient must be a whole number between 1 and 12",
-                    3 => "- Use ANY exact division fact (divisors 1–9)\n- Mix divisors freely",
-                    _ => ""
+                    1  => "- Use equal sharing or grouping questions\n- Exact division only\n- Small whole numbers only",
+                    2  => "- Use division by 10 only\n- Quotient must be a whole number",
+                    3  => "- Use division by 2 only\n- Quotient must be a whole number",
+                    4  => "- Use division by 5 only\n- Quotient must be a whole number",
+                    5  => "- Use division by 4 only\n- Quotient must be a whole number between 1 and 12",
+                    6  => "- Use division by 3 only\n- Quotient must be a whole number between 1 and 12",
+                    7  => "- Use division by 8 only\n- Quotient must be a whole number between 1 and 12",
+                    8  => "- Use division by 6 only\n- Quotient must be a whole number between 1 and 12",
+                    9  => "- Use division by 7 only\n- Quotient must be a whole number between 1 and 12",
+                    10 => "- Use division by 9 only\n- Quotient must be a whole number between 1 and 12",
+                    11 => "- Use ANY exact division fact (divisors 1–10)\n- Mix divisors freely",
+                    _  => ""
                 };
 
             case "arithmetic_review":
@@ -707,47 +705,48 @@ RETURN ONLY VALID JSON (no other text, no markdown):
             // ── Multiplication ───────────────────────────────────────────────
             "multiplication" or "multiplication_i" => step.Number switch
             {
-                1  => FallbackEqualGroups(variant),
-                2  => FallbackMultBy(10, variant),
-                3  => FallbackMultBy(2,  variant),
-                4  => FallbackMultBy(5,  variant),
-                5  => FallbackMultBy(4,  variant),
-                6  => FallbackMultBy(3,  variant),
-                7  => FallbackMultBy(8,  variant),
-                8  => FallbackMultBy(6,  variant),
-                9  => FallbackMultBy(7,  variant),
-                10 => FallbackMultBy(9,  variant),
-                11 => FallbackMixedMult(variant),
+                1  => FallbackEqualGroups(2, variant),
+                2  => FallbackEqualGroups(3, variant),
+                3  => FallbackEqualGroups(4, variant),
+                4  => FallbackEqualGroups(5, variant),
+                5  => FallbackEqualGroupsBridge(variant),
+                6  => FallbackMultBy(10, variant),
+                7  => FallbackMultBy(2,  variant),
+                8  => FallbackMultBy(5,  variant),
+                9  => FallbackMultBy(4,  variant),
+                10 => FallbackMultBy(3,  variant),
+                11 => FallbackMultBy(8,  variant),
+                12 => FallbackMultBy(6,  variant),
+                13 => FallbackMultBy(7,  variant),
+                14 => FallbackMultBy(9,  variant),
+                15 => FallbackMixedMult(variant),
                 _  => FallbackMultBy(2,  variant),
             },
-            "multiplication_ii" => step.Number switch
+            "multiplication_ii" => step.Number switch  // retired slug
             {
                 1 => FallbackMultBy(3, variant), 2 => FallbackMultBy(4, variant),
                 3 => FallbackMultBy(6, variant), _ => FallbackMultBy(7, variant),
             },
-            "multiplication_iii" => step.Number switch
+            "multiplication_iii" => step.Number switch  // retired slug
             {
                 1 => FallbackMultBy(8, variant), 2 => FallbackMultBy(9, variant),
                 _ => FallbackMixedMult(variant),
             },
-            // ── Division ─────────────────────────────────────────────────────
-            "division_i" or "division" => step.Number switch
+            // ── Division (single challenge, mirrors mult order) ──────────────
+            "division" or "division_i" or "division_ii" or "division_iii" => step.Number switch
             {
                 1  => FallbackSharingEqually(variant),
-                2  => FallbackDivBy(2,  variant),
-                3  => FallbackDivBy(5,  variant),
-                4  => FallbackDivBy(10, variant),
+                2  => FallbackDivBy(10, variant),
+                3  => FallbackDivBy(2,  variant),
+                4  => FallbackDivBy(5,  variant),
+                5  => FallbackDivBy(4,  variant),
+                6  => FallbackDivBy(3,  variant),
+                7  => FallbackDivBy(8,  variant),
+                8  => FallbackDivBy(6,  variant),
+                9  => FallbackDivBy(7,  variant),
+                10 => FallbackDivBy(9,  variant),
+                11 => FallbackMixedDiv(variant),
                 _  => FallbackDivBy(2,  variant),
-            },
-            "division_ii" => step.Number switch
-            {
-                1 => FallbackDivBy(3, variant), 2 => FallbackDivBy(4, variant),
-                3 => FallbackDivBy(6, variant), _ => FallbackDivBy(7, variant),
-            },
-            "division_iii" => step.Number switch
-            {
-                1 => FallbackDivBy(8, variant), 2 => FallbackDivBy(9, variant),
-                _ => FallbackMixedDiv(variant),
             },
             // ── Addition ─────────────────────────────────────────────────────
             "addition" => step.Number switch
@@ -791,15 +790,42 @@ RETURN ONLY VALID JSON (no other text, no markdown):
             $"Multiply by {multiplier}");
     }
 
-    private IQuestion FallbackEqualGroups(int variant)
+    private IQuestion FallbackEqualGroups(int numGroups, int variant)
     {
-        var (groups, size) = variant switch { 0 => (3, 4), 1 => (5, 2), _ => (4, 3) };
-        int correct = groups * size;
+        // Size per group varies by variant so the same step yields different questions
+        int size = numGroups switch
+        {
+            2 => variant switch { 0 => 4, 1 => 6, _ => 3 },
+            3 => variant switch { 0 => 4, 1 => 2, _ => 5 },
+            4 => variant switch { 0 => 3, 1 => 4, _ => 2 },
+            _ => variant switch { 0 => 3, 1 => 2, _ => 4 }   // 5 groups
+        };
+        int correct = numGroups * size;
+        string visual = MakeGroupsVisual(numGroups, size);
         return MakeFallbackMC(
-            $"There are {groups} groups of {size} objects. How many objects in total?",
+            $"There are {numGroups} equal groups.\n{visual}\nHow many items are there in total?",
             correct.ToString(),
             Shuffle(correct, Distractors(correct, 3)),
-            "Equal Groups");
+            $"{numGroups} Equal Groups");
+    }
+
+    private IQuestion FallbackEqualGroupsBridge(int variant)
+    {
+        var (groups, size) = variant switch { 0 => (3, 4), 1 => (2, 5), _ => (4, 3) };
+        int correct = groups * size;
+        string visual = MakeGroupsVisual(groups, size);
+        return MakeFallbackMC(
+            $"What multiplication fact does this picture show?\n{visual}",
+            $"{groups} × {size} = {correct}",
+            Shuffle(correct, Distractors(correct, 3)).Select(s => s == correct.ToString() ? $"{groups} × {size} = {correct}" : $"{groups} × {size} = {s}").ToArray(),
+            "Groups & Arrays");
+    }
+
+    // Generates a bracket-dot visual: [● ● ●]  [● ● ●]  [● ● ●]
+    private static string MakeGroupsVisual(int numGroups, int itemsPerGroup)
+    {
+        string singleGroup = "[" + string.Join(" ", Enumerable.Repeat("●", itemsPerGroup)) + "]";
+        return string.Join("  ", Enumerable.Repeat(singleGroup, numGroups));
     }
 
     private IQuestion FallbackMixedMult(int variant)

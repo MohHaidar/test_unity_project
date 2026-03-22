@@ -230,6 +230,9 @@ MonoBehaviour:
   stepsContainer: {fileID: 5657317}
   stepButtonPrefab: {fileID: 4555241401557805526, guid: 054b94be27768cf439d9f750c6c197e2, type: 3}
   backButton: {fileID: 685274336}
+  stageLabel: {fileID: 0}
+  stageProgress: {fileID: 0}
+  stageProgressBar: {fileID: 0}
 --- !u!4 &125398876
 Transform:
   m_ObjectHideFlags: 0

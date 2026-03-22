@@ -44,20 +44,63 @@ public class ChallengeDataManager
     public const string STEP_SUBTRACTION_5_ID = "fd000000-0000-0000-0000-000000000000";  // Subtract from Tens
     public const string STEP_SUBTRACTION_6_ID = "c9000000-0000-0000-0000-000000000000";  // Two-Digit No Borrow
     public const string STEP_SUBTRACTION_7_ID = "ca000000-0000-0000-0000-000000000000";  // Two-Digit With Borrow
-    // Unified Multiplication challenge steps (ordered by learning difficulty: 10>2>5>4>3>8>6>7>9>mixed)
-    public const string STEP_MULT_EQUAL_GROUPS_ID = "cb000000-0000-0000-0000-000000000000";
-    public const string STEP_MULT_BY_10_ID        = "cc000000-0000-0000-0000-000000000000";
-    public const string STEP_MULT_BY_2_ID         = "cd000000-0000-0000-0000-000000000000";
-    public const string STEP_MULT_BY_5_ID         = "ce000000-0000-0000-0000-000000000000";  // → unlocks Division I
-    // Legacy aliases (kept for external callers)
-    public const string STEP_MULTIPLICATION_1_ID  = STEP_MULT_EQUAL_GROUPS_ID;
+
+    // ── Multiplication steps (steps 1–5 = Equal Groups series, 6–15 = times tables 10>2>5>4>3>8>6>7>9>mixed)
+    public const string STEP_MULT_EG_2_ID        = "cb000000-0000-0000-0000-000000000000"; // Equal Groups: 2 groups
+    public const string STEP_MULT_EG_3_ID        = "10000000-0000-0000-0000-000000000000"; // Equal Groups: 3 groups
+    public const string STEP_MULT_EG_4_ID        = "11000000-0000-0000-0000-000000000000"; // Equal Groups: 4 groups
+    public const string STEP_MULT_EG_5_ID        = "12000000-0000-0000-0000-000000000000"; // Equal Groups: 5 groups
+    public const string STEP_MULT_EG_BRIDGE_ID   = "13000000-0000-0000-0000-000000000000"; // Groups & Arrays (bridge)
+    public const string STEP_MULT_BY_10_ID       = "cc000000-0000-0000-0000-000000000000"; // Step 6  → unlocks Division
+    public const string STEP_MULT_BY_2_ID        = "cd000000-0000-0000-0000-000000000000"; // Step 7
+    public const string STEP_MULT_BY_5_ID        = "ce000000-0000-0000-0000-000000000000"; // Step 8
+    public const string STEP_MULT_BY_4_ID        = "ea000000-0000-0000-0000-000000000000"; // Step 9
+    public const string STEP_MULT_BY_3_ID        = "eb000000-0000-0000-0000-000000000000"; // Step 10
+    public const string STEP_MULT_BY_8_ID        = "ec000000-0000-0000-0000-000000000000"; // Step 11
+    public const string STEP_MULT_BY_6_ID        = "ed000000-0000-0000-0000-000000000000"; // Step 12
+    public const string STEP_MULT_BY_7_ID        = "ee000000-0000-0000-0000-000000000000"; // Step 13
+    public const string STEP_MULT_BY_9_ID        = "ef000000-0000-0000-0000-000000000000"; // Step 14
+    public const string STEP_MULT_MIXED_ID       = "f0000000-0000-0000-0000-000000000000"; // Step 15
+    // Legacy aliases
+    public const string STEP_MULT_EQUAL_GROUPS_ID = STEP_MULT_EG_2_ID;
+    public const string STEP_MULTIPLICATION_1_ID  = STEP_MULT_EG_2_ID;
     public const string STEP_MULTIPLICATION_2_ID  = STEP_MULT_BY_10_ID;
     public const string STEP_MULTIPLICATION_3_ID  = STEP_MULT_BY_2_ID;
     public const string STEP_MULTIPLICATION_4_ID  = STEP_MULT_BY_5_ID;
-    public const string STEP_DIVISION_1_ID = "cf000000-0000-0000-0000-000000000000";
-    public const string STEP_DIVISION_2_ID = "d1000000-0000-0000-0000-000000000000";
-    public const string STEP_DIVISION_3_ID = "d2000000-0000-0000-0000-000000000000";
-    public const string STEP_DIVISION_4_ID = "d3000000-0000-0000-0000-000000000000";
+    public const string STEP_MULT_II_1_ID  = STEP_MULT_BY_4_ID;
+    public const string STEP_MULT_II_2_ID  = STEP_MULT_BY_3_ID;
+    public const string STEP_MULT_II_3_ID  = STEP_MULT_BY_8_ID;
+    public const string STEP_MULT_II_4_ID  = STEP_MULT_BY_6_ID;
+    public const string STEP_MULT_III_1_ID = STEP_MULT_BY_7_ID;
+    public const string STEP_MULT_III_2_ID = STEP_MULT_BY_9_ID;
+    public const string STEP_MULT_III_3_ID = STEP_MULT_MIXED_ID;
+
+    // ── Division steps (one challenge, order mirrors Multiplication: ÷10>÷2>÷5>÷4>÷3>÷8>÷6>÷7>÷9>mixed)
+    // Each step requires the prior division step AND the matching multiplication step.
+    public const string STEP_DIV_SHARING_EQUALLY_ID = "cf000000-0000-0000-0000-000000000000"; // Step 1
+    public const string STEP_DIV_BY_10_ID           = "d3000000-0000-0000-0000-000000000000"; // Step 2 (was Div I step 4)
+    public const string STEP_DIV_BY_2_ID            = "d1000000-0000-0000-0000-000000000000"; // Step 3 (was Div I step 2)
+    public const string STEP_DIV_BY_5_ID            = "d2000000-0000-0000-0000-000000000000"; // Step 4 (was Div I step 3)
+    public const string STEP_DIV_BY_4_ID            = "f2000000-0000-0000-0000-000000000000"; // Step 5 (was Div II step 2)
+    public const string STEP_DIV_BY_3_ID            = "f1000000-0000-0000-0000-000000000000"; // Step 6 (was Div II step 1)
+    public const string STEP_DIV_BY_8_ID            = "f5000000-0000-0000-0000-000000000000"; // Step 7 (was Div III step 1)
+    public const string STEP_DIV_BY_6_ID            = "f3000000-0000-0000-0000-000000000000"; // Step 8 (was Div II step 3)
+    public const string STEP_DIV_BY_7_ID            = "f4000000-0000-0000-0000-000000000000"; // Step 9 (was Div II step 4)
+    public const string STEP_DIV_BY_9_ID            = "f6000000-0000-0000-0000-000000000000"; // Step 10 (was Div III step 2)
+    public const string STEP_DIV_MIXED_ID           = "f7000000-0000-0000-0000-000000000000"; // Step 11 (was Div III step 3)
+    // Legacy aliases
+    public const string STEP_DIVISION_1_ID = STEP_DIV_SHARING_EQUALLY_ID;
+    public const string STEP_DIVISION_2_ID = STEP_DIV_BY_2_ID;
+    public const string STEP_DIVISION_3_ID = STEP_DIV_BY_5_ID;
+    public const string STEP_DIVISION_4_ID = STEP_DIV_BY_10_ID;
+    public const string STEP_DIV_II_1_ID   = STEP_DIV_BY_3_ID;
+    public const string STEP_DIV_II_2_ID   = STEP_DIV_BY_4_ID;
+    public const string STEP_DIV_II_3_ID   = STEP_DIV_BY_6_ID;
+    public const string STEP_DIV_II_4_ID   = STEP_DIV_BY_7_ID;
+    public const string STEP_DIV_III_1_ID  = STEP_DIV_BY_8_ID;
+    public const string STEP_DIV_III_2_ID  = STEP_DIV_BY_9_ID;
+    public const string STEP_DIV_III_3_ID  = STEP_DIV_MIXED_ID;
+
     public const string STEP_ORDER_OF_OPERATIONS_1_ID = "d4000000-0000-0000-0000-000000000000";
     public const string STEP_ORDER_OF_OPERATIONS_2_ID = "d5000000-0000-0000-0000-000000000000";
     public const string STEP_ORDER_OF_OPERATIONS_3_ID = "d6000000-0000-0000-0000-000000000000";
@@ -82,41 +125,14 @@ public class ChallengeDataManager
     public const string STEP_FORCE_1_ID       = "c7000000-0000-0000-0000-000000000000";
     public const string STEP_ROME_1_ID        = "c8000000-0000-0000-0000-000000000000";
 
-    // ─── New Math challenges (Stage 2 & 3) ──────────────────────────────────
-    // Note: Multiplication II & III are retired — all multiplication is now in the single Multiplication challenge.
-    // Their step UUIDs are reused for the expanded step list (steps 5–11).
+    // ─── Challenge catalog (Stage 2 & 3) ────────────────────────────────────
+    // Multiplication II & III retired — all multiplication in one challenge.
+    // Division II & III retired — all division in one challenge.
     public const string CHALLENGE_MULTIPLICATION_II_ID  = "bc000000-0000-0000-0000-000000000000";  // retired
     public const string CHALLENGE_MULTIPLICATION_III_ID = "bd000000-0000-0000-0000-000000000000";  // retired
-    public const string CHALLENGE_DIVISION_II_ID        = "be000000-0000-0000-0000-000000000000";
-    public const string CHALLENGE_DIVISION_III_ID       = "bf000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_DIVISION_II_ID        = "be000000-0000-0000-0000-000000000000";  // retired
+    public const string CHALLENGE_DIVISION_III_ID       = "bf000000-0000-0000-0000-000000000000";  // retired
     public const string CHALLENGE_ARITHMETIC_REVIEW_ID  = "b0000000-0000-0000-0000-000000000000";
-
-    // Multiplication steps 5–11 (reusing former Mult II/III UUIDs, new order: ×4,×3,×8,×6,×7,×9,mixed)
-    public const string STEP_MULT_BY_4_ID   = "ea000000-0000-0000-0000-000000000000";
-    public const string STEP_MULT_BY_3_ID   = "eb000000-0000-0000-0000-000000000000";  // → unlocks Division II
-    public const string STEP_MULT_BY_8_ID   = "ec000000-0000-0000-0000-000000000000";
-    public const string STEP_MULT_BY_6_ID   = "ed000000-0000-0000-0000-000000000000";
-    public const string STEP_MULT_BY_7_ID   = "ee000000-0000-0000-0000-000000000000";  // → unlocks Division III
-    public const string STEP_MULT_BY_9_ID   = "ef000000-0000-0000-0000-000000000000";
-    public const string STEP_MULT_MIXED_ID  = "f0000000-0000-0000-0000-000000000000";
-    // Legacy aliases
-    public const string STEP_MULT_II_1_ID  = STEP_MULT_BY_4_ID;
-    public const string STEP_MULT_II_2_ID  = STEP_MULT_BY_3_ID;
-    public const string STEP_MULT_II_3_ID  = STEP_MULT_BY_8_ID;
-    public const string STEP_MULT_II_4_ID  = STEP_MULT_BY_6_ID;
-    public const string STEP_MULT_III_1_ID = STEP_MULT_BY_7_ID;
-    public const string STEP_MULT_III_2_ID = STEP_MULT_BY_9_ID;
-    public const string STEP_MULT_III_3_ID = STEP_MULT_MIXED_ID;
-    // Division II steps: ÷3, ÷4, ÷6, ÷7
-    public const string STEP_DIV_II_1_ID = "f1000000-0000-0000-0000-000000000000";
-    public const string STEP_DIV_II_2_ID = "f2000000-0000-0000-0000-000000000000";
-    public const string STEP_DIV_II_3_ID = "f3000000-0000-0000-0000-000000000000";
-    public const string STEP_DIV_II_4_ID = "f4000000-0000-0000-0000-000000000000";
-    // Division III steps: ÷8, ÷9, mixed
-    public const string STEP_DIV_III_1_ID = "f5000000-0000-0000-0000-000000000000";
-    public const string STEP_DIV_III_2_ID = "f6000000-0000-0000-0000-000000000000";
-    public const string STEP_DIV_III_3_ID = "f7000000-0000-0000-0000-000000000000";
-    // Arithmetic Review steps
     public const string STEP_ARITH_REVIEW_1_ID = "f8000000-0000-0000-0000-000000000000";
     public const string STEP_ARITH_REVIEW_2_ID = "f9000000-0000-0000-0000-000000000000";
     public const string STEP_ARITH_REVIEW_3_ID = "fa000000-0000-0000-0000-000000000000";
@@ -403,83 +419,85 @@ public class ChallengeDataManager
         };
 
         var multiplication = new Challenge(CHALLENGE_MULTIPLICATION_ID, "Multiplication", "Math",
-            "Master all single-digit times tables through carefully sequenced steps; intermediate steps unlock matching Division challenges",
+            "Master all single-digit times tables through carefully sequenced steps; completing ×10 unlocks Division",
             "multiplication", SUBJECT_MATH_ID)
             { StageNumber = 1, StageName = "Arithmetic Foundations", Difficulty = 0.15f };
         multiplication.Prerequisites = new List<string> { CHALLENGE_SUBTRACTION_ID };
         multiplication.Steps = new List<Step>
         {
-            // Step 1 — conceptual foundation
-            MakeStep(STEP_MULT_EQUAL_GROUPS_ID, CHALLENGE_MULTIPLICATION_ID,  1, "Equal Groups",
-                "Math", "Multiplication", new List<string>(),                                     0.13f),
-            // Step 2–4: easiest patterns first (10, 2, 5)
-            MakeStep(STEP_MULT_BY_10_ID,        CHALLENGE_MULTIPLICATION_ID,  2, "Multiply by 10",
-                "Math", "Multiplication", new List<string> { STEP_MULT_EQUAL_GROUPS_ID },         0.14f),
-            MakeStep(STEP_MULT_BY_2_ID,         CHALLENGE_MULTIPLICATION_ID,  3, "Multiply by 2",
-                "Math", "Multiplication", new List<string> { STEP_MULT_BY_10_ID },                0.15f),
-            // ×5 completion → unlocks Division I (÷2, ÷5, ÷10)
-            MakeStep(STEP_MULT_BY_5_ID,         CHALLENGE_MULTIPLICATION_ID,  4, "Multiply by 5",
-                "Math", "Multiplication", new List<string> { STEP_MULT_BY_2_ID },                 0.16f,
+            // ── Equal Groups concept (5 steps, each showing a different number of groups visually) ──
+            MakeStep(STEP_MULT_EG_2_ID,      CHALLENGE_MULTIPLICATION_ID,  1, "2 Equal Groups",
+                "Math", "Multiplication", new List<string>(),                                      0.11f),
+            MakeStep(STEP_MULT_EG_3_ID,      CHALLENGE_MULTIPLICATION_ID,  2, "3 Equal Groups",
+                "Math", "Multiplication", new List<string> { STEP_MULT_EG_2_ID },                  0.12f),
+            MakeStep(STEP_MULT_EG_4_ID,      CHALLENGE_MULTIPLICATION_ID,  3, "4 Equal Groups",
+                "Math", "Multiplication", new List<string> { STEP_MULT_EG_3_ID },                  0.13f),
+            MakeStep(STEP_MULT_EG_5_ID,      CHALLENGE_MULTIPLICATION_ID,  4, "5 Equal Groups",
+                "Math", "Multiplication", new List<string> { STEP_MULT_EG_4_ID },                  0.13f),
+            MakeStep(STEP_MULT_EG_BRIDGE_ID, CHALLENGE_MULTIPLICATION_ID,  5, "Groups & Arrays",
+                "Math", "Multiplication", new List<string> { STEP_MULT_EG_5_ID },                  0.14f),
+            // ── Times tables (ordered by difficulty: 10>2>5>4>3>8>6>7>9>mixed) ──
+            // ×10 unlocks the Division challenge
+            MakeStep(STEP_MULT_BY_10_ID, CHALLENGE_MULTIPLICATION_ID,  6, "Multiply by 10",
+                "Math", "Multiplication", new List<string> { STEP_MULT_EG_BRIDGE_ID },             0.14f,
                 unlocksChallengeIds: new List<string> { CHALLENGE_DIVISION_ID }),
-            // Step 5–6: medium difficulty (4 = double of 2; 3 = new pattern)
-            MakeStep(STEP_MULT_BY_4_ID,         CHALLENGE_MULTIPLICATION_ID,  5, "Multiply by 4",
-                "Math", "Multiplication", new List<string> { STEP_MULT_BY_5_ID },                 0.18f),
-            // ×3 completion → unlocks Division II (÷3, ÷4)
-            MakeStep(STEP_MULT_BY_3_ID,         CHALLENGE_MULTIPLICATION_ID,  6, "Multiply by 3",
-                "Math", "Multiplication", new List<string> { STEP_MULT_BY_4_ID },                 0.20f,
-                unlocksChallengeIds: new List<string> { CHALLENGE_DIVISION_II_ID }),
-            // Step 7–9: harder tables (8 = double of 4; 6 = double of 3; 7 = trickiest)
-            MakeStep(STEP_MULT_BY_8_ID,         CHALLENGE_MULTIPLICATION_ID,  7, "Multiply by 8",
-                "Math", "Multiplication", new List<string> { STEP_MULT_BY_3_ID },                 0.23f),
-            MakeStep(STEP_MULT_BY_6_ID,         CHALLENGE_MULTIPLICATION_ID,  8, "Multiply by 6",
-                "Math", "Multiplication", new List<string> { STEP_MULT_BY_8_ID },                 0.25f),
-            // ×7 completion → unlocks Division III (÷6, ÷7, ÷8)
-            MakeStep(STEP_MULT_BY_7_ID,         CHALLENGE_MULTIPLICATION_ID,  9, "Multiply by 7",
-                "Math", "Multiplication", new List<string> { STEP_MULT_BY_6_ID },                 0.27f,
-                unlocksChallengeIds: new List<string> { CHALLENGE_DIVISION_III_ID }),
-            // Step 10–11: complete and consolidate
-            MakeStep(STEP_MULT_BY_9_ID,         CHALLENGE_MULTIPLICATION_ID, 10, "Multiply by 9",
-                "Math", "Multiplication", new List<string> { STEP_MULT_BY_7_ID },                 0.28f),
-            MakeStep(STEP_MULT_MIXED_ID,        CHALLENGE_MULTIPLICATION_ID, 11, "Mixed Times Tables (1–10)",
-                "Math", "Multiplication", new List<string> { STEP_MULT_BY_9_ID },                 0.30f),
+            MakeStep(STEP_MULT_BY_2_ID,  CHALLENGE_MULTIPLICATION_ID,  7, "Multiply by 2",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_10_ID },                 0.15f),
+            MakeStep(STEP_MULT_BY_5_ID,  CHALLENGE_MULTIPLICATION_ID,  8, "Multiply by 5",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_2_ID },                  0.16f),
+            MakeStep(STEP_MULT_BY_4_ID,  CHALLENGE_MULTIPLICATION_ID,  9, "Multiply by 4",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_5_ID },                  0.18f),
+            MakeStep(STEP_MULT_BY_3_ID,  CHALLENGE_MULTIPLICATION_ID, 10, "Multiply by 3",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_4_ID },                  0.20f),
+            MakeStep(STEP_MULT_BY_8_ID,  CHALLENGE_MULTIPLICATION_ID, 11, "Multiply by 8",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_3_ID },                  0.23f),
+            MakeStep(STEP_MULT_BY_6_ID,  CHALLENGE_MULTIPLICATION_ID, 12, "Multiply by 6",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_8_ID },                  0.25f),
+            MakeStep(STEP_MULT_BY_7_ID,  CHALLENGE_MULTIPLICATION_ID, 13, "Multiply by 7",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_6_ID },                  0.27f),
+            MakeStep(STEP_MULT_BY_9_ID,  CHALLENGE_MULTIPLICATION_ID, 14, "Multiply by 9",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_7_ID },                  0.28f),
+            MakeStep(STEP_MULT_MIXED_ID, CHALLENGE_MULTIPLICATION_ID, 15, "Mixed Times Tables (1–10)",
+                "Math", "Multiplication", new List<string> { STEP_MULT_BY_9_ID },                  0.30f),
         };
 
-        var division = new Challenge(CHALLENGE_DIVISION_ID, "Division I", "Math", "Connect division to equal sharing; build fluency with ÷2, ÷5, ÷10 — unlocked after mastering ×5", "division", SUBJECT_MATH_ID)
+        // Division: one challenge, steps mirror mult order (÷10>÷2>÷5>÷4>÷3>÷8>÷6>÷7>÷9>mixed)
+        // Unlocked by completing Mult ×10 (step 6). Each inner step also requires the matching mult step.
+        var division = new Challenge(CHALLENGE_DIVISION_ID, "Division", "Math",
+            "Connect division to equal sharing; steps unlock in step with the Multiplication times tables you've mastered",
+            "division", SUBJECT_MATH_ID)
             { StageNumber = 1, StageName = "Arithmetic Foundations", Difficulty = 0.19f };
-        // No challenge prerequisites: Division I is unlocked by the ×5 step in Multiplication
+        // No challenge prerequisites — Division is unlocked by the ×10 step above
         division.Steps = new List<Step>
         {
-            MakeStep(STEP_DIVISION_1_ID, CHALLENGE_DIVISION_ID, 1, "Sharing Equally", "Math", "Division I", new List<string>(),                               0.18f),
-            MakeStep(STEP_DIVISION_2_ID, CHALLENGE_DIVISION_ID, 2, "Divide by 2",    "Math", "Division I", new List<string> { STEP_DIVISION_1_ID },           0.19f),
-            MakeStep(STEP_DIVISION_3_ID, CHALLENGE_DIVISION_ID, 3, "Divide by 5",    "Math", "Division I", new List<string> { STEP_DIVISION_2_ID },           0.20f),
-            MakeStep(STEP_DIVISION_4_ID, CHALLENGE_DIVISION_ID, 4, "Divide by 10",   "Math", "Division I", new List<string> { STEP_DIVISION_3_ID },           0.21f),
+            MakeStep(STEP_DIV_SHARING_EQUALLY_ID, CHALLENGE_DIVISION_ID,  1, "Sharing Equally",
+                "Math", "Division", new List<string>(),                                                                  0.18f),
+            MakeStep(STEP_DIV_BY_10_ID,           CHALLENGE_DIVISION_ID,  2, "Divide by 10",
+                "Math", "Division", new List<string> { STEP_DIV_SHARING_EQUALLY_ID, STEP_MULT_BY_10_ID },               0.19f),
+            MakeStep(STEP_DIV_BY_2_ID,            CHALLENGE_DIVISION_ID,  3, "Divide by 2",
+                "Math", "Division", new List<string> { STEP_DIV_BY_10_ID, STEP_MULT_BY_2_ID },                          0.20f),
+            MakeStep(STEP_DIV_BY_5_ID,            CHALLENGE_DIVISION_ID,  4, "Divide by 5",
+                "Math", "Division", new List<string> { STEP_DIV_BY_2_ID, STEP_MULT_BY_5_ID },                           0.21f),
+            MakeStep(STEP_DIV_BY_4_ID,            CHALLENGE_DIVISION_ID,  5, "Divide by 4",
+                "Math", "Division", new List<string> { STEP_DIV_BY_5_ID, STEP_MULT_BY_4_ID },                           0.24f),
+            MakeStep(STEP_DIV_BY_3_ID,            CHALLENGE_DIVISION_ID,  6, "Divide by 3",
+                "Math", "Division", new List<string> { STEP_DIV_BY_4_ID, STEP_MULT_BY_3_ID },                           0.26f),
+            MakeStep(STEP_DIV_BY_8_ID,            CHALLENGE_DIVISION_ID,  7, "Divide by 8",
+                "Math", "Division", new List<string> { STEP_DIV_BY_3_ID, STEP_MULT_BY_8_ID },                           0.29f),
+            MakeStep(STEP_DIV_BY_6_ID,            CHALLENGE_DIVISION_ID,  8, "Divide by 6",
+                "Math", "Division", new List<string> { STEP_DIV_BY_8_ID, STEP_MULT_BY_6_ID },                           0.31f),
+            MakeStep(STEP_DIV_BY_7_ID,            CHALLENGE_DIVISION_ID,  9, "Divide by 7",
+                "Math", "Division", new List<string> { STEP_DIV_BY_6_ID, STEP_MULT_BY_7_ID },                           0.33f),
+            MakeStep(STEP_DIV_BY_9_ID,            CHALLENGE_DIVISION_ID, 10, "Divide by 9",
+                "Math", "Division", new List<string> { STEP_DIV_BY_7_ID, STEP_MULT_BY_9_ID },                           0.34f),
+            MakeStep(STEP_DIV_MIXED_ID,           CHALLENGE_DIVISION_ID, 11, "Mixed Division Facts (1–10)",
+                "Math", "Division", new List<string> { STEP_DIV_BY_9_ID, STEP_MULT_MIXED_ID },                          0.36f),
         };
 
         // ── Stage 2: Arithmetic Mastery ──────────────────────────────────────
-        var divisionII = new Challenge(CHALLENGE_DIVISION_II_ID, "Division II", "Math", "Divide by 3 and 4 using known times-table inverses — unlocked after mastering ×3", "division_ii", SUBJECT_MATH_ID)
-            { StageNumber = 2, StageName = "Arithmetic Mastery", Difficulty = 0.29f };
-        // No challenge prerequisites: Division II is unlocked by the ×3 step in Multiplication
-        divisionII.Steps = new List<Step>
-        {
-            MakeStep(STEP_DIV_II_1_ID, CHALLENGE_DIVISION_II_ID, 1, "Divide by 3", "Math", "Division II", new List<string>(),                               0.28f),
-            MakeStep(STEP_DIV_II_2_ID, CHALLENGE_DIVISION_II_ID, 2, "Divide by 4", "Math", "Division II", new List<string> { STEP_DIV_II_1_ID },           0.29f),
-            MakeStep(STEP_DIV_II_3_ID, CHALLENGE_DIVISION_II_ID, 3, "Divide by 6", "Math", "Division II", new List<string> { STEP_DIV_II_2_ID },           0.30f),
-            MakeStep(STEP_DIV_II_4_ID, CHALLENGE_DIVISION_II_ID, 4, "Divide by 7", "Math", "Division II", new List<string> { STEP_DIV_II_3_ID },           0.31f),
-        };
-
-        var divisionIII = new Challenge(CHALLENGE_DIVISION_III_ID, "Division III", "Math", "Divide by 6, 7, and 8, then fluently mix all division facts — unlocked after mastering ×7", "division_iii", SUBJECT_MATH_ID)
-            { StageNumber = 2, StageName = "Arithmetic Mastery", Difficulty = 0.37f };
-        // No challenge prerequisites: Division III is unlocked by the ×7 step in Multiplication
-        divisionIII.Steps = new List<Step>
-        {
-            MakeStep(STEP_DIV_III_1_ID, CHALLENGE_DIVISION_III_ID, 1, "Divide by 8",             "Math", "Division III", new List<string>(),                                0.36f),
-            MakeStep(STEP_DIV_III_2_ID, CHALLENGE_DIVISION_III_ID, 2, "Divide by 9",             "Math", "Division III", new List<string> { STEP_DIV_III_1_ID },           0.37f),
-            MakeStep(STEP_DIV_III_3_ID, CHALLENGE_DIVISION_III_ID, 3, "Mixed Division Facts (1–9)","Math", "Division III", new List<string> { STEP_DIV_III_2_ID },         0.38f),
-        };
-
         var orderOfOperations = new Challenge(CHALLENGE_ORDER_OF_OPERATIONS_ID, "Order of Operations", "Math", "Evaluate short expressions by choosing the correct operation order", "order_of_operations", SUBJECT_MATH_ID)
             { StageNumber = 2, StageName = "Arithmetic Mastery", Difficulty = 0.41f };
-        orderOfOperations.Prerequisites = new List<string> { CHALLENGE_DIVISION_III_ID };
+        orderOfOperations.Prerequisites = new List<string> { CHALLENGE_DIVISION_ID };
         orderOfOperations.Steps = new List<Step>
         {
             MakeStep(STEP_ORDER_OF_OPERATIONS_1_ID, CHALLENGE_ORDER_OF_OPERATIONS_ID, 1, "Multiply Then Add",     "Math", "Order of Operations", new List<string>(),                                              0.39f),
@@ -567,8 +585,6 @@ public class ChallengeDataManager
         Register("Math", subtraction);
         Register("Math", multiplication);
         Register("Math", division);
-        Register("Math", divisionII);
-        Register("Math", divisionIII);
         Register("Math", orderOfOperations);
         Register("Math", arithmeticReview);
         Register("Math", expressions);
