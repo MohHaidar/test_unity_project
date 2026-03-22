@@ -44,14 +44,6 @@ public class ConversationQuestion : IQuestion
     /// <summary>Explanation of why the correct answer is right — shown after answer.</summary>
     public string Explanation { get; set; }
 
-    /// <summary>
-    /// When true, the UI shows a free-text input field alongside the pre-defined options
-    /// so the player can write their own response instead of picking one.
-    /// The evaluator uses AI scoring (not CheckAnswer) for free-text submissions.
-    /// Always true for parlour questions — set false only for strict vocabulary drills.
-    /// </summary>
-    public bool AllowFreeResponse { get; set; } = true;
-
     // ── IQuestion implementation ──────────────────────────────────────────────
 
     public bool CheckAnswer(string studentAnswer)
@@ -60,13 +52,6 @@ public class ConversationQuestion : IQuestion
             return false;
         return CorrectAnswer.Equals(studentAnswer, System.StringComparison.OrdinalIgnoreCase);
     }
-
-    /// <summary>
-    /// Returns true when the submitted answer is not one of the pre-defined Options,
-    /// meaning the player typed their own response. The evaluator uses AI scoring for these.
-    /// </summary>
-    public bool IsFreeTextAnswer(string answer) =>
-        !string.IsNullOrEmpty(answer) && (Options == null || !Options.Contains(answer));
 
     public override string ToString() =>
         $"Conversation({CharacterName}): \"{CharacterDialogue?.Substring(0, System.Math.Min(40, CharacterDialogue?.Length ?? 0))}...\"";

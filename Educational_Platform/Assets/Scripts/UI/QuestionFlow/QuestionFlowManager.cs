@@ -84,14 +84,6 @@ public class QuestionFlowManager : MonoBehaviour
         _questionGenerator = new OllamaQuestionGenerator("gpt-oss:20b-cloud");
         _performanceEvaluator = new OllamaPerformanceEvaluator("gpt-oss:20b-cloud");
 
-        // Detect parlour challenges (slug starts with "parlour_")
-        _isParlourChallenge = _currentChallenge.Slug.StartsWith("parlour_", System.StringComparison.OrdinalIgnoreCase);
-        if (_isParlourChallenge)
-        {
-            _parlourGenerator = new ParlourQuestionGenerator("gpt-oss:20b-cloud");
-            Debug.Log($"[QuestionFlowManager] Parlour mode active for challenge: {_currentChallenge.Slug}");
-        }
-
         // Check Ollama is available
         if (!new OllamaAPI().IsOllamaAvailable())
         {
@@ -118,6 +110,14 @@ public class QuestionFlowManager : MonoBehaviour
         {
             ShowStatus($"ERROR: Challenge {_player.CurrentChallenge} not found");
             return;
+        }
+
+        // Detect parlour challenges (slug starts with "parlour_") — must be after challenge load
+        _isParlourChallenge = _currentChallenge.Slug.StartsWith("parlour_", System.StringComparison.OrdinalIgnoreCase);
+        if (_isParlourChallenge)
+        {
+            _parlourGenerator = new ParlourQuestionGenerator("gpt-oss:20b-cloud");
+            Debug.Log($"[QuestionFlowManager] Parlour mode active for challenge: {_currentChallenge.Slug}");
         }
 
         // Setup buttons

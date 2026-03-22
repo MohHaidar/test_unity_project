@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -158,35 +159,46 @@ Speaking Style: {character.SpeakingStyle}
 
 === PLAYER CONTEXT ===
 {playerContext}
-The character is aware of this context and may subtly reference the player's progress, encourage them, or challenge them based on it.
+The character may subtly reference the player's journey if it fits naturally — never force it.
 
 === SCENE ===
 {c.Scene}
 
-=== STEP REQUIREMENTS ===
-Skill being practiced: {c.SkillFocus}
+=== SKILL BEING PRACTICED ===
+{c.SkillFocus}
 Step description: {step.Description}
 Difficulty note: {c.DifficultyNote}
 
-=== INSTRUCTIONS ===
-1. Write a SHORT piece of dialogue from {character.Name} (2–3 sentences max) that:
-   - Fits the scene and the character's personality/style EXACTLY
-   - Naturally leads into a verbal communication question
-   - May subtly reference the player's progress if natural (don't force it)
-2. Write a short question prompt (""How do you respond?"" or similar) that follows the dialogue
-3. Write exactly 3 response options. Only ONE is the ideal response given the skill being practiced.
-   The others should be plausible but wrong in specific ways (too formal, too casual, misreads tone, etc.)
-   Keep each option under 15 words — they are selectable buttons, not essays.
-4. Provide a 1-sentence explanation of why the correct answer is right.
+=== YOUR TASK ===
+
+Step 1 — Write SHORT dialogue from {character.Name} (2–3 sentences) that:
+  - Creates a SITUATION or MOMENT that REQUIRES the player to apply ""{c.SkillFocus}""
+  - The situation must NOT have an obvious single answer — the player needs to think
+  - Do NOT make it an open invitation like ""What do you think?"" or ""Tell me about yourself""
+  - The character should say or do something that CHALLENGES the player to use the skill
+
+Step 2 — Write the response question as: ""What do you say?""
+
+Step 3 — Write exactly 4 options. CRITICAL RULES FOR OPTIONS:
+  ✅ Each option MUST be actual words the player would speak aloud — like real dialogue
+  ✅ Each option must DEMONSTRATE (or fail to demonstrate) ""{c.SkillFocus}"" specifically
+  ✅ The correct option should clearly apply the skill in context
+  ✅ Wrong options should fail in different, specific ways (too blunt, misses the subtext, wrong register, deflects)
+  ❌ NEVER write meta-descriptions like ""Respond warmly"", ""Use a formal tone"", ""Agree politely""
+  ❌ NEVER write options that are just agreement/disagreement (""Yes I agree"", ""I think so too"")
+  ❌ Options must NOT be generic — they must be specific to THIS scene and this character's dialogue
+  Keep each option under 15 words.
+
+Step 4 — Write a 1-sentence explanation of why the correct answer best applies ""{c.SkillFocus}"".
 
 Return ONLY valid JSON with no markdown, no extra text:
 
 {{
-  ""dialogue"": ""<character's opening speech>"",
-  ""question"": ""<short prompt asking the player how to respond>"",
-  ""options"": [""<option A>"", ""<option B>"", ""<option C>""],
-  ""correct"": ""<exact text of the correct option>"",
-  ""explanation"": ""<why this response is correct>"",
+  ""dialogue"": ""<character's situational dialogue>"",
+  ""question"": ""What do you say?"",
+  ""options"": [""<spoken response A>"", ""<spoken response B>"", ""<spoken response C>"", ""<spoken response D>""],
+  ""correct"": ""<exact text of the correct spoken response>"",
+  ""explanation"": ""<one sentence: why this response best applies {c.SkillFocus}>"",
   ""toneContext"": ""{c.SkillFocus}"",
   ""skillFocus"": ""{c.SkillFocus}""
 }}";
@@ -228,8 +240,7 @@ Return ONLY valid JSON with no markdown, no extra text:
                 Explanation       = data.explanation,
                 ToneContext       = data.toneContext,
                 SkillFocus        = data.skillFocus,
-                Difficulty        = 0.5f,
-                AllowFreeResponse = true
+                Difficulty        = 0.5f
             };
         }
         catch (Exception e)
@@ -255,6 +266,20 @@ Return ONLY valid JSON with no markdown, no extra text:
             { reason = "Empty correct answer"; return false; }
         if (!q.Options.Contains(q.CorrectAnswer))
             { reason = $"Correct answer not in options: \"{q.CorrectAnswer}\""; return false; }
+
+        // Reject meta-description options — options must be actual spoken dialogue
+        string[] metaPhrases = { "respond warmly", "respond formally", "respond with", "use a", "give a ",
+                                  "ignore the", "say nothing", "agree politely", "agree and", "disagree",
+                                  "be formal", "be casual", "be polite", "match the tone", "show empathy",
+                                  "acknowledge", "use formal", "use casual", "act professionally" };
+        foreach (var opt in q.Options)
+        {
+            string lower = opt.ToLower();
+            foreach (var phrase in metaPhrases)
+                if (lower.StartsWith(phrase) || lower.Contains(" " + phrase))
+                    { reason = $"Option is a meta-description, not spoken dialogue: \"{opt}\""; return false; }
+        }
+
         return true;
     }
 
@@ -270,29 +295,102 @@ Return ONLY valid JSON with no markdown, no extra text:
 
     // ── Fallback question ─────────────────────────────────────────────────────
 
-    private IQuestion GetFallbackQuestion(Step step, Character character = null, ParlourConstraints constraints = null)
+    private IQuestion GetFallbackQuestion(Step step, Character character = null, ParlourConstraints? constraints = null)
     {
         string charName = character?.Name ?? "Maya";
         string skill    = constraints?.SkillFocus ?? step?.Description ?? "verbal communication";
 
+        // Fallback questions are skill-specific where possible, always use actual spoken dialogue as options
+        return GetFallbackForSkill(skill, charName, character?.Id ?? CharacterManager.CHAR_MAYA_ID);
+    }
+
+    private ConversationQuestion GetFallbackForSkill(string skill, string charName, string charId)
+    {
+        // Pick a situation + real spoken-dialogue options that match the skill focus
+        string skillLower = skill.ToLower();
+
+        if (skillLower.Contains("active listening") || skillLower.Contains("listen"))
+            return MakeFallback(charId, charName, skill,
+                $"{charName} finishes explaining something personal, then pauses and looks at you expectantly.",
+                new[] {
+                    "That must have been really hard. How did you feel afterward?",
+                    "Interesting. Anyway, let me tell you about my day.",
+                    "Got it. So what do you need from me?",
+                    "Yeah, people always say that kind of stuff."
+                }, 0,
+                "Asking a follow-up about their feelings shows you were truly listening and invite them to continue.");
+
+        if (skillLower.Contains("tone") || skillLower.Contains("register") || skillLower.Contains("formal"))
+            return MakeFallback(charId, charName, skill,
+                $"{charName} is your new manager and greets you for the first time at the office.",
+                new[] {
+                    "Great to meet you! I'm looking forward to working with you.",
+                    "Hey, nice one! This is gonna be fun, right?",
+                    "Hello. I am present and ready for work.",
+                    "So like… are you strict or what?"
+                }, 0,
+                "Warm but professional language matches the first-impression context without being overly casual or robotic.");
+
+        if (skillLower.Contains("empathy") || skillLower.Contains("support"))
+            return MakeFallback(charId, charName, skill,
+                $"{charName} tells you their project got cancelled after months of work, looking deflated.",
+                new[] {
+                    "That's really disappointing — all that effort you put in.",
+                    "Well, at least now you have time for other things.",
+                    "Yeah, that happens. So, what's next on your list?",
+                    "You should have seen it coming honestly."
+                }, 0,
+                "Acknowledging the effort and emotional impact first shows genuine empathy before moving forward.");
+
+        if (skillLower.Contains("small talk") || skillLower.Contains("casual"))
+            return MakeFallback(charId, charName, skill,
+                $"{charName} is in the elevator with you and says: \"Rough week, huh?\"",
+                new[] {
+                    "Ha, just a bit! Yours going okay?",
+                    "I prefer not to discuss personal matters in public.",
+                    "It was fine.",
+                    "Don't even get me started. Last Tuesday..."
+                }, 0,
+                "A light, reciprocal reply keeps the small talk natural without oversharing or shutting it down.");
+
+        if (skillLower.Contains("assertive") || skillLower.Contains("boundary") || skillLower.Contains("disagree"))
+            return MakeFallback(charId, charName, skill,
+                $"{charName} keeps interrupting you mid-sentence during a group discussion.",
+                new[] {
+                    "Could I finish my thought? I want to make sure my point lands.",
+                    "Sorry, go ahead, it doesn't matter.",
+                    "Stop interrupting me, that's so rude!",
+                    "..."
+                }, 0,
+                "Calmly asserting your turn without aggression or giving up is the hallmark of assertive communication.");
+
+        // Generic fallback — still uses actual dialogue, not meta-descriptions
+        return MakeFallback(charId, charName, skill,
+            $"{charName} asks: \"I've heard a lot about you — what makes you tick?\"",
+            new[] {
+                "I'm really driven by learning new things and solving tricky problems.",
+                "I don't know, I'm just normal I guess.",
+                "That's a broad question. Can you be more specific?",
+                "I work hard and I am a team player."
+            }, 0,
+            "A genuine, specific answer demonstrates self-awareness and engages the conversation meaningfully.");
+    }
+
+    private ConversationQuestion MakeFallback(string charId, string charName, string skill,
+        string dialogue, string[] options, int correctIndex, string explanation)
+    {
         return new ConversationQuestion
         {
-            CharacterId       = character?.Id ?? CharacterManager.CHAR_MAYA_ID,
+            CharacterId       = charId,
             CharacterName     = charName,
-            CharacterDialogue = $"Hey! Let's work on {skill} together. I have a quick question for you.",
-            QuestionText      = "Which response best fits this situation?",
-            Options           = new List<string>
-            {
-                "Respond warmly and match the conversational tone",
-                "Give a very formal and distant response",
-                "Respond with a one-word answer"
-            },
-            CorrectAnswer     = "Respond warmly and match the conversational tone",
-            Explanation       = "Matching tone and showing engagement is the hallmark of effective informal communication.",
+            CharacterDialogue = dialogue,
+            QuestionText      = "What do you say?",
+            Options           = new List<string>(options),
+            CorrectAnswer     = options[correctIndex],
+            Explanation       = explanation,
             ToneContext       = skill,
             SkillFocus        = skill,
-            Difficulty        = 0.3f,
-            AllowFreeResponse = true
+            Difficulty        = 0.3f
         };
     }
 

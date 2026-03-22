@@ -49,14 +49,9 @@ public class OllamaPerformanceEvaluator
 
     /// <summary>
     /// Builds the prompt sent to Ollama for answer evaluation.
-    /// Routes to a verbal communication prompt for ConversationQuestion free-text answers.
     /// </summary>
     private string BuildEvaluationPrompt(Player player, Step step, IQuestion question, string studentAnswer, float timeTakenSeconds)
     {
-        // Parlour free-text answers need a verbal-communication-aware prompt
-        if (question is ConversationQuestion conv && conv.IsFreeTextAnswer(studentAnswer))
-            return BuildParlourEvaluationPrompt(player, step, conv, studentAnswer, timeTakenSeconds);
-
         float stepMastery = player.GetCurrentStepMastery();
 
         string prompt = $@"You are an expert math educator analyzing a student's answer.
@@ -140,65 +135,6 @@ RETURN ONLY VALID JSON (no other text, no markdown):
     }
 
     /// <summary>
-    /// Builds an evaluation prompt for parlour free-text answers.
-    /// The AI judges the appropriateness of the player's verbal response
-    /// rather than checking for an exact string match.
-    /// </summary>
-    private string BuildParlourEvaluationPrompt(Player player, Step step, ConversationQuestion question, string studentAnswer, float timeTakenSeconds)
-    {
-        float stepMastery = player.GetCurrentStepMastery();
-
-        return $@"You are an expert verbal communication coach evaluating a student's free-text response.
-
-SCENE:
-{question.CharacterDialogue}
-
-QUESTION ASKED:
-{question.QuestionText}
-
-SKILL BEING ASSESSED: {question.SkillFocus}
-STEP DESCRIPTION: {step.Description}
-
-STUDENT'S FREE-TEXT RESPONSE:
-""{studentAnswer}""
-
-IDEAL RESPONSE (for reference): ""{question.CorrectAnswer}""
-
-STUDENT CONTEXT:
-- Current mastery (this step): {stepMastery:F2}
-- Streak: {player.StreakInCurrentStep}/{step.StreakGoal}
-
-EVALUATION CRITERIA:
-Judge the student's response on how well it demonstrates the skill being assessed ({question.SkillFocus}).
-A response is CORRECT if it:
-  - Uses appropriate register and tone for the scene
-  - Demonstrates understanding of the skill being practiced
-  - Would be a natural and effective real-world response
-A response is INCORRECT if it:
-  - Uses the wrong register (too formal/too casual for context)
-  - Misreads the tone or intent of the situation
-  - Would be socially inappropriate or awkward in the scene
-
-The student does NOT need to match the ideal response exactly — judge on communication quality.
-
-RETURN ONLY VALID JSON (no extra text, no markdown):
-
-{{
-  ""isCorrect"": <true or false>,
-  ""correctAnswer"": ""{question.CorrectAnswer}"",
-  ""studentAnswer"": ""{studentAnswer}"",
-  ""errorType"": ""<null if correct, else: wrong_register|tone_mismatch|misread_subtext|inappropriate>"",
-  ""errorExplanation"": ""<brief analysis of why the response works or doesn't work>"",
-  ""studentHint"": ""<If incorrect: 1-2 sentences guiding them. E.g. 'Your response was too formal for this casual scene. Try matching Maya's friendly, relaxed tone.' Null if correct.>"",
-  ""speedScore"": <0.0-1.0, based on {timeTakenSeconds:F1}s — longer is fine for free-text>,
-  ""confidenceInPerformance"": <0.0-1.0>,
-  ""masteryDelta"": <-0.10 to +0.10>,
-  ""nextDifficulty"": ""<increase|same|decrease>"",
-  ""nextFocusArea"": ""<what specific communication skill to work on next, or null>""
-}}";
-    }
-
-    /// <summary>
     /// Parses JSON evaluation response from Ollama.
     /// </summary>
     private EvaluationResult ParseEvaluationResponse(string jsonText, IQuestion question, string studentAnswer)
@@ -222,10 +158,8 @@ RETURN ONLY VALID JSON (no extra text, no markdown):
                 return null;
             }
 
-            // For parlour free-text answers the AI decides correctness (not CheckAnswer)
-            bool isCorrect = (question is ConversationQuestion conv && conv.IsFreeTextAnswer(studentAnswer))
-                ? data.isCorrect
-                : question.CheckAnswer(studentAnswer);
+            // Determine correctness
+            bool isCorrect = question.CheckAnswer(studentAnswer);
 
             EvaluationResult result = new EvaluationResult
             {

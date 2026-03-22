@@ -36,11 +36,6 @@ public class QuestionDisplay : MonoBehaviour
     [SerializeField] private TextMeshProUGUI characterNameText;
     [SerializeField] private TextMeshProUGUI characterDialogueText;
 
-    [Header("Free Response (Parlour)")]
-    [SerializeField] private GameObject freeResponseRow;
-    [SerializeField] private TMP_InputField freeResponseInput;
-    [SerializeField] private Button freeResponseSubmitButton;
-
     [Header("Shared")]
     [SerializeField] private TextMeshProUGUI feedbackText;
 
@@ -146,39 +141,7 @@ public class QuestionDisplay : MonoBehaviour
             optionButtons[i].interactable = true;
         }
 
-        // Free-response row — shown when the question allows it
-        if (freeResponseRow != null)
-            freeResponseRow.SetActive(question.AllowFreeResponse);
-
-        if (question.AllowFreeResponse)
-        {
-            if (freeResponseInput != null)
-            {
-                freeResponseInput.text = "";
-                freeResponseInput.interactable = true;
-            }
-            if (freeResponseSubmitButton != null)
-            {
-                freeResponseSubmitButton.onClick.RemoveAllListeners();
-                freeResponseSubmitButton.onClick.AddListener(OnFreeResponseSubmit);
-                freeResponseSubmitButton.interactable = true;
-            }
-        }
-
         if (feedbackText != null) feedbackText.text = "";
-    }
-
-    private void OnFreeResponseSubmit()
-    {
-        if (_currentQuestion == null) return;
-        string answer = freeResponseInput != null ? freeResponseInput.text.Trim() : "";
-        if (string.IsNullOrEmpty(answer)) return;
-
-        DisableAllButtons();
-        if (freeResponseInput  != null) freeResponseInput.interactable  = false;
-        if (freeResponseSubmitButton != null) freeResponseSubmitButton.interactable = false;
-
-        _answerSubmitter?.SubmitAnswer(answer);
     }
 
     // ─── Multiple Choice ──────────────────────────────────────────────────────
@@ -311,16 +274,12 @@ public class QuestionDisplay : MonoBehaviour
     {
         foreach (var button in optionButtons)
             if (button != null) button.interactable = false;
-        if (freeResponseInput        != null) freeResponseInput.interactable        = false;
-        if (freeResponseSubmitButton != null) freeResponseSubmitButton.interactable = false;
     }
 
     public void EnableAllButtons()
     {
         foreach (var button in optionButtons)
             if (button != null) button.interactable = true;
-        if (freeResponseInput        != null) freeResponseInput.interactable        = true;
-        if (freeResponseSubmitButton != null) freeResponseSubmitButton.interactable = true;
     }
 
     public void ClearDisplay()
@@ -330,8 +289,6 @@ public class QuestionDisplay : MonoBehaviour
         if (feedbackText          != null) feedbackText.text          = "";
         if (characterNameText     != null) characterNameText.text     = "";
         if (characterDialogueText != null) characterDialogueText.text = "";
-        if (freeResponseInput     != null) freeResponseInput.text     = "";
-        if (freeResponseRow       != null) freeResponseRow.SetActive(false);
 
         foreach (var button in optionButtons)
         {
