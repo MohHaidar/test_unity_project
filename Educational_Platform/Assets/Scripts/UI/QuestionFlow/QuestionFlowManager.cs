@@ -22,9 +22,17 @@ public class QuestionFlowManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI expPopText;
     [SerializeField] private GameObject stepCompletePanel;
     [SerializeField] private TextMeshProUGUI stepCompleteText;
-    [SerializeField] private GameObject challengeCompletePanel;    // assign a separate panel, or leave null to reuse stepCompletePanel
-    [SerializeField] private TextMeshProUGUI challengeCompleteText; // text inside challengeCompletePanel
-    [SerializeField] private Button challengeCompleteButton;        // "Back to Challenges" button
+    [SerializeField] private GameObject challengeCompletePanel;
+    [SerializeField] private TextMeshProUGUI challengeCompleteText;
+    [SerializeField] private Button challengeCompleteButton;
+
+    [Header("Debug Mode (disable in production)")]
+    [SerializeField] private bool debugMode = false;
+    [SerializeField] private GameObject debugPanel;
+    [SerializeField] private TextMeshProUGUI debugLogText;
+    [SerializeField] private Button debugWinQuestionButton;
+    [SerializeField] private Button debugWinStepButton;
+    [SerializeField] private Button debugWinChallengeButton;
 
     private Player _player;
     private Challenge _currentChallenge;
@@ -40,7 +48,7 @@ public class QuestionFlowManager : MonoBehaviour
     private int _sessionExpEarned;
     private int _sessionCoinsEarned;
     private float _sessionMasteryStart;
-    private float _lastQuestionDifficulty = -1f;  // -1 = no previous question yet
+    private float _lastQuestionDifficulty = -1f;
 
     private OllamaQuestionGenerator _questionGenerator;
     private OllamaPerformanceEvaluator _performanceEvaluator;
@@ -49,6 +57,11 @@ public class QuestionFlowManager : MonoBehaviour
 
     private bool _isWaitingForAnswer = false;
     private bool _isProcessingEvaluation = false;
+
+    // Debug insta-win flags (set by button callbacks, consumed by GameLoop)
+    private bool _debugForceCorrect = false;
+    private bool _debugForceCompleteStep = false;
+    private bool _debugForceCompleteChallenge = false;
 
     private void Start()
     {
@@ -109,6 +122,16 @@ public class QuestionFlowManager : MonoBehaviour
         if (backButton != null)
             backButton.onClick.AddListener(OnBackButtonClicked);
 
+        // Debug panel
+        if (debugPanel != null) debugPanel.SetActive(debugMode);
+        if (debugMode)
+        {
+            if (debugWinQuestionButton  != null) debugWinQuestionButton.onClick.AddListener(OnDebugWinQuestion);
+            if (debugWinStepButton      != null) debugWinStepButton.onClick.AddListener(OnDebugWinStep);
+            if (debugWinChallengeButton != null) debugWinChallengeButton.onClick.AddListener(OnDebugWinChallenge);
+            Debug.LogWarning("[QuestionFlowManager] ⚠ DEBUG MODE ENABLED — insta-win buttons active");
+        }
+
         // Hide overlays/pops initially
         if (expPopText != null) expPopText.gameObject.SetActive(false);
         if (stepCompletePanel != null) stepCompletePanel.SetActive(false);
@@ -132,6 +155,26 @@ public class QuestionFlowManager : MonoBehaviour
     {
         while (true)
         {
+            // Debug: insta-complete the whole challenge (skip all remaining steps)
+            if (_debugForceCompleteChallenge)
+            {
+                _debugForceCompleteChallenge = false;
+                // Mark all remaining steps complete
+                foreach (var s in _currentChallenge.Steps)
+                {
+                    if (!_player.CompletedSteps.Contains(s.Id))
+                    {
+                        s.Status = StepStatus.Completed;
+                        s.StreakCurrent = s.StreakGoal;
+                        _player.MarkStepCompleted(s.Id);
+                    }
+                }
+                Debug.LogWarning("[QuestionFlowManager] DEBUG: insta-completed all steps in challenge");
+                PlayerDataManager.Instance.SavePlayer(_player);
+                yield return StartCoroutine(HandleChallengeComplete());
+                break;
+            }
+
             // Get current step
             _currentStep = _currentChallenge.GetStep(_player.CurrentStep);
             if (_currentStep == null)
@@ -177,6 +220,14 @@ public class QuestionFlowManager : MonoBehaviour
             // Question loop: keep asking until step is fully complete (5-streak + optional ultimate challenge)
             while (!_currentStep.IsFullyComplete)
             {
+                // Debug: insta-complete the whole challenge
+                if (_debugForceCompleteChallenge)
+                {
+                    _debugForceCompleteChallenge = false;
+                    _currentStep.StreakCurrent = _currentStep.StreakGoal;
+                    break;
+                }
+
                 // Ultimate Challenge is not yet implemented — auto-complete so the streak alone finishes the step
                 if (_currentStep.IsStreakComplete && _currentStep.RequireUltimateChallenge && !_currentStep.UltimateChallengeCompleted)
                 {
@@ -184,9 +235,21 @@ public class QuestionFlowManager : MonoBehaviour
                     break;
                 }
 
+                // Debug: insta-complete this step
+                if (_debugForceCompleteStep)
+                {
+                    _debugForceCompleteStep = false;
+                    _currentStep.StreakCurrent = _currentStep.StreakGoal;
+                    break;
+                }
+
                 // Generate question
                 ShowStatus($"Generating question... (Streak: {_currentStep.StreakCurrent}/{_currentStep.StreakGoal})");
                 _currentQuestion = _questionGenerator.GenerateQuestion(_player, _currentStep);
+
+                // Show debug log after generation
+                if (debugMode && debugLogText != null)
+                    debugLogText.text = _questionGenerator.LastGenerationDebugLog;
 
                 if (_currentQuestion == null)
                 {
@@ -199,20 +262,33 @@ public class QuestionFlowManager : MonoBehaviour
                 _questionDisplay.DisplayQuestion(_currentQuestion);
                 _questionStartTime = Time.time;
                 _isWaitingForAnswer = true;
+                _debugForceCorrect = false;
 
                 UpdatePlayerStats();
 
-                // Wait for answer
-                yield return new WaitUntil(() => _answerSubmitter.IsAnswerReady || !_isWaitingForAnswer);
+                // Wait for answer or debug override
+                yield return new WaitUntil(() => _answerSubmitter.IsAnswerReady || !_isWaitingForAnswer || _debugForceCorrect);
 
-                if (!_isWaitingForAnswer) continue; // User clicked next without answering
+                if (!_isWaitingForAnswer && !_debugForceCorrect) continue;
 
                 _isWaitingForAnswer = false;
                 _isProcessingEvaluation = true;
 
-                // Get answer and time
-                string studentAnswer = _answerSubmitter.SelectedAnswer;
-                float timeTaken = Time.time - _questionStartTime;
+                // Debug: inject the correct answer
+                string studentAnswer;
+                float timeTaken;
+                if (_debugForceCorrect)
+                {
+                    _debugForceCorrect = false;
+                    studentAnswer = GetCorrectAnswer(_currentQuestion);
+                    timeTaken = 1f;
+                    Debug.LogWarning($"[QuestionFlowManager] DEBUG: insta-win question, injecting correct answer: {studentAnswer}");
+                }
+                else
+                {
+                    studentAnswer = _answerSubmitter.SelectedAnswer;
+                    timeTaken = Time.time - _questionStartTime;
+                }
 
                 Debug.Log($"[QuestionFlowManager] Answer: {studentAnswer} (Time: {timeTaken:F1}s)");
 
@@ -416,6 +492,32 @@ public class QuestionFlowManager : MonoBehaviour
     {
         if (stepCompleteButton != null)
             stepCompleteButton.gameObject.SetActive(false);
+    }
+
+    // ─── Debug insta-win handlers ─────────────────────────────────────────────
+
+    private void OnDebugWinQuestion()
+    {
+        if (!debugMode) return;
+        Debug.LogWarning("[QuestionFlowManager] DEBUG: Win Question pressed");
+        _isWaitingForAnswer = false;
+        _debugForceCorrect = true;
+    }
+
+    private void OnDebugWinStep()
+    {
+        if (!debugMode) return;
+        Debug.LogWarning("[QuestionFlowManager] DEBUG: Win Step pressed");
+        _isWaitingForAnswer = false;
+        _debugForceCompleteStep = true;
+    }
+
+    private void OnDebugWinChallenge()
+    {
+        if (!debugMode) return;
+        Debug.LogWarning("[QuestionFlowManager] DEBUG: Win Challenge pressed");
+        _isWaitingForAnswer = false;
+        _debugForceCompleteChallenge = true;
     }
 
     private bool _challengeCompleteAcknowledged = false;
