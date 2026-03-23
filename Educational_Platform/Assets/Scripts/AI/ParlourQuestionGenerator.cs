@@ -15,6 +15,7 @@ using UnityEngine;
 public class ParlourQuestionGenerator
 {
     private OllamaAPI _ollamaAPI;
+    private int _questionCount = 0; // tracks questions generated this session for alternating history references
 
     public ParlourQuestionGenerator(string model = "gpt-oss:20b-cloud")
     {
@@ -40,10 +41,24 @@ public class ParlourQuestionGenerator
             return GetFallbackQuestion(step);
         }
 
-        // Parse step's prompt_constraints JSON for character_id, skill_focus, scene
+        // Alternate: include an explicit personal history reference every ~2nd question
+        bool includePersonalReference = (_questionCount % 2 == 1) &&
+                                        (player.QuestionHistory?.Count ?? 0) >= 3;
+        _questionCount++;
+
+        // Parse step's prompt_constraints JSON for skill_focus, scene, difficulty_note
+        // character_id is now optional — resolved from challenge slug if absent
         ParlourConstraints constraints = ParseConstraints(step.PromptConstraints, debugLog);
 
-        // Resolve character
+        // Auto-resolve character from challenge slug when character_id not in constraints
+        if (string.IsNullOrEmpty(constraints.CharacterId) || constraints.CharacterId == CharacterManager.CHAR_MAYA_ID)
+        {
+            var ch = ChallengeDataManager.Instance?.GetChallengeById(step.ChallengeId);
+            if (ch != null)
+                constraints.CharacterId = CharacterFromSlug(ch.Slug);
+        }
+
+        // Resolve character object
         Character character = CharacterManager.Instance.GetCharacterById(constraints.CharacterId);
         if (character == null)
         {
@@ -51,13 +66,13 @@ public class ParlourQuestionGenerator
             character = CharacterManager.Instance.GetCharacterById(CharacterManager.CHAR_MAYA_ID)
                         ?? new Character(CharacterManager.CHAR_MAYA_ID, "Maya", "Warm and encouraging.", "Casual and friendly.", "maya_placeholder");
         }
-        debugLog.AppendLine($"Character: {character.Name}  |  Skill: {constraints.SkillFocus}");
+        debugLog.AppendLine($"Character: {character.Name}  |  Skill: {constraints.SkillFocus}  |  IncludeRef: {includePersonalReference}");
 
         // Build player context
         string playerContext = BuildPlayerContext(player, debugLog);
 
         // Build prompt
-        string prompt = BuildPrompt(step, character, constraints, playerContext);
+        string prompt = BuildPrompt(step, character, constraints, playerContext, includePersonalReference);
         debugLog.AppendLine($"Prompt length: {prompt.Length} chars");
 
         float[] temps = { 0.4f, 0.6f, 0.8f, 0.9f };
@@ -186,49 +201,55 @@ public class ParlourQuestionGenerator
         var sb = new System.Text.StringBuilder();
         sb.AppendLine("- Memorable moments (specific events the character could reference):");
 
-        // Last failure — what they got wrong and what they chose
-        var lastFailure = history.LastOrDefault(r => !r.IsCorrect);
-        if (lastFailure != null)
+        // Most recent low-scoring parlour answer (scored < 60) — the communication style they defaulted to
+        var lastWeakParlour = history.LastOrDefault(r => r.AnswerScore >= 0 && r.AnswerScore < 60);
+        if (lastWeakParlour != null)
         {
-            string subj  = !string.IsNullOrEmpty(lastFailure.SubjectName) ? $" in {lastFailure.SubjectName}" : "";
-            string step  = !string.IsNullOrEmpty(lastFailure.StepDescription) ? $" ({lastFailure.StepDescription})" : "";
-            string chose = lastFailure.StudentAnswer?.Length > 40 ? lastFailure.StudentAnswer.Substring(0, 37) + "…" : lastFailure.StudentAnswer;
-            string right = lastFailure.CorrectAnswer?.Length > 40 ? lastFailure.CorrectAnswer.Substring(0, 37) + "…" : lastFailure.CorrectAnswer;
-            sb.AppendLine($"  • Last misstep{subj}{step}: chose \"{chose}\" (correct was \"{right}\")");
+            string subj  = !string.IsNullOrEmpty(lastWeakParlour.SubjectName) ? $" in {lastWeakParlour.SubjectName}" : "";
+            string skill = !string.IsNullOrEmpty(lastWeakParlour.SkillFocus) ? $" · {lastWeakParlour.SkillFocus}" : "";
+            string chose = lastWeakParlour.StudentAnswer?.Length > 40 ? lastWeakParlour.StudentAnswer.Substring(0, 37) + "…" : lastWeakParlour.StudentAnswer;
+            string best  = lastWeakParlour.BestAnswer?.Length > 40 ? lastWeakParlour.BestAnswer.Substring(0, 37) + "…" : lastWeakParlour.BestAnswer;
+            sb.AppendLine($"  • Recent communication pattern{subj}{skill}: defaulted to \"{chose}\" (score {lastWeakParlour.AnswerScore}/100{(!string.IsNullOrEmpty(best) ? $", stronger choice was \"{best}\"" : "")})");
         }
 
-        // Clutch moment — a correct answer after 2+ consecutive wrong answers
-        for (int i = 2; i < history.Count; i++)
+        // Strong recent parlour answer
+        var lastStrongParlour = history.LastOrDefault(r => r.AnswerScore >= 80);
+        if (lastStrongParlour != null && lastStrongParlour != lastWeakParlour)
         {
-            if (history[i].IsCorrect && !history[i - 1].IsCorrect && !history[i - 2].IsCorrect)
+            string subj  = !string.IsNullOrEmpty(lastStrongParlour.SubjectName) ? $" in {lastStrongParlour.SubjectName}" : "";
+            string skill = !string.IsNullOrEmpty(lastStrongParlour.SkillFocus) ? $" · {lastStrongParlour.SkillFocus}" : "";
+            sb.AppendLine($"  • Recent strength{subj}{skill}: score {lastStrongParlour.AnswerScore}/100 — showed strong {lastStrongParlour.SkillFocus ?? "communication"}");
+        }
+
+        // Long-term communication style across all parlour answers (if enough data)
+        var parlourHistory = history.Where(r => r.AnswerScore >= 0).ToList();
+        if (parlourHistory.Count >= 5)
+        {
+            float avgScore = (float)parlourHistory.Average(r => r.AnswerScore);
+            var bySkill = parlourHistory
+                .Where(r => !string.IsNullOrEmpty(r.SkillFocus))
+                .GroupBy(r => r.SkillFocus)
+                .OrderByDescending(g => g.Average(r => r.AnswerScore))
+                .ToList();
+
+            if (bySkill.Count >= 2)
             {
-                string subj = !string.IsNullOrEmpty(history[i].SubjectName) ? $" in {history[i].SubjectName}" : "";
-                string step = !string.IsNullOrEmpty(history[i].StepDescription) ? $" ({history[i].StepDescription})" : "";
-                string ans  = history[i].StudentAnswer?.Length > 40 ? history[i].StudentAnswer.Substring(0, 37) + "…" : history[i].StudentAnswer;
-                sb.AppendLine($"  • Clutch recovery{subj}{step}: finally got it with \"{ans}\" after two misses");
-                break;
+                var strongest = bySkill.First();
+                var weakest   = bySkill.Last();
+                sb.AppendLine($"  • Communication identity: avg score {avgScore:F0}/100 across {parlourHistory.Count} parlour answers");
+                if (strongest.Key != weakest.Key)
+                    sb.AppendLine($"    - Naturally strong in: {strongest.Key} ({strongest.Average(r => r.AnswerScore):F0}/100)");
+                if ((int)weakest.Average(r => r.AnswerScore) < 65)
+                    sb.AppendLine($"    - Tends to struggle with: {weakest.Key} ({weakest.Average(r => r.AnswerScore):F0}/100)");
             }
         }
 
-        // Best subject (most accurate, minimum 4 answers)
-        var bySubject = history
-            .Where(r => !string.IsNullOrEmpty(r.SubjectName))
-            .GroupBy(r => r.SubjectName)
-            .Where(g => g.Count() >= 4)
-            .OrderByDescending(g => g.Count(r => r.IsCorrect) / (float)g.Count())
-            .FirstOrDefault();
-        if (bySubject != null)
-        {
-            float acc = bySubject.Count(r => r.IsCorrect) / (float)bySubject.Count() * 100f;
-            sb.AppendLine($"  • Strongest subject: {bySubject.Key} ({acc:F0}% accuracy over {bySubject.Count()} questions)");
-        }
-
-        // Fastest wrong — a suspicious speed-run failure (answered in under 3 seconds and got it wrong)
-        var fastMiss = history.Where(r => !r.IsCorrect && r.TimeTakenSeconds > 0 && r.TimeTakenSeconds < 3f).LastOrDefault();
+        // Fastest rushed answer — shows impulsiveness
+        var fastMiss = history.Where(r => r.AnswerScore >= 0 && r.AnswerScore < 50 && r.TimeTakenSeconds > 0 && r.TimeTakenSeconds < 3f).LastOrDefault();
         if (fastMiss != null)
         {
             string subj = !string.IsNullOrEmpty(fastMiss.SubjectName) ? $" in {fastMiss.SubjectName}" : "";
-            sb.AppendLine($"  • Rushed mistake{subj}: wrong answer in {fastMiss.TimeTakenSeconds:F1}s — classic guessing");
+            sb.AppendLine($"  • Impulsive moment{subj}: low-scoring choice made in {fastMiss.TimeTakenSeconds:F1}s — suggests guessing or disengagement");
         }
 
         debugLog.AppendLine($"Memorables extracted from {history.Count} entries");
@@ -280,7 +301,7 @@ public class ParlourQuestionGenerator
         return sb.ToString().TrimEnd();
     }
 
-    private string BuildPrompt(Step step, Character character, ParlourConstraints c, string playerContext)
+    private string BuildPrompt(Step step, Character character, ParlourConstraints c, string playerContext, bool includePersonalReference)
     {
         return $@"You are generating a verbal communication exercise for an educational game.
 
@@ -292,35 +313,22 @@ Speaking Style: {character.SpeakingStyle}
 === PLAYER CONTEXT ===
 {playerContext}
 
-=== HOW TO USE THIS HISTORY ===
-Before writing, silently analyze the data above. You are looking for:
-  - Short-term mood: is the player on a roll, slumping, rushing, or grinding through?
-  - Long-term identity: what kind of learner are they — careful, impulsive, strong in one area, stuck in another?
-  - Specific memorable moments: the missteps, clutch recoveries, and fastest guesses listed above are REAL events you witnessed.
+=== HOW TO INHABIT THIS CHARACTER ===
+You are {character.Name}. You have been spending time with this player and have formed a natural impression of who they are as a communicator. The player context and history above are things you know — not things you report on.
 
-Now express these insights through {character.Name}'s personality in the opening dialogue.
-You are NOT reading a report — you are a character living in the same world as the player, who naturally remembers things that happened.
+RULE — no greetings ever: Do NOT start with ""Hey"", ""Hi"", ""Hello"", ""Hey there"", ""Oh hey"", or any greeting word. Jump straight into the scene. Every single question, no exceptions.
 
-CRITICAL — relationship and tone:
-  The relationship between {character.Name} and the player is already established. Do NOT open with greetings, introductions, or ""Hey there!"" type openers. Jump straight into the scene as if mid-conversation or resuming from where you left off.
-
-CRITICAL — how to reference the past:
-  NEVER quote the player's previous answer verbatim: e.g. ""I remember you saying 'yeah, a cappuccino sounds good'""
-  NEVER frame it as a memory recall: ""last time you said..."", ""I remember you answering...""
-  NEVER reference the surface content of an answer (the topic, the drink, the object) as if it were a personal preference — the player was choosing a COMMUNICATION STYLE, not expressing a preference. If the history shows ""Chose: 'I'd go with the latte' | Score: 40/100 | Skill: Tone Matching"", the relevant insight is that they gave a flat, unengaged answer on tone-matching — NOT that they like lattes.
-  DO reference the communication pattern: ""You tend to go direct when things feel uncertain."" / ""Last time you kept it surface-level when things got personal."" / ""You came back strong after that one.""
-  DO treat past scores and skills as what they are — evidence of how the player communicates, not what they ordered or said.
-  The character has absorbed these patterns into their understanding of who the player IS — not what they literally said.
-
-Pick AT MOST ONE specific moment or pattern to reference. Weave it in naturally, don't announce it.
-
-How {character.Name} would express this (stay true to their voice):
-  - If warm/celebratory (e.g. Maya): bring up a win like it's shared history — ""You totally came back on that one — I was rooting for you!""
-  - If formal/precise (e.g. Victor): note it as an observable pattern, not a memory — ""Your instinct in X situations tends to be [pattern]. Let's test that.""
-  - If playful/sarcastic (e.g. Zoe, Alex): tease the fact, not the quote — ""So. Cappuccino. Bold."" / ""You really went for that one, huh.""
-  - If analytical/curious (e.g. Dr. Chen): absorb it as data about the person — ""Interesting — you tend to go direct when under pressure.""
-
-The goal is for the player to feel seen — surprised by how personal this feels, not reminded they're in a quiz.
+{(includePersonalReference ? $@"THIS QUESTION: Include one brief personal reference in {character.Name}'s dialogue.
+  Draw from the communication patterns or memorable moments listed in the player context above.
+  Express it as a feeling, attitude, or assumption — not as an observation or report.
+  Wrong: ""You bounced back last time"" / ""I noticed you struggle with tone""
+  Right (Maya): a warmer lean-in, referencing what she felt watching them navigate something
+  Right (Victor): an expectation set in his tone, as if he already knows where they'll go wrong
+  Right (Zoe): a raised-eyebrow comment that implies she knows something about how they tick
+  Right (Dr. Chen): a curious framing that reveals she's been thinking about their pattern
+  Right (Alex): an understated assumption, delivered as if obvious — never explained
+  Keep it to ONE sentence woven into the dialogue, not a preamble. Then get straight to the scene." : $@"THIS QUESTION: Do NOT include any reference to past history. Jump straight into the scene with no personal commentary.
+  The character's knowledge of the player should only show in the TONE and ATTITUDE they bring — not in any words about the past.")}
 
 === SCENE ===
 {c.Scene}
@@ -333,10 +341,10 @@ Difficulty note: {c.DifficultyNote}
 === YOUR TASK ===
 
 Step 1 — Write SHORT dialogue from {character.Name} (2–3 sentences) that:
-  - Opens with OR naturally includes a brief personal reference from the history above (in their voice)
-  - Then creates a SITUATION that REQUIRES the player to apply ""{c.SkillFocus}""
+  - Creates a SITUATION that REQUIRES the player to apply ""{c.SkillFocus}""
   - The situation must NOT have an obvious single answer — the player needs to think
   - The character should say or do something that CHALLENGES the player to use the skill
+  - History may quietly shape the tone, but does NOT need to be explicitly mentioned
 
 Step 2 — Write the response question as: ""What do you say?""
 
@@ -579,8 +587,26 @@ Return ONLY valid JSON with no markdown, no extra text:
     // ── Constraint parsing ────────────────────────────────────────────────────
 
     /// <summary>
+    /// Maps a parlour challenge slug to its owning character's ID.
+    /// </summary>
+    private static string CharacterFromSlug(string slug)
+    {
+        if (slug == null) return CharacterManager.CHAR_MAYA_ID;
+        return slug.ToLower() switch
+        {
+            "parlour_maya"   => CharacterManager.CHAR_MAYA_ID,
+            "parlour_victor" => CharacterManager.CHAR_VICTOR_ID,
+            "parlour_zoe"    => CharacterManager.CHAR_ZOE_ID,
+            "parlour_chen"   => CharacterManager.CHAR_DR_CHEN_ID,
+            "parlour_alex"   => CharacterManager.CHAR_ALEX_ID,
+            _                => CharacterManager.CHAR_MAYA_ID
+        };
+    }
+
+    /// <summary>
     /// Parses prompt_constraints JSON string into a ParlourConstraints struct.
-    /// Expected format: {"character_id":"...","skill_focus":"...","scene":"...","difficulty_note":"..."}
+    /// Expected format: {"skill_focus":"...","scene":"...","difficulty_note":"..."}
+    /// character_id is optional — resolved automatically from challenge slug if absent.
     /// </summary>
     private ParlourConstraints ParseConstraints(string json, System.Text.StringBuilder debugLog)
     {

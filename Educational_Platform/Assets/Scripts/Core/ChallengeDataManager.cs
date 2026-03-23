@@ -141,34 +141,47 @@ public class ChallengeDataManager
     // ── Verbal Communication subject ─────────────────────────────────────────
     public const string SUBJECT_VERBAL_COMMUNICATION_ID = "a4000000-0000-0000-0000-000000000000";
 
-    // Parlour challenges
-    public const string CHALLENGE_COFFEE_SHOP_ID    = "26000000-0000-0000-0000-000000000000";
-    public const string CHALLENGE_JOB_INTERVIEW_ID  = "27000000-0000-0000-0000-000000000000";
-    public const string CHALLENGE_BOOK_CLUB_ID      = "28000000-0000-0000-0000-000000000000";
+    // Parlour challenges — one per character
+    public const string CHALLENGE_MAYA_ID   = "29000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_VICTOR_ID = "2a000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_ZOE_ID    = "2b000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_CHEN_ID   = "2c000000-0000-0000-0000-000000000000";
+    public const string CHALLENGE_ALEX_ID   = "2d000000-0000-0000-0000-000000000000";
 
-    // Coffee Shop steps (6 steps: First Impressions → Graceful Exit)
-    public const string STEP_CS_FIRST_IMPRESSIONS_ID = "14000000-0000-0000-0000-000000000000";
-    public const string STEP_CS_READING_CONTEXT_ID   = "15000000-0000-0000-0000-000000000000";
-    public const string STEP_CS_TONE_MATCHING_ID     = "16000000-0000-0000-0000-000000000000";
-    public const string STEP_CS_READING_ROOM_ID      = "17000000-0000-0000-0000-000000000000";
-    public const string STEP_CS_BETWEEN_LINES_ID     = "18000000-0000-0000-0000-000000000000";
-    public const string STEP_CS_GRACEFUL_EXIT_ID     = "19000000-0000-0000-0000-000000000000";
+    // Maya's steps (Social Warmth track)
+    public const string STEP_MAYA_1_ID = "30000000-0000-0000-0000-000000000000";
+    public const string STEP_MAYA_2_ID = "31000000-0000-0000-0000-000000000000";
+    public const string STEP_MAYA_3_ID = "32000000-0000-0000-0000-000000000000";
+    public const string STEP_MAYA_4_ID = "33000000-0000-0000-0000-000000000000";
+    public const string STEP_MAYA_5_ID = "34000000-0000-0000-0000-000000000000";
 
-    // Job Interview steps (6 steps)
-    public const string STEP_JI_MAKING_ENTRANCE_ID  = "1a000000-0000-0000-0000-000000000000";
-    public const string STEP_JI_TELL_ME_ABOUT_ID    = "1b000000-0000-0000-0000-000000000000";
-    public const string STEP_JI_TRICKY_QUESTIONS_ID = "1c000000-0000-0000-0000-000000000000";
-    public const string STEP_JI_STAYING_COMPOSED_ID = "1d000000-0000-0000-0000-000000000000";
-    public const string STEP_JI_READING_OFFER_ID    = "1e000000-0000-0000-0000-000000000000";
-    public const string STEP_JI_CLOSING_STATEMENT_ID = "1f000000-0000-0000-0000-000000000000";
+    // Victor's steps (Professional Excellence track)
+    public const string STEP_VICTOR_1_ID = "35000000-0000-0000-0000-000000000000";
+    public const string STEP_VICTOR_2_ID = "36000000-0000-0000-0000-000000000000";
+    public const string STEP_VICTOR_3_ID = "37000000-0000-0000-0000-000000000000";
+    public const string STEP_VICTOR_4_ID = "38000000-0000-0000-0000-000000000000";
+    public const string STEP_VICTOR_5_ID = "39000000-0000-0000-0000-000000000000";
 
-    // Book Club steps (6 steps)
-    public const string STEP_BC_OPENING_DISCUSSION_ID    = "20000000-0000-0000-0000-000000000000";
-    public const string STEP_BC_WORD_CHOICE_ID           = "21000000-0000-0000-0000-000000000000";
-    public const string STEP_BC_AUTHOR_MEANING_ID        = "22000000-0000-0000-0000-000000000000";
-    public const string STEP_BC_POLITE_DISAGREEMENT_ID   = "23000000-0000-0000-0000-000000000000";
-    public const string STEP_BC_TONE_INTENT_ID           = "24000000-0000-0000-0000-000000000000";
-    public const string STEP_BC_YOUR_TURN_ID             = "25000000-0000-0000-0000-000000000000";
+    // Zoe's steps (Playful Wit track)
+    public const string STEP_ZOE_1_ID = "3a000000-0000-0000-0000-000000000000";
+    public const string STEP_ZOE_2_ID = "3b000000-0000-0000-0000-000000000000";
+    public const string STEP_ZOE_3_ID = "3c000000-0000-0000-0000-000000000000";
+    public const string STEP_ZOE_4_ID = "3d000000-0000-0000-0000-000000000000";
+    public const string STEP_ZOE_5_ID = "3e000000-0000-0000-0000-000000000000";
+
+    // Dr. Chen's steps (Intellectual Depth track)
+    public const string STEP_CHEN_1_ID = "3f000000-0000-0000-0000-000000000000";
+    public const string STEP_CHEN_2_ID = "40000000-0000-0000-0000-000000000000";
+    public const string STEP_CHEN_3_ID = "41000000-0000-0000-0000-000000000000";
+    public const string STEP_CHEN_4_ID = "42000000-0000-0000-0000-000000000000";
+    public const string STEP_CHEN_5_ID = "43000000-0000-0000-0000-000000000000";
+
+    // Alex's steps (Social Challenge track)
+    public const string STEP_ALEX_1_ID = "44000000-0000-0000-0000-000000000000";
+    public const string STEP_ALEX_2_ID = "45000000-0000-0000-0000-000000000000";
+    public const string STEP_ALEX_3_ID = "46000000-0000-0000-0000-000000000000";
+    public const string STEP_ALEX_4_ID = "47000000-0000-0000-0000-000000000000";
+    public const string STEP_ALEX_5_ID = "48000000-0000-0000-0000-000000000000";
 
     // ─── Lookup dictionaries ─────────────────────────────────────────────────
     private Dictionary<string, Challenge> _challengeById   = new Dictionary<string, Challenge>();
@@ -644,77 +657,123 @@ public class ChallengeDataManager
     {
         const string VC = "Verbal Communication";
 
-        // ── The Coffee Shop (unlocked from the start) ────────────────────────
-        var coffeeShop = new Challenge(CHALLENGE_COFFEE_SHOP_ID, "The Coffee Shop", VC,
-            "Practice informal language, tone matching, and reading social cues in a relaxed coffee-shop setting",
-            "parlour_coffee_shop", SUBJECT_VERBAL_COMMUNICATION_ID)
-            { StageNumber = 1, StageName = "Parlour Foundations", Difficulty = 0.10f };
+        // ── Maya's Track: Social Warmth (unlocked from start) ────────────────
+        // Completing step 1 unlocks Zoe's track. Completing step 2 unlocks Victor's track.
+        var maya = new Challenge(CHALLENGE_MAYA_ID, "Maya's Track", VC,
+            "Social warmth and genuine human connection. Maya guides you through real moments that require empathy, emotional awareness, and the courage to be present with others.",
+            "parlour_maya", SUBJECT_VERBAL_COMMUNICATION_ID)
+            { StageNumber = 1, StageName = "Parlour", Difficulty = 0.10f };
 
-        coffeeShop.Steps = new List<Step>
+        maya.Steps = new List<Step>
         {
-            MakeStep(STEP_CS_FIRST_IMPRESSIONS_ID, CHALLENGE_COFFEE_SHOP_ID, 1, "First Impressions",
-                VC, "The Coffee Shop", new List<string>(), 0.08f),
-            MakeStep(STEP_CS_READING_CONTEXT_ID,  CHALLENGE_COFFEE_SHOP_ID, 2, "Reading the Context",
-                VC, "The Coffee Shop", new List<string> { STEP_CS_FIRST_IMPRESSIONS_ID }, 0.12f),
-            MakeStep(STEP_CS_TONE_MATCHING_ID,    CHALLENGE_COFFEE_SHOP_ID, 3, "Tone Matching",
-                VC, "The Coffee Shop", new List<string> { STEP_CS_READING_CONTEXT_ID }, 0.15f),
-            MakeStep(STEP_CS_READING_ROOM_ID,     CHALLENGE_COFFEE_SHOP_ID, 4, "Reading the Room",
-                VC, "The Coffee Shop", new List<string> { STEP_CS_TONE_MATCHING_ID }, 0.18f),
-            MakeStep(STEP_CS_BETWEEN_LINES_ID,    CHALLENGE_COFFEE_SHOP_ID, 5, "Between the Lines",
-                VC, "The Coffee Shop", new List<string> { STEP_CS_READING_ROOM_ID }, 0.20f),
-            MakeStep(STEP_CS_GRACEFUL_EXIT_ID,    CHALLENGE_COFFEE_SHOP_ID, 6, "Graceful Exit",
-                VC, "The Coffee Shop", new List<string> { STEP_CS_BETWEEN_LINES_ID }, 0.18f),
+            MakeStep(STEP_MAYA_1_ID, CHALLENGE_MAYA_ID, 1, "Making Someone Feel Heard",
+                VC, "Maya's Track", new List<string>(), 0.10f,
+                unlocksChallengeIds: new List<string> { CHALLENGE_ZOE_ID }),
+            MakeStep(STEP_MAYA_2_ID, CHALLENGE_MAYA_ID, 2, "Reading Emotional Cues",
+                VC, "Maya's Track", new List<string> { STEP_MAYA_1_ID }, 0.12f,
+                unlocksChallengeIds: new List<string> { CHALLENGE_VICTOR_ID }),
+            MakeStep(STEP_MAYA_3_ID, CHALLENGE_MAYA_ID, 3, "Navigating Awkward Silences",
+                VC, "Maya's Track", new List<string> { STEP_MAYA_2_ID }, 0.15f),
+            MakeStep(STEP_MAYA_4_ID, CHALLENGE_MAYA_ID, 4, "Expressing Disagreement Warmly",
+                VC, "Maya's Track", new List<string> { STEP_MAYA_3_ID }, 0.18f),
+            MakeStep(STEP_MAYA_5_ID, CHALLENGE_MAYA_ID, 5, "Deepening a Casual Connection",
+                VC, "Maya's Track", new List<string> { STEP_MAYA_4_ID }, 0.20f),
         };
 
-        // ── The Job Interview (unlocks after Coffee Shop Step 4: Reading the Room) ──
-        var jobInterview = new Challenge(CHALLENGE_JOB_INTERVIEW_ID, "The Job Interview", VC,
-            "Master formal register, professional tone, and controlled language under pressure",
-            "parlour_job_interview", SUBJECT_VERBAL_COMMUNICATION_ID)
-            { StageNumber = 1, StageName = "Parlour Foundations", Difficulty = 0.30f };
-        jobInterview.PrerequisiteStepIds = new List<string> { STEP_CS_READING_ROOM_ID };
+        // ── Victor's Track: Professional Excellence (unlocks after Maya step 2) ──
+        // Completing step 2 contributes to unlocking Dr. Chen's track.
+        // Completing step 4 contributes to unlocking Alex's track.
+        var victor = new Challenge(CHALLENGE_VICTOR_ID, "Victor's Track", VC,
+            "Professional communication under pressure. Victor holds you to a high standard in the boardroom, the office, and wherever words carry real weight.",
+            "parlour_victor", SUBJECT_VERBAL_COMMUNICATION_ID)
+            { StageNumber = 1, StageName = "Parlour", Difficulty = 0.30f };
+        victor.PrerequisiteStepIds = new List<string> { STEP_MAYA_2_ID };
 
-        jobInterview.Steps = new List<Step>
+        victor.Steps = new List<Step>
         {
-            MakeStep(STEP_JI_MAKING_ENTRANCE_ID,  CHALLENGE_JOB_INTERVIEW_ID, 1, "Making an Entrance",
-                VC, "The Job Interview", new List<string>(), 0.22f),
-            MakeStep(STEP_JI_TELL_ME_ABOUT_ID,    CHALLENGE_JOB_INTERVIEW_ID, 2, "Tell Me About Yourself",
-                VC, "The Job Interview", new List<string> { STEP_JI_MAKING_ENTRANCE_ID }, 0.26f),
-            MakeStep(STEP_JI_TRICKY_QUESTIONS_ID, CHALLENGE_JOB_INTERVIEW_ID, 3, "Tricky Questions",
-                VC, "The Job Interview", new List<string> { STEP_JI_TELL_ME_ABOUT_ID }, 0.28f),
-            MakeStep(STEP_JI_STAYING_COMPOSED_ID, CHALLENGE_JOB_INTERVIEW_ID, 4, "Staying Composed",
-                VC, "The Job Interview", new List<string> { STEP_JI_TRICKY_QUESTIONS_ID }, 0.30f),
-            MakeStep(STEP_JI_READING_OFFER_ID,    CHALLENGE_JOB_INTERVIEW_ID, 5, "Reading the Offer",
-                VC, "The Job Interview", new List<string> { STEP_JI_STAYING_COMPOSED_ID }, 0.32f),
-            MakeStep(STEP_JI_CLOSING_STATEMENT_ID,CHALLENGE_JOB_INTERVIEW_ID, 6, "Closing Statement",
-                VC, "The Job Interview", new List<string> { STEP_JI_READING_OFFER_ID }, 0.30f),
+            MakeStep(STEP_VICTOR_1_ID, CHALLENGE_VICTOR_ID, 1, "Setting Professional Boundaries",
+                VC, "Victor's Track", new List<string>(), 0.22f),
+            MakeStep(STEP_VICTOR_2_ID, CHALLENGE_VICTOR_ID, 2, "Delivering Feedback Diplomatically",
+                VC, "Victor's Track", new List<string> { STEP_VICTOR_1_ID }, 0.26f),
+            MakeStep(STEP_VICTOR_3_ID, CHALLENGE_VICTOR_ID, 3, "Asserting Without Aggressing",
+                VC, "Victor's Track", new List<string> { STEP_VICTOR_2_ID }, 0.28f),
+            MakeStep(STEP_VICTOR_4_ID, CHALLENGE_VICTOR_ID, 4, "Navigating Power Dynamics",
+                VC, "Victor's Track", new List<string> { STEP_VICTOR_3_ID }, 0.30f),
+            MakeStep(STEP_VICTOR_5_ID, CHALLENGE_VICTOR_ID, 5, "Recovering from Miscommunication",
+                VC, "Victor's Track", new List<string> { STEP_VICTOR_4_ID }, 0.30f),
         };
 
-        // ── The Book Club (unlocks after Coffee Shop Step 3: Tone Matching) ─
-        var bookClub = new Challenge(CHALLENGE_BOOK_CLUB_ID, "The Book Club", VC,
-            "Interpret subtext, explore word meaning, and learn to read between the lines of layered language",
-            "parlour_book_club", SUBJECT_VERBAL_COMMUNICATION_ID)
-            { StageNumber = 1, StageName = "Parlour Foundations", Difficulty = 0.25f };
-        bookClub.PrerequisiteStepIds = new List<string> { STEP_CS_TONE_MATCHING_ID };
+        // ── Zoe's Track: Playful Wit (unlocks after Maya step 1) ─────────────
+        // Completing step 3 contributes to unlocking Dr. Chen's track.
+        var zoe = new Challenge(CHALLENGE_ZOE_ID, "Zoe's Track", VC,
+            "Banter, subtext, and reading the room. Zoe tests your ability to catch what's unspoken, use humour well, and stay sharp in fast-moving social exchanges.",
+            "parlour_zoe", SUBJECT_VERBAL_COMMUNICATION_ID)
+            { StageNumber = 1, StageName = "Parlour", Difficulty = 0.25f };
+        zoe.PrerequisiteStepIds = new List<string> { STEP_MAYA_1_ID };
 
-        bookClub.Steps = new List<Step>
+        zoe.Steps = new List<Step>
         {
-            MakeStep(STEP_BC_OPENING_DISCUSSION_ID,  CHALLENGE_BOOK_CLUB_ID, 1, "Opening Discussion",
-                VC, "The Book Club", new List<string>(), 0.20f),
-            MakeStep(STEP_BC_WORD_CHOICE_ID,         CHALLENGE_BOOK_CLUB_ID, 2, "Word Choice Matters",
-                VC, "The Book Club", new List<string> { STEP_BC_OPENING_DISCUSSION_ID }, 0.23f),
-            MakeStep(STEP_BC_AUTHOR_MEANING_ID,      CHALLENGE_BOOK_CLUB_ID, 3, "What Did the Author Mean?",
-                VC, "The Book Club", new List<string> { STEP_BC_WORD_CHOICE_ID }, 0.25f),
-            MakeStep(STEP_BC_POLITE_DISAGREEMENT_ID, CHALLENGE_BOOK_CLUB_ID, 4, "A Polite Disagreement",
-                VC, "The Book Club", new List<string> { STEP_BC_AUTHOR_MEANING_ID }, 0.27f),
-            MakeStep(STEP_BC_TONE_INTENT_ID,         CHALLENGE_BOOK_CLUB_ID, 5, "Tone and Intent",
-                VC, "The Book Club", new List<string> { STEP_BC_POLITE_DISAGREEMENT_ID }, 0.28f),
-            MakeStep(STEP_BC_YOUR_TURN_ID,           CHALLENGE_BOOK_CLUB_ID, 6, "Your Turn",
-                VC, "The Book Club", new List<string> { STEP_BC_TONE_INTENT_ID }, 0.28f),
+            MakeStep(STEP_ZOE_1_ID, CHALLENGE_ZOE_ID, 1, "Reading the Room",
+                VC, "Zoe's Track", new List<string>(), 0.20f),
+            MakeStep(STEP_ZOE_2_ID, CHALLENGE_ZOE_ID, 2, "Playful Teasing vs. Overstepping",
+                VC, "Zoe's Track", new List<string> { STEP_ZOE_1_ID }, 0.22f),
+            MakeStep(STEP_ZOE_3_ID, CHALLENGE_ZOE_ID, 3, "Using Humour to Defuse Tension",
+                VC, "Zoe's Track", new List<string> { STEP_ZOE_2_ID }, 0.25f),
+            MakeStep(STEP_ZOE_4_ID, CHALLENGE_ZOE_ID, 4, "Picking Up on Subtext",
+                VC, "Zoe's Track", new List<string> { STEP_ZOE_3_ID }, 0.27f),
+            MakeStep(STEP_ZOE_5_ID, CHALLENGE_ZOE_ID, 5, "Keeping Conversation Alive",
+                VC, "Zoe's Track", new List<string> { STEP_ZOE_4_ID }, 0.28f),
         };
 
-        Register(VC, coffeeShop);
-        Register(VC, jobInterview);
-        Register(VC, bookClub);
+        // ── Dr. Chen's Track: Intellectual Depth (unlocks after Zoe step 3 + Victor step 2) ──
+        // Completing step 3 contributes to unlocking Alex's track.
+        var chen = new Challenge(CHALLENGE_CHEN_ID, "Dr. Chen's Track", VC,
+            "Depth, nuance, and precision in conversation. Dr. Chen leads you into exchanges where what you say — and how you say it — reveals how carefully you actually think.",
+            "parlour_chen", SUBJECT_VERBAL_COMMUNICATION_ID)
+            { StageNumber = 2, StageName = "Parlour Advanced", Difficulty = 0.45f };
+        chen.PrerequisiteStepIds = new List<string> { STEP_ZOE_3_ID, STEP_VICTOR_2_ID };
+
+        chen.Steps = new List<Step>
+        {
+            MakeStep(STEP_CHEN_1_ID, CHALLENGE_CHEN_ID, 1, "Asking the Right Questions",
+                VC, "Dr. Chen's Track", new List<string>(), 0.35f),
+            MakeStep(STEP_CHEN_2_ID, CHALLENGE_CHEN_ID, 2, "Challenging Ideas Without Dismissing People",
+                VC, "Dr. Chen's Track", new List<string> { STEP_CHEN_1_ID }, 0.38f),
+            MakeStep(STEP_CHEN_3_ID, CHALLENGE_CHEN_ID, 3, "Recognising Assumptions in Conversation",
+                VC, "Dr. Chen's Track", new List<string> { STEP_CHEN_2_ID }, 0.40f,
+                unlocksChallengeIds: new List<string> { CHALLENGE_ALEX_ID }),
+            MakeStep(STEP_CHEN_4_ID, CHALLENGE_CHEN_ID, 4, "Bridging Different Communication Styles",
+                VC, "Dr. Chen's Track", new List<string> { STEP_CHEN_3_ID }, 0.42f),
+            MakeStep(STEP_CHEN_5_ID, CHALLENGE_CHEN_ID, 5, "The Art of the Thoughtful Pause",
+                VC, "Dr. Chen's Track", new List<string> { STEP_CHEN_4_ID }, 0.45f),
+        };
+
+        // ── Alex's Track: Social Challenge (unlocks after Dr. Chen step 3 + Victor step 4) ──
+        var alex = new Challenge(CHALLENGE_ALEX_ID, "Alex's Track", VC,
+            "Ambiguity, pressure, and social intelligence. Alex puts you in situations with no obvious right answer — where reading subtext and holding your ground is everything.",
+            "parlour_alex", SUBJECT_VERBAL_COMMUNICATION_ID)
+            { StageNumber = 2, StageName = "Parlour Advanced", Difficulty = 0.65f };
+        alex.PrerequisiteStepIds = new List<string> { STEP_CHEN_3_ID, STEP_VICTOR_4_ID };
+
+        alex.Steps = new List<Step>
+        {
+            MakeStep(STEP_ALEX_1_ID, CHALLENGE_ALEX_ID, 1, "Detecting Mixed Signals",
+                VC, "Alex's Track", new List<string>(), 0.50f),
+            MakeStep(STEP_ALEX_2_ID, CHALLENGE_ALEX_ID, 2, "Navigating Ambiguity",
+                VC, "Alex's Track", new List<string> { STEP_ALEX_1_ID }, 0.55f),
+            MakeStep(STEP_ALEX_3_ID, CHALLENGE_ALEX_ID, 3, "Reading What's Not Said",
+                VC, "Alex's Track", new List<string> { STEP_ALEX_2_ID }, 0.58f),
+            MakeStep(STEP_ALEX_4_ID, CHALLENGE_ALEX_ID, 4, "Holding Ground Under Social Pressure",
+                VC, "Alex's Track", new List<string> { STEP_ALEX_3_ID }, 0.62f),
+            MakeStep(STEP_ALEX_5_ID, CHALLENGE_ALEX_ID, 5, "The Character Test",
+                VC, "Alex's Track", new List<string> { STEP_ALEX_4_ID }, 0.65f),
+        };
+
+        Register(VC, maya);
+        Register(VC, victor);
+        Register(VC, zoe);
+        Register(VC, chen);
+        Register(VC, alex);
     }
 
     private void Register(string subjectName, Challenge c)
