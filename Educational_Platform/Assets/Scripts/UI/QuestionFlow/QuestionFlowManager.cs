@@ -339,6 +339,10 @@ public class QuestionFlowManager : MonoBehaviour
                 _player.RecordAnswer(result);
                 _currentStep.QuestionsCompleted++;
 
+                // Update personality profile for parlour answers
+                if (_currentQuestion is ConversationQuestion parlourQ && evaluation.AnswerScore >= 0)
+                    _player.UpdatePersonality(parlourQ.SkillFocus, evaluation.AnswerScore / 100f);
+
                 // Update streak and mastery
                 if (evaluation.IsCorrect)
                 {

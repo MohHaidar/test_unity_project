@@ -27,6 +27,10 @@ public class OllamaPerformanceEvaluator
             return GetFallbackEvaluation(question, studentAnswer);
         }
 
+        // Parlour ConversationQuestions are pre-scored — skip Ollama entirely
+        if (question is ConversationQuestion convQ)
+            return EvaluateParlourAnswer(convQ, studentAnswer);
+
         string prompt = BuildEvaluationPrompt(player, step, question, studentAnswer, timeTakenSeconds);
         string response = _ollamaAPI.GenerateSync(prompt, temperature: 0.3f);
 
@@ -45,6 +49,46 @@ public class OllamaPerformanceEvaluator
 
         Debug.Log($"[Evaluator] Evaluation: {(result.IsCorrect ? "CORRECT" : "INCORRECT")} | Mastery Delta: {result.MasteryDelta:+0.00;-0.00}");
         return result;
+    }
+
+    /// <summary>
+    /// Evaluates a parlour answer using the pre-baked option scores.
+    /// No Ollama call required — scores are embedded in ConversationOption.Score.
+    /// Score >= 70 = counts as correct for streak purposes.
+    /// </summary>
+    private EvaluationResult EvaluateParlourAnswer(ConversationQuestion question, string studentAnswer)
+    {
+        int score    = question.GetOptionScore(studentAnswer);
+        bool correct = score >= 70;
+
+        // MasteryDelta: proportional to score, -0.09 to +0.11, neutral at score=50
+        float masteryDelta = (score / 100f - 0.45f) * 0.2f;
+
+        string errorType = score >= 70 ? null : score >= 40 ? "conceptual_gap" : "careless_mistake";
+
+        string hint = score switch
+        {
+            >= 85 => question.Explanation ?? "Excellent — that response shows strong awareness.",
+            >= 70 => "Good response, though there's an even stronger option here.",
+            >= 40 => "That's a reasonable reply, but it's missing something important.",
+            _     => "That response doesn't quite fit the situation."
+        };
+
+        Debug.Log($"[Evaluator] Parlour answer score: {score}/100 | {(correct ? "CORRECT" : "INCORRECT")} | Delta: {masteryDelta:+0.00;-0.00}");
+
+        return new EvaluationResult
+        {
+            IsCorrect              = correct,
+            AnswerScore            = score,
+            MasteryDelta           = masteryDelta,
+            ErrorType              = errorType,
+            StudentHint            = correct ? null : hint,
+            ErrorExplanation       = hint,
+            NextDifficulty         = score >= 70 ? "increase" : score >= 40 ? "same" : "decrease",
+            NextFocusArea          = question.SkillFocus,
+            SpeedScore             = 0.5f,
+            ConfidenceInPerformance = score / 100f
+        };
     }
 
     /// <summary>
@@ -236,6 +280,7 @@ public class EvaluationResult
     public float MasteryDelta { get; set; } // -0.10 to +0.10
     public string NextDifficulty { get; set; } // "increase", "same", "decrease"
     public string NextFocusArea { get; set; } // Specific concept to focus on
+    public int AnswerScore { get; set; } = -1; // 0–100 for scored parlour answers; -1 = not applicable
 
     public override string ToString()
     {

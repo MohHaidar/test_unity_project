@@ -137,19 +137,40 @@ public class ParlourQuestionGenerator
             ? $"Areas needing improvement: {string.Join(", ", weakAreas.Take(3))}"
             : "No significant weak areas identified yet";
 
-        string historyBlock    = BuildHistoryBlock(player, debugLog);
-        string memorablesBlock = ExtractMemorables(player, debugLog);
+        string personalityBlock = BuildPersonalityBlock(player);
+        string historyBlock     = BuildHistoryBlock(player, debugLog);
+        string memorablesBlock  = ExtractMemorables(player, debugLog);
 
         string context = $"- Player: {player.Name}\n" +
                          $"- Progress: {expTier}\n" +
                          $"- Steps completed overall: {completedCount}\n" +
                          $"- {weakText}\n" +
                          $"- Current streak in this step: {player.StreakInCurrentStep}\n" +
+                         personalityBlock + "\n" +
                          memorablesBlock + "\n" +
                          historyBlock;
 
-        debugLog.AppendLine($"Player context: {expTier}, {completedCount} steps done, {player.QuestionHistory?.Count ?? 0} history entries");
+        debugLog.AppendLine($"Player context: {expTier}, {completedCount} steps done, {player.QuestionHistory?.Count ?? 0} history entries, {player.PersonalityProfile?.Count ?? 0} personality traits");
         return context;
+    }
+
+    private string BuildPersonalityBlock(Player player)
+    {
+        var profile = player.PersonalityProfile;
+        if (profile == null || profile.Count == 0)
+            return "- Communication personality: not enough data yet";
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("- Communication personality (derived from answer patterns):");
+        foreach (var kv in profile.OrderByDescending(p => p.Value))
+        {
+            string tier = kv.Value >= 0.80f ? "very strong"
+                        : kv.Value >= 0.65f ? "solid"
+                        : kv.Value >= 0.45f ? "developing"
+                        : "struggling";
+            sb.AppendLine($"  • {kv.Key}: {kv.Value * 100f:F0}/100 ({tier})");
+        }
+        return sb.ToString().TrimEnd();
     }
 
     /// <summary>
@@ -266,16 +287,24 @@ Before writing, silently analyze the data above. You are looking for:
   - Specific memorable moments: the missteps, clutch recoveries, and fastest guesses listed above are REAL events you witnessed.
 
 Now express these insights through {character.Name}'s personality in the opening dialogue.
-You are NOT reading a report — you are a character who has been watching and remembers.
-Pick AT MOST ONE specific moment or pattern to reference. Make it feel natural, not like a data dump.
+You are NOT reading a report — you are a character living in the same world as the player, who naturally remembers things that happened.
+
+CRITICAL — how to reference the past:
+  NEVER quote the player's previous answer verbatim: e.g. ""I remember you saying 'yeah, a cappuccino sounds good'""
+  NEVER frame it as a memory recall: ""last time you said..."", ""I remember you answering...""
+  DO treat past answers as facts that happened in the world: ""So you're a cappuccino person."" / ""You went for the direct approach."" / ""Bold choice, by the way.""
+  DO treat past mistakes as something the character noticed, not logged: ""You seemed a bit lost in that one."" / ""That one caught you off guard, didn't it?""
+  The character has absorbed these events into their world model — they know things about the player the way a friend would, not the way a system would.
+
+Pick AT MOST ONE specific moment or pattern to reference. Weave it in naturally, don't announce it.
 
 How {character.Name} would express this (stay true to their voice):
-  - If warm/celebratory (e.g. Maya): bring up a win or near-miss with genuine excitement — ""I remember when you finally nailed that one after two tries!""
-  - If formal/precise (e.g. Victor): cite the pattern as a matter of professional record — ""Your recent performance in X revealed a tendency toward..."" 
-  - If playful/sarcastic (e.g. Zoe, Alex): tease the misstep with wit — ""Sooo... that one answer last time was... a choice."" / ""Bold move picking that. Bold.""
-  - If analytical/curious (e.g. Dr. Chen): observe the pattern with fascination — ""Interesting — I noticed you tend to rush when the stakes feel lower...""
+  - If warm/celebratory (e.g. Maya): bring up a win like it's shared history — ""You totally came back on that one — I was rooting for you!""
+  - If formal/precise (e.g. Victor): note it as an observable pattern, not a memory — ""Your instinct in X situations tends to be [pattern]. Let's test that.""
+  - If playful/sarcastic (e.g. Zoe, Alex): tease the fact, not the quote — ""So. Cappuccino. Bold."" / ""You really went for that one, huh.""
+  - If analytical/curious (e.g. Dr. Chen): absorb it as data about the person — ""Interesting — you tend to go direct when under pressure.""
 
-The goal is to make the player feel seen — surprised by how personal this feels.
+The goal is for the player to feel seen — surprised by how personal this feels, not reminded they're in a quiz.
 
 === SCENE ===
 {c.Scene}
@@ -295,26 +324,35 @@ Step 1 — Write SHORT dialogue from {character.Name} (2–3 sentences) that:
 
 Step 2 — Write the response question as: ""What do you say?""
 
-Step 3 — Write exactly 4 options. CRITICAL RULES FOR OPTIONS:
-  ✅ Each option MUST be actual words the player would speak aloud — like real dialogue
-  ✅ Each option must DEMONSTRATE (or fail to demonstrate) ""{c.SkillFocus}"" specifically
-  ✅ The correct option should clearly apply the skill in context
-  ✅ Wrong options should fail in different, specific ways (too blunt, misses the subtext, wrong register, deflects)
-  ❌ NEVER write meta-descriptions like ""Respond warmly"", ""Use a formal tone"", ""Agree politely""
-  ❌ NEVER write options that are just agreement/disagreement (""Yes I agree"", ""I think so too"")
-  ❌ Options must NOT be generic — they must be specific to THIS scene and this character's dialogue
-  Keep each option under 15 words.
+Step 3 — Write exactly 4 options. Each option is a SPOKEN RESPONSE with a quality SCORE (0–100).
+  SCORE TIERS:
+    85–100: ideal — clearly demonstrates ""{c.SkillFocus}"" in this specific context
+    55–75 : decent — shows some awareness but misses a nuance or reads tone slightly off
+    25–50 : weak — a recognisable mistake: too blunt, deflects, wrong social register
+    0–20  : poor — tone-deaf, inappropriate, or completely ignores the situation
 
-Step 4 — Write a 1-sentence explanation of why the correct answer best applies ""{c.SkillFocus}"".
+  RULES:
+  - Scores do NOT have to be in order — mix them up across the 4 options
+  - There can be TWO options with scores >= 70 (the player is not punished for either)
+  - NO option can be a meta-description like ""Respond warmly"" — each must be actual spoken words
+  - NO options that are mere agreement/disagreement (""Yes I agree"", ""I think so too"")
+  - All 4 options must be specific to THIS scene, not generic
+  - Keep each option under 15 words
+
+Step 4 — Write a 1-sentence explanation of what makes the highest-scored answer the strongest.
 
 Return ONLY valid JSON with no markdown, no extra text:
 
 {{
   ""dialogue"": ""<character's dialogue, personal + situational>"",
   ""question"": ""What do you say?"",
-  ""options"": [""<spoken response A>"", ""<spoken response B>"", ""<spoken response C>"", ""<spoken response D>""],
-  ""correct"": ""<exact text of the correct spoken response>"",
-  ""explanation"": ""<one sentence: why this response best applies {c.SkillFocus}>"",
+  ""options"": [
+    {{""text"": ""<spoken response>"", ""score"": <0-100>}},
+    {{""text"": ""<spoken response>"", ""score"": <0-100>}},
+    {{""text"": ""<spoken response>"", ""score"": <0-100>}},
+    {{""text"": ""<spoken response>"", ""score"": <0-100>}}
+  ],
+  ""explanation"": ""<one sentence: what makes the top-scored answer best for {c.SkillFocus}>"",
   ""toneContext"": ""{c.SkillFocus}"",
   ""skillFocus"": ""{c.SkillFocus}""
 }}";
@@ -342,8 +380,11 @@ Return ONLY valid JSON with no markdown, no extra text:
                 return null;
             }
 
-            var options = new List<string>();
-            if (data.options != null) options.AddRange(data.options);
+            var options = new List<ConversationOption>();
+            if (data.options != null)
+                foreach (var o in data.options)
+                    if (o != null && !string.IsNullOrWhiteSpace(o.text))
+                        options.Add(new ConversationOption { Text = o.text, Score = Mathf.Clamp(o.score, 0, 100) });
 
             return new ConversationQuestion
             {
@@ -352,7 +393,6 @@ Return ONLY valid JSON with no markdown, no extra text:
                 CharacterDialogue = data.dialogue,
                 QuestionText      = data.question,
                 Options           = options,
-                CorrectAnswer     = data.correct,
                 Explanation       = data.explanation,
                 ToneContext       = data.toneContext,
                 SkillFocus        = data.skillFocus,
@@ -378,10 +418,12 @@ Return ONLY valid JSON with no markdown, no extra text:
             { reason = "Empty question text"; return false; }
         if (q.Options == null || q.Options.Count < 2)
             { reason = $"Too few options ({q.Options?.Count ?? 0} — need at least 2)"; return false; }
-        if (string.IsNullOrWhiteSpace(q.CorrectAnswer))
-            { reason = "Empty correct answer"; return false; }
-        if (!q.Options.Contains(q.CorrectAnswer))
-            { reason = $"Correct answer not in options: \"{q.CorrectAnswer}\""; return false; }
+        if (q.CorrectAnswer == null)
+            { reason = "No scoreable option (all options have score 0?)"; return false; }
+
+        // At least one option must score >= 70
+        if (!q.Options.Any(o => o.Score >= 70))
+            { reason = "No option scores >= 70 — question has no good answer"; return false; }
 
         // Reject meta-description options — options must be actual spoken dialogue
         string[] metaPhrases = { "respond warmly", "respond formally", "respond with", "use a", "give a ",
@@ -390,10 +432,10 @@ Return ONLY valid JSON with no markdown, no extra text:
                                   "acknowledge", "use formal", "use casual", "act professionally" };
         foreach (var opt in q.Options)
         {
-            string lower = opt.ToLower();
+            string lower = opt.Text?.ToLower() ?? "";
             foreach (var phrase in metaPhrases)
                 if (lower.StartsWith(phrase) || lower.Contains(" " + phrase))
-                    { reason = $"Option is a meta-description, not spoken dialogue: \"{opt}\""; return false; }
+                    { reason = $"Option is a meta-description: \"{opt.Text}\""; return false; }
         }
 
         return true;
@@ -422,7 +464,6 @@ Return ONLY valid JSON with no markdown, no extra text:
 
     private ConversationQuestion GetFallbackForSkill(string skill, string charName, string charId)
     {
-        // Pick a situation + real spoken-dialogue options that match the skill focus
         string skillLower = skill.ToLower();
 
         if (skillLower.Contains("active listening") || skillLower.Contains("listen"))
@@ -433,8 +474,9 @@ Return ONLY valid JSON with no markdown, no extra text:
                     "Interesting. Anyway, let me tell you about my day.",
                     "Got it. So what do you need from me?",
                     "Yeah, people always say that kind of stuff."
-                }, 0,
-                "Asking a follow-up about their feelings shows you were truly listening and invite them to continue.");
+                },
+                new[] { 95, 15, 45, 20 },
+                "Asking a follow-up about their feelings shows you were truly listening and invites them to continue.");
 
         if (skillLower.Contains("tone") || skillLower.Contains("register") || skillLower.Contains("formal"))
             return MakeFallback(charId, charName, skill,
@@ -444,7 +486,8 @@ Return ONLY valid JSON with no markdown, no extra text:
                     "Hey, nice one! This is gonna be fun, right?",
                     "Hello. I am present and ready for work.",
                     "So like… are you strict or what?"
-                }, 0,
+                },
+                new[] { 90, 40, 30, 10 },
                 "Warm but professional language matches the first-impression context without being overly casual or robotic.");
 
         if (skillLower.Contains("empathy") || skillLower.Contains("support"))
@@ -455,7 +498,8 @@ Return ONLY valid JSON with no markdown, no extra text:
                     "Well, at least now you have time for other things.",
                     "Yeah, that happens. So, what's next on your list?",
                     "You should have seen it coming honestly."
-                }, 0,
+                },
+                new[] { 92, 35, 50, 5 },
                 "Acknowledging the effort and emotional impact first shows genuine empathy before moving forward.");
 
         if (skillLower.Contains("small talk") || skillLower.Contains("casual"))
@@ -466,7 +510,8 @@ Return ONLY valid JSON with no markdown, no extra text:
                     "I prefer not to discuss personal matters in public.",
                     "It was fine.",
                     "Don't even get me started. Last Tuesday..."
-                }, 0,
+                },
+                new[] { 88, 15, 40, 30 },
                 "A light, reciprocal reply keeps the small talk natural without oversharing or shutting it down.");
 
         if (skillLower.Contains("assertive") || skillLower.Contains("boundary") || skillLower.Contains("disagree"))
@@ -477,10 +522,11 @@ Return ONLY valid JSON with no markdown, no extra text:
                     "Sorry, go ahead, it doesn't matter.",
                     "Stop interrupting me, that's so rude!",
                     "..."
-                }, 0,
+                },
+                new[] { 93, 20, 15, 5 },
                 "Calmly asserting your turn without aggression or giving up is the hallmark of assertive communication.");
 
-        // Generic fallback — still uses actual dialogue, not meta-descriptions
+        // Generic fallback
         return MakeFallback(charId, charName, skill,
             $"{charName} asks: \"I've heard a lot about you — what makes you tick?\"",
             new[] {
@@ -488,21 +534,25 @@ Return ONLY valid JSON with no markdown, no extra text:
                 "I don't know, I'm just normal I guess.",
                 "That's a broad question. Can you be more specific?",
                 "I work hard and I am a team player."
-            }, 0,
+            },
+            new[] { 90, 25, 60, 35 },
             "A genuine, specific answer demonstrates self-awareness and engages the conversation meaningfully.");
     }
 
     private ConversationQuestion MakeFallback(string charId, string charName, string skill,
-        string dialogue, string[] options, int correctIndex, string explanation)
+        string dialogue, string[] optionTexts, int[] scores, string explanation)
     {
+        var options = new List<ConversationOption>();
+        for (int i = 0; i < optionTexts.Length; i++)
+            options.Add(new ConversationOption { Text = optionTexts[i], Score = i < scores.Length ? scores[i] : 30 });
+
         return new ConversationQuestion
         {
             CharacterId       = charId,
             CharacterName     = charName,
             CharacterDialogue = dialogue,
             QuestionText      = "What do you say?",
-            Options           = new List<string>(options),
-            CorrectAnswer     = options[correctIndex],
+            Options           = options,
             Explanation       = explanation,
             ToneContext       = skill,
             SkillFocus        = skill,
@@ -548,15 +598,21 @@ Return ONLY valid JSON with no markdown, no extra text:
     // ── DTOs ──────────────────────────────────────────────────────────────────
 
     [Serializable]
+    private class OptionJSON
+    {
+        public string text;
+        public int    score;
+    }
+
+    [Serializable]
     private class ConversationJSON
     {
-        public string   dialogue;
-        public string   question;
-        public string[] options;
-        public string   correct;
-        public string   explanation;
-        public string   toneContext;
-        public string   skillFocus;
+        public string     dialogue;
+        public string     question;
+        public OptionJSON[] options;
+        public string     explanation;
+        public string     toneContext;
+        public string     skillFocus;
     }
 
     [Serializable]

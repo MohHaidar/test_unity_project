@@ -34,6 +34,26 @@ public class Player
     // Completed steps tracking — contains step UUIDs
     public List<string> CompletedSteps { get; set; } = new List<string>();
 
+    /// <summary>
+    /// Verbal communication personality tendencies, keyed by skill_focus.
+    /// Value is a rolling average score (0.0–1.0) from parlour answers.
+    /// Higher = stronger in that skill. Used to personalise parlour character behaviour.
+    /// </summary>
+    public Dictionary<string, float> PersonalityProfile { get; set; } = new Dictionary<string, float>();
+
+    /// <summary>
+    /// Updates the rolling personality average for a skill with a new score (0.0–1.0).
+    /// Uses exponential moving average (alpha=0.3) so recent answers carry more weight.
+    /// </summary>
+    public void UpdatePersonality(string skill, float score01)
+    {
+        if (string.IsNullOrEmpty(skill)) return;
+        const float alpha = 0.3f;
+        float current = PersonalityProfile.TryGetValue(skill, out float v) ? v : 0.5f;
+        PersonalityProfile[skill] = current + alpha * (score01 - current);
+        LastUpdated = DateTime.Now;
+    }
+
     /// <summary>Marks a step completed by its UUID.</summary>
     public void MarkStepCompleted(string stepId)
     {

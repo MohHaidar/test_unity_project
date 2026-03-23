@@ -118,7 +118,7 @@ public class QuestionDisplay : MonoBehaviour
         if (questionText != null)
             questionText.text = question.QuestionText;
 
-        var shuffledOptions = new List<string>(question.Options);
+        var shuffledOptions = new List<ConversationOption>(question.Options);
         var rng = new System.Random();
         int n = shuffledOptions.Count;
         while (n > 1) { n--; int k = rng.Next(n + 1); var t = shuffledOptions[k]; shuffledOptions[k] = shuffledOptions[n]; shuffledOptions[n] = t; }
@@ -133,11 +133,11 @@ public class QuestionDisplay : MonoBehaviour
             if (!active) continue;
 
             var buttonText = optionButtons[i].GetComponentInChildren<TextMeshProUGUI>();
-            if (buttonText != null) buttonText.text = shuffledOptions[i];
+            if (buttonText != null) buttonText.text = shuffledOptions[i].Text;
 
             int idx = i;
             optionButtons[i].onClick.RemoveAllListeners();
-            optionButtons[i].onClick.AddListener(() => OnOptionSelected(question.Options[idx]));
+            optionButtons[i].onClick.AddListener(() => OnOptionSelected(question.Options[idx].Text));
             optionButtons[i].interactable = true;
         }
 
