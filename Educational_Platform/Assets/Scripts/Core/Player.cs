@@ -283,6 +283,11 @@ public class QuestionResult
     public string ChallengeSlug { get; set; } // e.g. "multiplication_1", "parlour_coffee_shop"
     public string StepDescription { get; set; } // e.g. "Active Listening"
 
+    // Parlour-specific — score of the chosen option (0–100), and what skill was being tested
+    public int    AnswerScore { get; set; } = -1;   // -1 = not a scored parlour answer
+    public string SkillFocus  { get; set; }          // e.g. "Active Listening", "Tone Matching"
+    public string BestAnswer  { get; set; }          // text of the highest-scored option (for AI context)
+
     public override string ToString()
     {
         return $"{(IsCorrect ? "✓" : "✗")} {QuestionText} → {StudentAnswer} ({TimeTakenSeconds:F1}s)";

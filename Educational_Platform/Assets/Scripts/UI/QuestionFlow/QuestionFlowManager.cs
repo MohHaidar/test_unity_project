@@ -321,6 +321,7 @@ public class QuestionFlowManager : MonoBehaviour
                 }
 
                 // Record answer
+                var parlourContext = _currentQuestion as ConversationQuestion;
                 QuestionResult result = new QuestionResult
                 {
                     QuestionText      = _currentQuestion.QuestionText,
@@ -333,7 +334,10 @@ public class QuestionFlowManager : MonoBehaviour
                     AnsweredAt        = System.DateTime.Now,
                     SubjectName       = _player.CurrentSubject,
                     ChallengeSlug     = _currentChallenge?.Slug,
-                    StepDescription   = _currentStep?.Description
+                    StepDescription   = _currentStep?.Description,
+                    AnswerScore       = evaluation.AnswerScore,
+                    SkillFocus        = parlourContext?.SkillFocus,
+                    BestAnswer        = parlourContext?.CorrectAnswer
                 };
 
                 _player.RecordAnswer(result);

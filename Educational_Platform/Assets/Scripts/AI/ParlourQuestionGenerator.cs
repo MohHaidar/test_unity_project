@@ -244,7 +244,6 @@ public class ParlourQuestionGenerator
             return "- Answer history: none yet (first session)";
         }
 
-        // Send last 20 entries — enough for both short and long-term signals
         int take = Math.Min(20, history.Count);
         var entries = history.Skip(history.Count - take).ToList();
 
@@ -257,11 +256,24 @@ public class ParlourQuestionGenerator
             string subject = !string.IsNullOrEmpty(r.SubjectName) ? $"[{r.SubjectName}]" : "[?]";
             string step    = !string.IsNullOrEmpty(r.StepDescription) ? $" · {r.StepDescription}" : "";
             string timing  = r.TimeTakenSeconds > 0 ? $" {r.TimeTakenSeconds:F0}s" : "";
-            string error   = (!r.IsCorrect && !string.IsNullOrEmpty(r.ErrorType)) ? $" [{r.ErrorType}]" : "";
-            string q       = r.QuestionText?.Length > 55 ? r.QuestionText.Substring(0, 52) + "…" : (r.QuestionText ?? "?");
-            string ans     = r.StudentAnswer?.Length > 40 ? r.StudentAnswer.Substring(0, 37) + "…" : (r.StudentAnswer ?? "?");
+            string ans     = r.StudentAnswer?.Length > 45 ? r.StudentAnswer.Substring(0, 42) + "…" : (r.StudentAnswer ?? "?");
 
-            sb.AppendLine($"  {mark} {subject}{step} | Q: \"{q}\" | A: \"{ans}\"{timing}{error}");
+            if (r.AnswerScore >= 0 && !string.IsNullOrEmpty(r.SkillFocus))
+            {
+                // Parlour entry — show the communication act, not the surface content
+                string scoreLabel = r.AnswerScore >= 85 ? "strong" : r.AnswerScore >= 70 ? "decent" : r.AnswerScore >= 40 ? "weak" : "poor";
+                string bestNote   = (!r.IsCorrect && !string.IsNullOrEmpty(r.BestAnswer))
+                    ? $" | best was: \"{(r.BestAnswer.Length > 40 ? r.BestAnswer.Substring(0, 37) + "…" : r.BestAnswer)}\""
+                    : "";
+                sb.AppendLine($"  {mark} {subject}{step} | Skill: {r.SkillFocus} | Score: {r.AnswerScore}/100 ({scoreLabel}) | Chose: \"{ans}\"{bestNote}{timing}");
+            }
+            else
+            {
+                // Non-parlour entry — standard format
+                string q     = r.QuestionText?.Length > 50 ? r.QuestionText.Substring(0, 47) + "…" : (r.QuestionText ?? "?");
+                string error = (!r.IsCorrect && !string.IsNullOrEmpty(r.ErrorType)) ? $" [{r.ErrorType}]" : "";
+                sb.AppendLine($"  {mark} {subject}{step} | Q: \"{q}\" | A: \"{ans}\"{timing}{error}");
+            }
         }
 
         debugLog.AppendLine($"History block: {entries.Count} entries from {history.Select(r => r.SubjectName).Where(s => s != null).Distinct().Count()} subjects");
@@ -289,12 +301,16 @@ Before writing, silently analyze the data above. You are looking for:
 Now express these insights through {character.Name}'s personality in the opening dialogue.
 You are NOT reading a report — you are a character living in the same world as the player, who naturally remembers things that happened.
 
+CRITICAL — relationship and tone:
+  The relationship between {character.Name} and the player is already established. Do NOT open with greetings, introductions, or ""Hey there!"" type openers. Jump straight into the scene as if mid-conversation or resuming from where you left off.
+
 CRITICAL — how to reference the past:
   NEVER quote the player's previous answer verbatim: e.g. ""I remember you saying 'yeah, a cappuccino sounds good'""
   NEVER frame it as a memory recall: ""last time you said..."", ""I remember you answering...""
-  DO treat past answers as facts that happened in the world: ""So you're a cappuccino person."" / ""You went for the direct approach."" / ""Bold choice, by the way.""
-  DO treat past mistakes as something the character noticed, not logged: ""You seemed a bit lost in that one."" / ""That one caught you off guard, didn't it?""
-  The character has absorbed these events into their world model — they know things about the player the way a friend would, not the way a system would.
+  NEVER reference the surface content of an answer (the topic, the drink, the object) as if it were a personal preference — the player was choosing a COMMUNICATION STYLE, not expressing a preference. If the history shows ""Chose: 'I'd go with the latte' | Score: 40/100 | Skill: Tone Matching"", the relevant insight is that they gave a flat, unengaged answer on tone-matching — NOT that they like lattes.
+  DO reference the communication pattern: ""You tend to go direct when things feel uncertain."" / ""Last time you kept it surface-level when things got personal."" / ""You came back strong after that one.""
+  DO treat past scores and skills as what they are — evidence of how the player communicates, not what they ordered or said.
+  The character has absorbed these patterns into their understanding of who the player IS — not what they literally said.
 
 Pick AT MOST ONE specific moment or pattern to reference. Weave it in naturally, don't announce it.
 
