@@ -57,7 +57,7 @@ public class ParlourQuestionGenerator
         string playerContext = BuildPlayerContext(player, debugLog);
 
         // Build prompt
-        string prompt = BuildPrompt(player, step, character, constraints, playerContext);
+        string prompt = BuildPrompt(step, character, constraints, playerContext);
         debugLog.AppendLine($"Prompt length: {prompt.Length} chars");
 
         float[] temps = { 0.4f, 0.6f, 0.8f, 0.9f };
@@ -124,32 +124,94 @@ public class ParlourQuestionGenerator
             _     => "experienced learner (500+ EXP)"
         };
 
-        // Mastery gaps
         var weakAreas = new List<string>();
         if (player.MasteryByStep != null)
             foreach (var kv in player.MasteryByStep)
                 if (kv.Value < 0.6f)
                 {
-                    var step = ChallengeDataManager.Instance.GetStepById(kv.Key);
-                    if (step != null) weakAreas.Add(step.Description);
+                    var s = ChallengeDataManager.Instance.GetStepById(kv.Key);
+                    if (s != null) weakAreas.Add(s.Description);
                 }
 
         string weakText = weakAreas.Count > 0
             ? $"Areas needing improvement: {string.Join(", ", weakAreas.Take(3))}"
             : "No significant weak areas identified yet";
 
-        // Recent answer history — last 8 entries, verbal/conversation questions prioritised
-        string historyBlock = BuildHistoryBlock(player, debugLog);
+        string historyBlock    = BuildHistoryBlock(player, debugLog);
+        string memorablesBlock = ExtractMemorables(player, debugLog);
 
         string context = $"- Player: {player.Name}\n" +
                          $"- Progress: {expTier}\n" +
                          $"- Steps completed overall: {completedCount}\n" +
                          $"- {weakText}\n" +
                          $"- Current streak in this step: {player.StreakInCurrentStep}\n" +
+                         memorablesBlock + "\n" +
                          historyBlock;
 
         debugLog.AppendLine($"Player context: {expTier}, {completedCount} steps done, {player.QuestionHistory?.Count ?? 0} history entries");
         return context;
+    }
+
+    /// <summary>
+    /// Pulls 2–3 specific memorable events from history so the AI can reference them
+    /// as concrete "memories" in the character's dialogue.
+    /// </summary>
+    private string ExtractMemorables(Player player, System.Text.StringBuilder debugLog)
+    {
+        var history = player.QuestionHistory;
+        if (history == null || history.Count < 3)
+            return "- Memorable moments: not enough history yet";
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("- Memorable moments (specific events the character could reference):");
+
+        // Last failure — what they got wrong and what they chose
+        var lastFailure = history.LastOrDefault(r => !r.IsCorrect);
+        if (lastFailure != null)
+        {
+            string subj  = !string.IsNullOrEmpty(lastFailure.SubjectName) ? $" in {lastFailure.SubjectName}" : "";
+            string step  = !string.IsNullOrEmpty(lastFailure.StepDescription) ? $" ({lastFailure.StepDescription})" : "";
+            string chose = lastFailure.StudentAnswer?.Length > 40 ? lastFailure.StudentAnswer.Substring(0, 37) + "…" : lastFailure.StudentAnswer;
+            string right = lastFailure.CorrectAnswer?.Length > 40 ? lastFailure.CorrectAnswer.Substring(0, 37) + "…" : lastFailure.CorrectAnswer;
+            sb.AppendLine($"  • Last misstep{subj}{step}: chose \"{chose}\" (correct was \"{right}\")");
+        }
+
+        // Clutch moment — a correct answer after 2+ consecutive wrong answers
+        for (int i = 2; i < history.Count; i++)
+        {
+            if (history[i].IsCorrect && !history[i - 1].IsCorrect && !history[i - 2].IsCorrect)
+            {
+                string subj = !string.IsNullOrEmpty(history[i].SubjectName) ? $" in {history[i].SubjectName}" : "";
+                string step = !string.IsNullOrEmpty(history[i].StepDescription) ? $" ({history[i].StepDescription})" : "";
+                string ans  = history[i].StudentAnswer?.Length > 40 ? history[i].StudentAnswer.Substring(0, 37) + "…" : history[i].StudentAnswer;
+                sb.AppendLine($"  • Clutch recovery{subj}{step}: finally got it with \"{ans}\" after two misses");
+                break;
+            }
+        }
+
+        // Best subject (most accurate, minimum 4 answers)
+        var bySubject = history
+            .Where(r => !string.IsNullOrEmpty(r.SubjectName))
+            .GroupBy(r => r.SubjectName)
+            .Where(g => g.Count() >= 4)
+            .OrderByDescending(g => g.Count(r => r.IsCorrect) / (float)g.Count())
+            .FirstOrDefault();
+        if (bySubject != null)
+        {
+            float acc = bySubject.Count(r => r.IsCorrect) / (float)bySubject.Count() * 100f;
+            sb.AppendLine($"  • Strongest subject: {bySubject.Key} ({acc:F0}% accuracy over {bySubject.Count()} questions)");
+        }
+
+        // Fastest wrong — a suspicious speed-run failure (answered in under 3 seconds and got it wrong)
+        var fastMiss = history.Where(r => !r.IsCorrect && r.TimeTakenSeconds > 0 && r.TimeTakenSeconds < 3f).LastOrDefault();
+        if (fastMiss != null)
+        {
+            string subj = !string.IsNullOrEmpty(fastMiss.SubjectName) ? $" in {fastMiss.SubjectName}" : "";
+            sb.AppendLine($"  • Rushed mistake{subj}: wrong answer in {fastMiss.TimeTakenSeconds:F1}s — classic guessing");
+        }
+
+        debugLog.AppendLine($"Memorables extracted from {history.Count} entries");
+        return sb.ToString().TrimEnd();
     }
 
     private string BuildHistoryBlock(Player player, System.Text.StringBuilder debugLog)
@@ -158,107 +220,34 @@ public class ParlourQuestionGenerator
         if (history == null || history.Count == 0)
         {
             debugLog.AppendLine("History block: empty");
-            return "- Recent answers: none yet";
+            return "- Answer history: none yet (first session)";
         }
+
+        // Send last 20 entries — enough for both short and long-term signals
+        int take = Math.Min(20, history.Count);
+        var entries = history.Skip(history.Count - take).ToList();
 
         var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"- Answer history ({entries.Count} most recent, oldest → newest):");
 
-        // ── SHORT-TERM: last 8 answers, any subject ──────────────────────────
-        int take = Math.Min(8, history.Count);
-        var recent = history.Skip(history.Count - take).ToList();
-
-        sb.AppendLine("- Recent answers (last 8, all subjects, oldest → newest):");
-        foreach (var r in recent)
+        foreach (var r in entries)
         {
             string mark    = r.IsCorrect ? "✓" : "✗";
-            string subject = !string.IsNullOrEmpty(r.SubjectName) ? $"[{r.SubjectName}]" : "";
-            string step    = !string.IsNullOrEmpty(r.StepDescription) ? $" ({r.StepDescription})" : "";
+            string subject = !string.IsNullOrEmpty(r.SubjectName) ? $"[{r.SubjectName}]" : "[?]";
+            string step    = !string.IsNullOrEmpty(r.StepDescription) ? $" · {r.StepDescription}" : "";
             string timing  = r.TimeTakenSeconds > 0 ? $" {r.TimeTakenSeconds:F0}s" : "";
             string error   = (!r.IsCorrect && !string.IsNullOrEmpty(r.ErrorType)) ? $" [{r.ErrorType}]" : "";
-            string q       = r.QuestionText?.Length > 50 ? r.QuestionText.Substring(0, 47) + "…" : (r.QuestionText ?? "?");
-            string ans     = r.StudentAnswer?.Length > 35 ? r.StudentAnswer.Substring(0, 32) + "…" : (r.StudentAnswer ?? "?");
+            string q       = r.QuestionText?.Length > 55 ? r.QuestionText.Substring(0, 52) + "…" : (r.QuestionText ?? "?");
+            string ans     = r.StudentAnswer?.Length > 40 ? r.StudentAnswer.Substring(0, 37) + "…" : (r.StudentAnswer ?? "?");
 
-            sb.AppendLine($"  {mark} {subject}{step} \"{q}\" → \"{ans}\"{timing}{error}");
+            sb.AppendLine($"  {mark} {subject}{step} | Q: \"{q}\" | A: \"{ans}\"{timing}{error}");
         }
 
-        // Short-term pattern
-        int recentCorrect = recent.Count(r => r.IsCorrect);
-        int recentWrong   = recent.Count - recentCorrect;
-        string shortPattern;
-        if (recentWrong >= (int)(recent.Count * 0.6f))
-            shortPattern = "Struggling recently — needs encouragement and clearer scaffolding.";
-        else if (recentCorrect == recent.Count)
-            shortPattern = "On a strong streak — ready for nuance and harder distractors.";
-        else
-            shortPattern = "Mixed recent performance — balanced challenge appropriate.";
-
-        // Most common recent error type
-        var recentErrors = recent.Where(r => !r.IsCorrect && !string.IsNullOrEmpty(r.ErrorType))
-                                 .GroupBy(r => r.ErrorType)
-                                 .OrderByDescending(g => g.Count())
-                                 .FirstOrDefault();
-        if (recentErrors != null)
-            shortPattern += $" Recurring error: {recentErrors.Key}.";
-
-        sb.AppendLine($"- Short-term pattern: {shortPattern}");
-
-        // ── LONG-TERM: per-subject breakdown across full history ─────────────
-        if (history.Count >= 5)
-        {
-            var bySubject = history
-                .Where(r => !string.IsNullOrEmpty(r.SubjectName))
-                .GroupBy(r => r.SubjectName)
-                .OrderByDescending(g => g.Count())
-                .ToList();
-
-            if (bySubject.Count > 0)
-            {
-                sb.AppendLine("- Long-term profile across subjects:");
-                foreach (var subjectGroup in bySubject)
-                {
-                    var entries   = subjectGroup.ToList();
-                    int total     = entries.Count;
-                    int correct   = entries.Count(r => r.IsCorrect);
-                    float pct     = total > 0 ? (correct / (float)total * 100f) : 0f;
-
-                    // Trend: compare first half vs second half accuracy
-                    string trend = "";
-                    if (total >= 6)
-                    {
-                        int half        = total / 2;
-                        float earlyAcc  = entries.Take(half).Count(r => r.IsCorrect) / (float)half;
-                        float lateAcc   = entries.Skip(half).Count(r => r.IsCorrect) / (float)(total - half);
-                        float delta     = lateAcc - earlyAcc;
-                        trend = delta > 0.15f ? " ↑ improving" : delta < -0.15f ? " ↓ declining" : " → steady";
-                    }
-
-                    // Most practiced step in this subject
-                    var topStep = entries
-                        .Where(r => !string.IsNullOrEmpty(r.StepDescription))
-                        .GroupBy(r => r.StepDescription)
-                        .OrderByDescending(g => g.Count())
-                        .FirstOrDefault();
-                    string topStepNote = topStep != null ? $", most practiced: {topStep.Key}" : "";
-
-                    sb.AppendLine($"  • {subjectGroup.Key}: {total} questions, {pct:F0}% correct{trend}{topStepNote}");
-                }
-
-                // Cross-subject insight
-                if (bySubject.Count >= 2)
-                {
-                    var best  = bySubject.OrderByDescending(g => g.Count(r => r.IsCorrect) / (float)g.Count()).First();
-                    var worst = bySubject.OrderBy(g => g.Count(r => r.IsCorrect) / (float)g.Count()).First();
-                    if (best.Key != worst.Key)
-                        sb.AppendLine($"- Cross-subject insight: strongest in {best.Key}, needs most work in {worst.Key}.");
-                }
-            }
-        }
-
-        debugLog.AppendLine($"History block: {history.Count} total, {take} recent, {history.Select(r => r.SubjectName).Distinct().Count()} subjects");
+        debugLog.AppendLine($"History block: {entries.Count} entries from {history.Select(r => r.SubjectName).Where(s => s != null).Distinct().Count()} subjects");
         return sb.ToString().TrimEnd();
     }
 
-    private string BuildPrompt(Player player, Step step, Character character, ParlourConstraints c, string playerContext)
+    private string BuildPrompt(Step step, Character character, ParlourConstraints c, string playerContext)
     {
         return $@"You are generating a verbal communication exercise for an educational game.
 
@@ -269,11 +258,24 @@ Speaking Style: {character.SpeakingStyle}
 
 === PLAYER CONTEXT ===
 {playerContext}
-Use the answer history above to inform the character's dialogue:
-- If the player has been struggling (many ✗), make the situation more approachable and the correct answer more clearly distinct.
-- If the player is on a strong streak (many ✓), introduce more nuance or subtext — make the wrong options more tempting.
-- If there's a recurring error type (e.g. "conceptual_gap"), craft a scenario that gently targets that gap.
-- The character may subtly acknowledge progress or encourage without directly stating stats.
+
+=== HOW TO USE THIS HISTORY ===
+Before writing, silently analyze the data above. You are looking for:
+  - Short-term mood: is the player on a roll, slumping, rushing, or grinding through?
+  - Long-term identity: what kind of learner are they — careful, impulsive, strong in one area, stuck in another?
+  - Specific memorable moments: the missteps, clutch recoveries, and fastest guesses listed above are REAL events you witnessed.
+
+Now express these insights through {character.Name}'s personality in the opening dialogue.
+You are NOT reading a report — you are a character who has been watching and remembers.
+Pick AT MOST ONE specific moment or pattern to reference. Make it feel natural, not like a data dump.
+
+How {character.Name} would express this (stay true to their voice):
+  - If warm/celebratory (e.g. Maya): bring up a win or near-miss with genuine excitement — ""I remember when you finally nailed that one after two tries!""
+  - If formal/precise (e.g. Victor): cite the pattern as a matter of professional record — ""Your recent performance in X revealed a tendency toward..."" 
+  - If playful/sarcastic (e.g. Zoe, Alex): tease the misstep with wit — ""Sooo... that one answer last time was... a choice."" / ""Bold move picking that. Bold.""
+  - If analytical/curious (e.g. Dr. Chen): observe the pattern with fascination — ""Interesting — I noticed you tend to rush when the stakes feel lower...""
+
+The goal is to make the player feel seen — surprised by how personal this feels.
 
 === SCENE ===
 {c.Scene}
@@ -286,9 +288,9 @@ Difficulty note: {c.DifficultyNote}
 === YOUR TASK ===
 
 Step 1 — Write SHORT dialogue from {character.Name} (2–3 sentences) that:
-  - Creates a SITUATION or MOMENT that REQUIRES the player to apply ""{c.SkillFocus}""
+  - Opens with OR naturally includes a brief personal reference from the history above (in their voice)
+  - Then creates a SITUATION that REQUIRES the player to apply ""{c.SkillFocus}""
   - The situation must NOT have an obvious single answer — the player needs to think
-  - Do NOT make it an open invitation like ""What do you think?"" or ""Tell me about yourself""
   - The character should say or do something that CHALLENGES the player to use the skill
 
 Step 2 — Write the response question as: ""What do you say?""
@@ -308,7 +310,7 @@ Step 4 — Write a 1-sentence explanation of why the correct answer best applies
 Return ONLY valid JSON with no markdown, no extra text:
 
 {{
-  ""dialogue"": ""<character's situational dialogue>"",
+  ""dialogue"": ""<character's dialogue, personal + situational>"",
   ""question"": ""What do you say?"",
   ""options"": [""<spoken response A>"", ""<spoken response B>"", ""<spoken response C>"", ""<spoken response D>""],
   ""correct"": ""<exact text of the correct spoken response>"",
